@@ -12,9 +12,39 @@ dotenv.config();
 
 const app: Express = express();
 const httpServer = createServer(app);
+
+// Allow frontend connections from localhost, env-configured URL, and Codespaces (*.app.github.dev)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  // Allow a secure variant of CLIENT_URL if only http is provided
+  process.env.CLIENT_URL?.replace('http://', 'https://'),
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173'
+].filter(Boolean) as string[];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow same-origin and non-browser clients
+      if (!origin) return callback(null, true);
+
+      // Direct matches
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Allow any GitHub Codespaces host (e.g., *.app.github.dev)
+      try {
+        const hostname = new URL(origin).hostname;
+        if (hostname.endsWith('.app.github.dev')) {
+          return callback(null, true);
+        }
+      } catch (err) {
+        // Fall through to rejection below
+      }
+
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -60,7 +90,21 @@ function generateRoomId(length = 6) {
   return result;
 }
 
-const rooms: Record<string, { users: { id: string, name: string, color: 'white' | 'black' }[] }> = {};
+interface RoomUser {
+  id: string;
+  name: string;
+  color: 'white' | 'black';
+}
+
+interface Room {
+  users: RoomUser[];
+  status: 'waiting' | 'playing' | 'finished';
+  gameStartTime?: number;
+  timerEnabled?: boolean;
+  timerDuration?: number;
+}
+
+const rooms: Record<string, Room> = {};
 
 // Basic health check endpoint
 app.get('/health', (req, res) => {
@@ -225,13 +269,27 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   // Create Room: user provides name, gets roomId
-  socket.on('createRoom', ({ name }, callback) => {
+  socket.on('createRoom', ({ name, timerEnabled, timerDuration }, callback) => {
     const roomId = generateRoomId();
     // First user is always white
-    rooms[roomId] = { users: [{ id: socket.id, name, color: 'white' }] };
+    rooms[roomId] = { 
+      users: [{ id: socket.id, name, color: 'white' }],
+      status: 'waiting',
+      timerEnabled: timerEnabled || false,
+      timerDuration: timerDuration || 600
+    };
     socket.join(roomId);
+    socket.data.roomId = roomId;
+    socket.data.playerColor = 'white';
+    socket.data.playerName = name;
+    
     if (callback) callback({ success: true, roomId, color: 'white' });
-    io.to(roomId).emit('userList', rooms[roomId].users);
+    io.to(roomId).emit('roomUpdated', {
+      roomId,
+      users: rooms[roomId].users,
+      status: rooms[roomId].status
+    });
+    console.log(`Room created: ${roomId} by ${name}`);
   });
 
   // Join Room: user provides name and roomId
@@ -240,25 +298,102 @@ io.on('connection', (socket) => {
       if (callback) callback({ success: false, message: 'Room not found' });
       return;
     }
+
+    const room = rooms[roomId];
+    
+    // Check if room is full (max 2 players)
+    if (room.users.length >= 2) {
+      if (callback) callback({ success: false, message: 'Room is full' });
+      return;
+    }
+
     // Assign color: if white taken, assign black, else white
-    const existingColors = rooms[roomId].users.map(u => u.color);
+    const existingColors = room.users.map(u => u.color);
     let color: 'white' | 'black' = existingColors.includes('white') ? 'black' : 'white';
-    rooms[roomId].users.push({ id: socket.id, name, color });
+    
+    room.users.push({ id: socket.id, name, color });
     socket.join(roomId);
-    if (callback) callback({ success: true, color });
-    io.to(roomId).emit('userList', rooms[roomId].users);
+    socket.data.roomId = roomId;
+    socket.data.playerColor = color;
+    socket.data.playerName = name;
+
+    // Once both players join, start the game
+    if (room.users.length === 2) {
+      room.status = 'playing';
+      room.gameStartTime = Date.now();
+      io.to(roomId).emit('gameReady', {
+        players: room.users,
+        status: room.status,
+        startTime: room.gameStartTime,
+        timerEnabled: room.timerEnabled,
+        timerDuration: room.timerDuration
+      });
+      console.log(`Game started in room ${roomId} between ${room.users.map(u => u.name).join(' vs ')}`);
+    } else {
+      io.to(roomId).emit('roomUpdated', {
+        roomId,
+        users: room.users,
+        status: room.status
+      });
+    }
+
+    if (callback) callback({ success: true, color, users: room.users });
+  });
+
+  // Handle game moves
+  socket.on('makeMove', ({ roomId, move }, callback) => {
+    const room = rooms[roomId];
+    if (!room) {
+      if (callback) callback({ success: false, message: 'Room not found' });
+      return;
+    }
+
+    // Broadcast move to both players
+    io.to(roomId).emit('moveMade', {
+      move,
+      playerColor: socket.data.playerColor,
+      playerName: socket.data.playerName
+    });
+
+    if (callback) callback({ success: true });
+  });
+
+  // Handle game end
+  socket.on('endGame', ({ roomId, result, winner }, callback) => {
+    const room = rooms[roomId];
+    if (!room) {
+      if (callback) callback({ success: false, message: 'Room not found' });
+      return;
+    }
+
+    room.status = 'finished';
+    io.to(roomId).emit('gameEnded', {
+      result,
+      winner,
+      players: room.users
+    });
+
+    if (callback) callback({ success: true });
   });
 
   socket.on('disconnect', () => {
-    for (const [roomId, room] of Object.entries(rooms)) {
+    const roomId = socket.data.roomId;
+    if (roomId && rooms[roomId]) {
+      const room = rooms[roomId];
       const idx = room.users.findIndex(u => u.id === socket.id);
       if (idx !== -1) {
         room.users.splice(idx, 1);
-        io.to(roomId).emit('userList', room.users);
+        
         if (room.users.length === 0) {
           delete rooms[roomId];
+          console.log(`Room deleted: ${roomId}`);
+        } else {
+          // Notify remaining player that opponent disconnected
+          io.to(roomId).emit('opponentDisconnected', {
+            remainingPlayers: room.users
+          });
+          console.log(`Player disconnected from room ${roomId}. Remaining: ${room.users.length}`);
         }
-        break;
       }
     }
     console.log(`User disconnected: ${socket.id}`);
