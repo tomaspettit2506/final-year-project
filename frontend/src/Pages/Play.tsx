@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';
-import MultiplayerSetup from '../Components/PlayComponents/MultiplayerSetup';
 import type { GameMode } from '../Types/chess';
 import Box from '@mui/material/Box';
 import AppBarComponent from '../Components/AppBarComponent';
 
-type Screen = 'setup' | 'game' | 'multiplayer';
+type Screen = 'setup' | 'game';
 
 interface GameConfig {
   gameMode: GameMode;
@@ -39,12 +38,17 @@ const Play = () => {
     setCurrentScreen('setup');
   };
 
-  const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean) => {
+  const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean, timerDuration?: number, timerEnabled?: boolean) => {
     setRoomId(joinedRoomId);
     setMyName(name);
     setMyColor(color);
     setIsHost(host);
-    setGameConfig(cfg => ({ ...cfg, gameMode: 'pvp' }));
+    setGameConfig(cfg => ({ 
+      ...cfg, 
+      gameMode: 'pvp',
+      timerDuration: timerDuration ?? cfg.timerDuration,
+      timerEnabled: timerEnabled ?? cfg.timerEnabled
+    }));
     setCurrentScreen('game');
   };
 
@@ -53,17 +57,8 @@ const Play = () => {
       <Box>
         <AppBarComponent title="Game Setup" isBackButton={true} isSettings={true} isExit={true}/>
         <Box sx={{ mt: 2 }}>
-          <GameSetup onStartGame={handleStartGame} />
+          <GameSetup onStartGame={handleStartGame} onRoomJoined={handleRoomJoined} />
         </Box>
-      </Box>
-    );
-  }
-
-  if (currentScreen === 'multiplayer') {
-    return (
-      <Box>
-        <AppBarComponent title="Multiplayer Setup" isBackButton={true} isSettings={false} isExit={true}/>
-        <MultiplayerSetup onRoomJoined={handleRoomJoined} />
       </Box>
     );
   }
