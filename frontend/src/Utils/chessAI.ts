@@ -240,7 +240,7 @@ function getRandomMove(moves: Array<{ from: Position; to: Position }>): { from: 
 function getBeginnerMove(
   board: Board,
   moves: Array<{ from: Position; to: Position }>,
-  aiColor: PieceColor
+  _aiColor: PieceColor
 ): { from: Position; to: Position } {
   // Prefer captures but mostly random
   const captureMoves = moves.filter(move => board[move.to.row][move.to.col] !== null);

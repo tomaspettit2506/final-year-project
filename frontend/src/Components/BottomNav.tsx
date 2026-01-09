@@ -12,7 +12,7 @@ const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     navigate(newValue);
   };
 
