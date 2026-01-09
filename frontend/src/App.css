@@ -1,0 +1,136 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #8cc9da;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.profile-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info h3 {
+  margin-bottom: 5px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: black;
+  color: white;
+}
+
+/* 🛠 Custom Swiper Arrow Fix */
+.custom-swiper .swiper-button-prev,
+.custom-swiper .swiper-button-next {
+  color: white; /* Make them blend better */
+  font-size: 24px; /* Reduce size */
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2); /* Light transparent background */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.custom-swiper .swiper-button-prev {
+  left: -10px; /* Adjust closer to content */
+}
+
+.custom-swiper .swiper-button-next {
+  right: -10px; /* Adjust closer to content */
+}
+
+.custom-swiper .swiper-button-prev:hover,
+.custom-swiper .swiper-button-next:hover {
+  background: rgba(255, 255, 255, 0.4); /* More visible on hover */
+}
+
+.custom-swiper .swiper-button-prev::after,
+.custom-swiper .swiper-button-next::after {
+  font-size: 18px; /* Reduce arrow icon size */
+  font-weight: bold;
+}
+
+.custom-textfield {
+  width: 100%;
+  background: rgb(0, 0, 0);
+  border-radius: 5px;
+}
+
+.custom-textfield .MuiInputBase-input {
+  font-size: 1rem;
+  padding: 12px; /* Adjusted padding to reduce height */
+}
+
+.custom-textfield .MuiInputLabel-root {
+  color: #555;
+  font-size: 0.9rem; /* Slightly smaller to save space */
+  transform: translate(14px, 12px) scale(1); /* Adjust label positioning */
+}
+
+.custom-textfield .MuiOutlinedInput-root fieldset {
+  border-color: #ccc; /* Light border */
+}
+
+.custom-textfield .MuiOutlinedInput-root:hover fieldset {
+  border-color: #a777e3; /* Purple hover effect */
+}
+
+.custom-textfield .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #6e8efb; /* Blue focus effect */
+}
+
+.typography-custom {
+  font-size: 1rem;
+  color: #ff0000;
+}

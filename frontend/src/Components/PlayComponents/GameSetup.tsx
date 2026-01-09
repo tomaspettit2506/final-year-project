@@ -1,17 +1,20 @@
-import { useState } from 'react';
-import { socket } from '../../Services/socket';
-import { TextField, Alert } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { socket } from '../../Services/socket';
 import type { GameMode } from '../../Types/chess';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Slider from '@mui/material/Slider';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import { Users, Bot, Crown, Clock } from 'lucide-react';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, TextField, Alert, CircularProgress, Switch } from '@mui/material';
+
+interface RoomUser {
+  id: string;
+  name: string;
+  color: 'white' | 'black';
+}
 
 interface GameSetupProps {
   onStartGame: (config: {
@@ -20,21 +23,26 @@ interface GameSetupProps {
     timerEnabled: boolean;
     timerDuration: number;
   }) => void;
+  onRoomJoined?: (roomId: string, name: string, color: 'white' | 'black', isHost: boolean, timerDuration?: number, timerEnabled?: boolean) => void;
 }
 
-const GameSetup = ({ onStartGame }: GameSetupProps) => {
+const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [difficulty, setDifficulty] = useState<number>(750);
-  const [timerEnabled, setTimerEnabled] = useState(false);
-  const [timerDuration, setTimerDuration] = useState(600);
-  // Multiplayer setup states
-  const [mpStep, setMpStep] = useState<'choose' | 'create' | 'join'>('choose');
+  
+  // Multiplayer states
+  const [mpStep, setMpStep] = useState<'choose' | 'create' | 'join' | 'waiting'>('choose');
   const [name, setName] = useState('');
   const [roomId, setRoomId] = useState('');
   const [createdRoomId, setCreatedRoomId] = useState('');
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
+  const [playerColor, setPlayerColor] = useState<'white' | 'black' | null>(null);
+  const [isHost, setIsHost] = useState(false);
+  const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
+  const [timerEnabled, setTimerEnabled] = useState(true);
+  const [timerDuration, setTimerDuration] = useState(600); // 10 minutes default
 
   const getDifficultyLabel = (value: number) => {
     if (value < 600) return 'Beginner';
@@ -50,15 +58,43 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
 
   const handleModeChange = (mode: GameMode) => {
     setSelectedMode(mode);
-    // Enable timer by default when switching to PvP
+    // If switching to PvP, show multiplayer setup
     if (mode === 'pvp') {
-      setTimerEnabled(true);
       setMpStep('choose');
-    } else {
-      setTimerEnabled(false);
     }
   };
-  // Multiplayer logic
+
+  // Multiplayer socket listeners
+  useEffect(() => {
+    if (mpStep !== 'waiting') return;
+
+    const handleGameReady = (data: { players: RoomUser[]; status: string; startTime: number; timerEnabled?: boolean; timerDuration?: number }) => {
+      console.log('Game is ready, both players have joined!', data);
+      setRoomUsers(data.players);
+      if (data.timerEnabled !== undefined) setTimerEnabled(data.timerEnabled);
+      if (data.timerDuration !== undefined) setTimerDuration(data.timerDuration);
+      
+      if (playerColor && onRoomJoined) {
+        const actualRoomId = createdRoomId || roomId;
+        onRoomJoined(actualRoomId, name, playerColor, isHost, data.timerDuration || timerDuration, data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled);
+      }
+    };
+
+    const handleRoomUpdated = (data: { roomId: string; users: RoomUser[]; status: string }) => {
+      console.log('Room updated:', data);
+      setRoomUsers(data.users);
+    };
+
+    socket.on('gameReady', handleGameReady);
+    socket.on('roomUpdated', handleRoomUpdated);
+
+    return () => {
+      socket.off('gameReady', handleGameReady);
+      socket.off('roomUpdated', handleRoomUpdated);
+    };
+  }, [mpStep, playerColor, createdRoomId, roomId, name, isHost, timerDuration, timerEnabled, onRoomJoined]);
+
+  // Create Room
   const handleCreateRoom = () => {
     setError('');
     if (!name.trim()) {
@@ -66,16 +102,21 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
       return;
     }
     socket.connect();
-    socket.emit('createRoom', { name }, (res: { success: boolean; roomId?: string }) => {
-      if (res.success && res.roomId) {
+    socket.emit('createRoom', { name, timerEnabled, timerDuration }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
+      if (res.success && res.roomId && res.color) {
         setCreatedRoomId(res.roomId);
-        setMpStep('create');
+        setPlayerColor(res.color);
+        setIsHost(true);
+        setRoomUsers([{ id: socket.id || '', name, color: res.color }]);
+        setMpStep('waiting');
+        console.log(`Room created: ${res.roomId}. You are ${res.color}. Waiting for opponent...`);
       } else {
         setError('Failed to create room.');
       }
     });
   };
 
+  // Join Room
   const handleJoinRoom = () => {
     setError('');
     if (!name.trim() || !roomId.trim()) {
@@ -84,11 +125,14 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
     }
     setJoining(true);
     socket.connect();
-    socket.emit('joinRoom', { name, roomId }, (res: { success: boolean; message?: string }) => {
+    socket.emit('joinRoom', { name, roomId }, (res: { success: boolean; color?: 'white' | 'black'; users?: RoomUser[]; message?: string }) => {
       setJoining(false);
-      if (res.success) {
-        // Successful join: keep user in multiplayer flow (do NOT auto-start the game here)
-        setMpStep('join');
+      if (res.success && res.color) {
+        setPlayerColor(res.color);
+        setIsHost(false);
+        if (res.users) setRoomUsers(res.users);
+        setMpStep('waiting');
+        console.log(`Joined room: ${roomId}. You are ${res.color}. Waiting for game to start...`);
       } else {
         setError(res.message || 'Failed to join room.');
       }
@@ -99,8 +143,8 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
     onStartGame({
       gameMode: selectedMode,
       difficulty,
-      timerEnabled,
-      timerDuration
+      timerEnabled: false,
+      timerDuration: 600
     });
   };
 
@@ -217,24 +261,23 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
               {/* PvP Multiplayer Setup */}
               {selectedMode === 'pvp' && (
                 <Box>
-                  {/* Step selection: Create or Join Room */}
                   {mpStep === 'choose' && (
                     <>
-                      <Typography variant="h5" mb={2}>Multiplayer Setup</Typography>
+                      <Typography variant="h6" color="white" mb={3}>Multiplayer Setup</Typography>
                       <Grid container spacing={2}>
-                        <Grid size={{xs: 12}}>
+                        <Grid size={{ xs: 12 }}>
                           <Button fullWidth variant="contained" color="primary" onClick={() => setMpStep('create')}>Create Room</Button>
                         </Grid>
-                        <Grid size={{xs: 12}}>
+                        <Grid size={{ xs: 12 }}>
                           <Button fullWidth variant="outlined" color="primary" onClick={() => setMpStep('join')}>Join Room</Button>
                         </Grid>
                       </Grid>
                     </>
                   )}
-                  {/* Create Room UI */}
+
                   {mpStep === 'create' && (
                     <>
-                      <Typography variant="h6" mb={2}>Create Room</Typography>
+                      <Typography variant="h6" color="white" mb={2}>Create Room</Typography>
                       <TextField
                         label="Your Name"
                         value={name}
@@ -242,7 +285,44 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
                         fullWidth
                         margin="normal"
                         disabled={!!createdRoomId}
+                        sx={{ color: 'white' }}
                       />
+                      
+                      {!createdRoomId && (
+                        <>
+                          <Box display="flex" alignItems="center" justifyContent="space-between" mt={3} mb={2}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Clock className="w-5 h-5" style={{ color: 'white' }} />
+                              <Typography color="white">Enable Timer</Typography>
+                            </Box>
+                            <Switch
+                              checked={timerEnabled}
+                              onChange={(_, checked) => setTimerEnabled(checked)}
+                            />
+                          </Box>
+                          {timerEnabled && (
+                            <Box mb={3}>
+                              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                <Typography color="text.secondary">Time per player</Typography>
+                                <Typography color="primary">{getTimerLabel(timerDuration)}</Typography>
+                              </Box>
+                              <Slider
+                                value={timerDuration}
+                                onChange={(_, value) => setTimerDuration(value as number)}
+                                min={300}
+                                max={3600}
+                                step={60}
+                                sx={{ width: '100%' }}
+                              />
+                              <Box display="flex" justifyContent="space-between" mt={1}>
+                                <Typography variant="caption" color="text.secondary">5 min</Typography>
+                                <Typography variant="caption" color="text.secondary">60 min</Typography>
+                              </Box>
+                            </Box>
+                          )}
+                        </>
+                      )}
+                      
                       {createdRoomId && (
                         <Alert severity="success" sx={{ my: 2 }}>
                           Room created! Share this Room ID: <strong>{createdRoomId}</strong>
@@ -251,19 +331,20 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
                       {!createdRoomId && (
                         <Button fullWidth variant="contained" color="primary" onClick={handleCreateRoom} sx={{ mt: 2 }}>Create</Button>
                       )}
-                      <Button fullWidth variant="text" color="secondary" onClick={() => setMpStep('choose')} sx={{ mt: 2 }}>Back</Button>
+                      <Button fullWidth variant="text" color="secondary" onClick={() => { setMpStep('choose'); setCreatedRoomId(''); }} sx={{ mt: 2 }}>Back</Button>
                     </>
                   )}
-                  {/* Join Room UI */}
+
                   {mpStep === 'join' && (
                     <>
-                      <Typography variant="h6" mb={2}>Join Room</Typography>
+                      <Typography variant="h6" color="white" mb={2}>Join Room</Typography>
                       <TextField
                         label="Your Name"
                         value={name}
                         onChange={e => setName(e.target.value)}
                         fullWidth
                         margin="normal"
+                        sx={{ color: 'white' }}
                       />
                       <TextField
                         label="Room ID"
@@ -271,6 +352,7 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
                         onChange={e => setRoomId(e.target.value.toUpperCase())}
                         fullWidth
                         margin="normal"
+                        sx={{ color: 'white' }}
                       />
                       <Button fullWidth variant="contained" color="primary" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={joining}>
                         {joining ? 'Joining...' : 'Join'}
@@ -278,47 +360,35 @@ const GameSetup = ({ onStartGame }: GameSetupProps) => {
                       <Button fullWidth variant="text" color="secondary" onClick={() => setMpStep('choose')} sx={{ mt: 2 }}>Back</Button>
                     </>
                   )}
-                  {/* Timer Settings (only after room is created/joined) */}
-                  {(mpStep === 'create' && createdRoomId) || (mpStep === 'join' && !joining && !error) ? (
-                    <Box mt={4}>
-                      <Box display="flex" alignItems="center" justifyContent="space-between" mb={4}>
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Clock className="w-5 h-5" style={{ color: 'white' }} />
-                          <Typography color="white">Enable Timer</Typography>
-                        </Box>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={timerEnabled}
-                              onChange={(_, checked) => setTimerEnabled(checked)}
-                            />
-                          }
-                          label=""
-                        />
+
+                  {mpStep === 'waiting' && (
+                    <>
+                      <Typography variant="h6" color="white" mb={3}>
+                        {roomUsers.length === 2 ? 'Starting Game...' : 'Waiting for opponent...'}
+                      </Typography>
+                      <Box display="flex" justifyContent="center" mb={3}>
+                        <CircularProgress />
                       </Box>
-                      {timerEnabled && (
-                        <Box>
-                          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                            <Typography color="text.secondary">Time per player</Typography>
-                            <Typography color="primary">{getTimerLabel(timerDuration)}</Typography>
-                          </Box>
-                          <Slider
-                            value={timerDuration}
-                            onChange={(_, value) => setTimerDuration(value as number)}
-                            min={600}
-                            max={3600}
-                            step={60}
-                            sx={{ width: '100%' }}
-                          />
-                          <Box display="flex" justifyContent="space-between" mt={2}>
-                            <Typography variant="caption" color="text.secondary">10 min</Typography>
-                            <Typography variant="caption" color="text.secondary">60 min</Typography>
-                          </Box>
-                        </Box>
+                      <Card variant="outlined" sx={{ mb: 2, bgcolor: '#f5f5f5' }}>
+                        <CardContent>
+                          <Typography variant="body2" color="textSecondary" mb={1}>Room ID: <strong>{createdRoomId || roomId}</strong></Typography>
+                          <Typography variant="body2" color="textSecondary" mb={1}>Your Color: <strong>{playerColor?.toUpperCase()}</strong></Typography>
+                          <Typography variant="body2" color="textSecondary" sx={{ fontWeight: roomUsers.length === 2 ? 'bold' : 'normal' }}>
+                            Players in room: {roomUsers.length}/2
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                      {roomUsers.length > 0 && (
+                        <Alert severity={roomUsers.length === 2 ? 'success' : 'info'} sx={{ mb: 2 }}>
+                          {roomUsers.map(u => `${u.name} (${u.color})`).join(' vs ')}
+                        </Alert>
                       )}
-                    </Box>
-                  ) : null}
-                  {/* Error Alert */}
+                      <Typography variant="caption" color="textSecondary" align="center" display="block">
+                        {roomUsers.length === 2 ? 'Both players ready! Game starting...' : 'Waiting for the other player to join...'}
+                      </Typography>
+                    </>
+                  )}
+
                   {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
                 </Box>
               )}
