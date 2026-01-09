@@ -1,5 +1,3 @@
-// frontend/src/Utils/AuthFunctions.ts
-
 import { auth } from "../firebase";
 import { 
   createUserWithEmailAndPassword, 

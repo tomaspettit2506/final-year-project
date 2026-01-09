@@ -1,5 +1,3 @@
-// Home.tsx
-
 import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";

@@ -1,5 +1,3 @@
-// InstallPWA.tsx
-
 import React, { useState } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import GetAppIcon from '@mui/icons-material/GetApp';

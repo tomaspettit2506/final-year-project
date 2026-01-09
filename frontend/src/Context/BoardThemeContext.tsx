@@ -1,5 +1,3 @@
-// BoardThemeContext.tsx
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 type BoardTheme = "classic" | "modern" | "wooden";

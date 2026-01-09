@@ -1,5 +1,3 @@
-// Landing.tsx
-
 import { useEffect, useState } from "react";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { motion } from "framer-motion";

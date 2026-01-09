@@ -1,5 +1,3 @@
-// ChallengeDialog.tsx
-
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography,
     Box, Button, FormControl, InputLabel, Select, MenuItem } from "@mui/material";

@@ -1,5 +1,3 @@
-// PiecesComponent.tsx
-
 import { Paper, Box, Typography } from "@mui/material";
 import PieceGuide from "./PieceGuide";
 

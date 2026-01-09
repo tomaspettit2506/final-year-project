@@ -1,5 +1,3 @@
-// ChessPiece.tsx
-
 interface ChessPieceProps {
   piece: string;
   size?: 'sm' | 'md' | 'lg';

@@ -1,5 +1,3 @@
-// RulesComponent.tsx
-
 import { Card, Box, Accordion, AccordionSummary, AccordionDetails, Typography } from "@mui/material";
 
 const RulesComponent = () => {

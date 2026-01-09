@@ -1,5 +1,3 @@
-// BasicComponent.tsx
-
 import { Box, Card, Typography } from "@mui/material";
 
 const BasicComponent = () => {

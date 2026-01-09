@@ -1,5 +1,3 @@
-// WinningComponent.tsx
-
 import { Card, Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Trophy } from "lucide-react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";

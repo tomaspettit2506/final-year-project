@@ -1,5 +1,3 @@
-// MiniBoard.tsx
-
 import { Box } from '@mui/material';
 import ChessPiece from './ChessPiece';
 

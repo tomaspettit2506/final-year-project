@@ -1,5 +1,3 @@
-// frontend/src/Services/api.ts
-
 function resolveApiBaseUrl(): string {
   // 1. Try to derive from current window location (most robust for Codespaces)
   if (typeof window !== "undefined") {

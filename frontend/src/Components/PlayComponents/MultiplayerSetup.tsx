@@ -1,5 +1,3 @@
-// MultiplayerSetup.tsx
-
 import { useState, useEffect } from 'react';
 import { socket } from '../../Services/socket';
 import { Box, Button, Card, CardContent, Typography, TextField, Grid, Alert, CircularProgress, Slider, Switch } from '@mui/material';

@@ -1,5 +1,3 @@
-// PieceGuide.tsx
-
 import { Paper, Box, Grid, Typography } from '@mui/material';
 import ChessPiece from './ChessPiece';
 import MiniBoard from './MiniBoard';

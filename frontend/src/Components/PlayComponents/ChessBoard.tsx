@@ -1,5 +1,3 @@
-// ChessBoard.tsx
-
 import type { Position, Piece } from "../../Types/chess";
 import { useState } from "react";
 import { Box, Grid, Typography, useTheme, useMediaQuery } from "@mui/material";

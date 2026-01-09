@@ -1,5 +1,3 @@
-// DrawComponent.tsx
-
 import {Badge, Box, Card, Typography } from '@mui/material'
 
 const DrawComponent = () => {
