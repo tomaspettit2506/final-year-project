@@ -16,7 +16,6 @@ import {
   getMoveNotation
 } from '../../Utils/chessLogic';
 import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
-import { socket } from '../../Services/socket';
 import { ArrowLeft, RotateCcw, Undo } from 'lucide-react';
 
 interface GameScreenProps {
@@ -149,84 +148,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       }, thinkingTime);
     }
   }, [gameMode, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate]);
-
-  // Handle multiplayer socket events
-  useEffect(() => {
-    if (gameMode !== 'pvp' || !roomId) return;
-
-    const handleMoveMade = (data: { move: { from: Position; to: Position; notation: string }; playerColor: string; playerName: string }) => {
-      if (!isMountedRef.current) return;
-      
-      // Only apply move if it's from opponent
-      if (data.playerColor !== myColor) {
-        const { from, to } = data.move;
-        const newBoard = simulateMove(gameState.board, from, to);
-        const capturedPiece = gameState.board[to.row][to.col];
-        
-        const move: Move = {
-          from,
-          to,
-          piece: gameState.board[from.row][from.col]!,
-          captured: capturedPiece || undefined,
-          notation: data.move.notation
-        };
-
-        const newCapturedPieces = { ...gameState.capturedPieces };
-        if (capturedPiece) {
-          newCapturedPieces[move.piece.color].push(capturedPiece);
-        }
-
-        const nextPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
-        const isCheck = isKingInCheck(newBoard, nextPlayer);
-        const isCheckmateState = isCheckmate(newBoard, nextPlayer);
-        const isStalemateState = isStalemate(newBoard, nextPlayer);
-
-        setGameState({
-          board: newBoard,
-          currentPlayer: nextPlayer,
-          selectedPosition: null,
-          legalMoves: [],
-          moveHistory: [...gameState.moveHistory, move],
-          capturedPieces: newCapturedPieces,
-          isCheck,
-          isCheckmate: isCheckmateState,
-          isStalemate: isStalemateState,
-          winner: isCheckmateState ? gameState.currentPlayer : null
-        });
-      }
-    };
-
-    const handleGameEnded = (data: { result: string; winner: string | null; players: Array<{ name: string; color: string }> }) => {
-      if (!isMountedRef.current) return;
-      console.log('Game ended by opponent:', data);
-      // Game state is already updated, just log for now
-    };
-
-    const handleOpponentDisconnected = () => {
-      if (!isMountedRef.current) return;
-      console.log('Opponent disconnected');
-      setGameState(prev => ({
-        ...prev,
-        isCheckmate: true,
-        winner: myColor
-      }));
-    };
-
-    socket.on('moveMade', handleMoveMade);
-    socket.on('gameEnded', handleGameEnded);
-    socket.on('opponentDisconnected', handleOpponentDisconnected);
-
-    return () => {
-      socket.off('moveMade', handleMoveMade);
-      socket.off('gameEnded', handleGameEnded);
-      socket.off('opponentDisconnected', handleOpponentDisconnected);
-    };
-  }, [gameMode, roomId, myColor, gameState]);
   
   const handleSquareClick = (row: number, col: number) => {
-    // Prevent moves if it's not your turn in multiplayer
-    if (gameMode === 'pvp' && gameState.currentPlayer !== myColor) return;
-    
     if (gameMode === 'ai' && (gameState.currentPlayer === 'black' || isAIThinking)) return;
     if (gameState.isCheckmate || gameState.isStalemate) return;
     
@@ -296,7 +219,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
     const isCheckmateState = isCheckmate(newBoard, nextPlayer);
     const isStalemateState = isStalemate(newBoard, nextPlayer);
     
-    const newGameState: GameState = {
+    setGameState({
       board: newBoard,
       currentPlayer: nextPlayer,
       selectedPosition: null,
@@ -307,23 +230,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       isCheckmate: isCheckmateState,
       isStalemate: isStalemateState,
       winner: isCheckmateState ? gameState.currentPlayer : null
-    };
-
-    setGameState(newGameState);
-
-    // Emit move to opponent in multiplayer mode
-    if (gameMode === 'pvp' && roomId) {
-      socket.emit('makeMove', { roomId, move: { from, to, notation } });
-      
-      // If game ended, notify opponent
-      if (isCheckmateState || isStalemateState) {
-        socket.emit('endGame', { 
-          roomId, 
-          result: isCheckmateState ? 'checkmate' : 'stalemate',
-          winner: isCheckmateState ? gameState.currentPlayer : null
-        });
-      }
-    }
+    });
 
     if (timerEnabled && gameState.moveHistory.length === 0) {
       setTimer(prev => ({ ...prev, isActive: true }));
