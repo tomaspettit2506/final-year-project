@@ -1,3 +1,5 @@
+// Friends.tsx (Page)
+
 import { useState } from "react";
 import { Box, Container, Typography, Tabs, Tab, Badge } from "@mui/material";
 

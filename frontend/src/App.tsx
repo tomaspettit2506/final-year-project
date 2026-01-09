@@ -1,3 +1,5 @@
+// frontend/src/App.tsx
+
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CircularProgress, Box, Fade, CssBaseline, ThemeProvider } from "@mui/material";
 import Landing from './Pages/Landing'

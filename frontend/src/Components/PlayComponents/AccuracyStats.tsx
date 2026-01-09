@@ -1,3 +1,5 @@
+// AccuracyStats.tsx
+
 import type { Move } from '../../Types/chess';
 import { Badge, Box, Card, LinearProgress, Typography } from '@mui/material';
 import { Target, Zap } from 'lucide-react';

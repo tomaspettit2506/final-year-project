@@ -1,3 +1,5 @@
+// CapturedPieces.tsx
+
 import React from 'react';
 import type { Piece } from '../../Types/chess';
 import { Box, Typography } from '@mui/material';

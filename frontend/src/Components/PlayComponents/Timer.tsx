@@ -1,3 +1,5 @@
+// Timer.tsx
+
 import React from 'react';
 import type { PieceColor } from '../../Types/chess';
 import { Card } from '@mui/material';

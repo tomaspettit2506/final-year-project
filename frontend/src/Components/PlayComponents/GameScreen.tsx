@@ -1,3 +1,5 @@
+// GameScreen.tsx
+
 import { useState, useEffect, useRef } from 'react';
 import ChessBoard from './ChessBoard';
 import CapturedPieces from './CapturedPieces';

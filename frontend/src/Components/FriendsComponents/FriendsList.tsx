@@ -1,3 +1,5 @@
+// FriendsList.tsx
+
 import React, { useState } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Avatar, 
   Badge, Chip, Button, IconButton, Menu, MenuItem, Typography } from "@mui/material";

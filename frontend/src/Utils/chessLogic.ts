@@ -1,3 +1,5 @@
+// frontend/src/Utils/chessLogic.ts
+
 import type { Board, PieceColor, Position} from '../Types/chess';
 
 export function createInitialBoard(): Board {

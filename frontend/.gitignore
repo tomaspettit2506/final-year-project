@@ -1,3 +1,5 @@
+## Ignore frontend build and dependency files
+
 # Logs
 logs
 *.log

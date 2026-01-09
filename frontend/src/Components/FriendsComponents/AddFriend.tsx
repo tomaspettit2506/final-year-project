@@ -1,3 +1,5 @@
+// AddFriend.tsx
+
 import { useState } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, 
     Button, Avatar, Badge, Chip, Typography,

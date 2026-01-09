@@ -1,3 +1,5 @@
+// frontend/src/Utils/chessAI.ts
+
 import type { Board, PieceColor, Position } from '../Types/chess';
 import { getAllLegalMoves, simulateMove, isCheckmate } from './chessLogic';
 

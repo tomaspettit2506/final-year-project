@@ -1,3 +1,5 @@
+// Play.tsx
+
 import { useState } from 'react';
 import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';

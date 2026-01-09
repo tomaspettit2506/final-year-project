@@ -1,3 +1,5 @@
+// Settings.tsx
+
 import React, { useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
