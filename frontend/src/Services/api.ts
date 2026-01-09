@@ -30,6 +30,10 @@ function resolveApiBaseUrl(): string {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.text();

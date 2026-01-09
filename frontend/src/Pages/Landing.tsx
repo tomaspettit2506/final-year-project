@@ -10,6 +10,7 @@ import { auth, firestore } from "../firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import ChessTheme from "../assets/chess_board.jpg";
+import { getApiBaseUrl } from "../Services/api";
 
 // Features for the slideshow
 const slides = [
@@ -94,7 +95,7 @@ const Landing = () => {
         });
         // Notify backend about new Google user
         try {
-          await fetch("http://localhost:8000/user", {
+          await fetch(`${getApiBaseUrl()}/user`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
