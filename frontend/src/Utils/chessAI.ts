@@ -152,20 +152,25 @@ export function getAIMove(
   
   if (allMoves.length === 0) return null;
   
-  // Map difficulty (250-2000) to AI behavior
-  if (difficulty < 600) {
-    // Beginner: mostly random with slight preference for captures
+  // Map difficulty (250-2800) to AI behavior
+  if (difficulty < 550) {
+    // Easy: mostly random with slight preference for captures
     return getBeginnerMove(board, allMoves, aiColor);
-  } else if (difficulty < 1100) {
-    // Intermediate: basic evaluation with randomness
+  } else if (difficulty < 900) {
+    // Medium: basic evaluation with randomness
     return getIntermediateMove(board, allMoves, aiColor);
-  } else if (difficulty < 1600) {
-    // Advanced: depth-2 minimax
+  } else if (difficulty < 1300) {
+    // Hard: depth-2 minimax
     return getHardMove(board, allMoves, aiColor, 2);
+  } else if (difficulty < 1700) {
+    // Expert: depth-3 minimax
+    return getHardMove(board, allMoves, aiColor, 3);
+  } else if (difficulty < 2200) {
+    // Master: depth-4 minimax
+    return getHardMove(board, allMoves, aiColor, 4);
   } else {
-    // Expert: depth-3 or 4 minimax based on difficulty
-    const depth = difficulty >= 1800 ? 4 : 3;
-    return getHardMove(board, allMoves, aiColor, depth);
+    // Rocket: depth-5 minimax (special level - extremely challenging)
+    return getHardMove(board, allMoves, aiColor, 5);
   }
 }
 

@@ -6,15 +6,7 @@ import Timer from './Timer';
 import AccuracyStats from './AccuracyStats';
 import { Button, Box, Card, Grid, Typography, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import type { GameState, Position, Move, Piece, GameMode, TimerState } from '../../Types/chess';
-import {
-  createInitialBoard,
-  getLegalMoves,
-  simulateMove,
-  isCheckmate,
-  isStalemate,
-  isKingInCheck,
-  getMoveNotation
-} from '../../Utils/chessLogic';
+import {createInitialBoard, getLegalMoves, simulateMove, isCheckmate, isStalemate, isKingInCheck, getMoveNotation } from '../../Utils/chessLogic';
 import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
 import { socket } from '../../Services/socket';
 import { ArrowLeft, RotateCcw, Undo } from 'lucide-react';
@@ -54,17 +46,23 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
   });
   const timerIntervalRef = useRef<number | null>(null);
   const aiTimeoutRef = useRef<number | null>(null);
-  const isMountedRef = useRef(true);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const isMountedRef = useRef(true);  const gameStateRef = useRef(gameState);
+  const difficultyRef = useRef(difficulty);  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  // Update refs with current gameState and difficulty
+  useEffect(() => {
+    gameStateRef.current = gameState;
+    difficultyRef.current = difficulty;
+  }, [gameState, difficulty]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (timerIntervalRef.current) {
+      if (timerIntervalRef.current !== null) {
         clearInterval(timerIntervalRef.current);
       }
-      if (aiTimeoutRef.current) {
+      if (aiTimeoutRef.current !== null) {
         clearTimeout(aiTimeoutRef.current);
       }
     };
@@ -73,7 +71,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
   // Timer countdown effect
   useEffect(() => {
     if (!timerEnabled || !timer.isActive || gameState.isCheckmate || gameState.isStalemate) {
-      if (timerIntervalRef.current) {
+      if (timerIntervalRef.current !== null) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
       }
@@ -106,7 +104,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
     }, 1000);
 
     return () => {
-      if (timerIntervalRef.current) {
+      if (timerIntervalRef.current !== null) {
         clearInterval(timerIntervalRef.current);
       }
     };
@@ -124,29 +122,45 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       setIsAIThinking(true);
       
       // Adjust AI thinking time based on difficulty
-      // Beginner: quick response (100-200ms)
-      // Intermediate: moderate response (200-400ms)
-      // Advanced: thoughtful response (400-600ms)
-      // Expert: deep thinking (600-1000ms)
+      // Easy: quick response (100-200ms)
+      // Medium: moderate response (200-400ms)
+      // Hard: thoughtful response (400-600ms)
+      // Expert: deep thinking (600-900ms)
+      // Master: very deep thinking (900-1200ms)
+      // Rocket: extreme thinking (1200-1800ms)
       let thinkingTime: number;
-      if (difficulty < 600) {
+      if (difficultyRef.current < 550) {
         thinkingTime = 100 + Math.random() * 100; // 100-200ms
-      } else if (difficulty < 1100) {
+      } else if (difficultyRef.current < 900) {
         thinkingTime = 200 + Math.random() * 200; // 200-400ms
-      } else if (difficulty < 1600) {
+      } else if (difficultyRef.current < 1300) {
         thinkingTime = 400 + Math.random() * 200; // 400-600ms
+      } else if (difficultyRef.current < 1700) {
+        thinkingTime = 600 + Math.random() * 300; // 600-900ms
+      } else if (difficultyRef.current < 2200) {
+        thinkingTime = 900 + Math.random() * 300; // 900-1200ms
       } else {
-        thinkingTime = 600 + Math.random() * 400; // 600-1000ms
+        thinkingTime = 1200 + Math.random() * 600; // 1200-1800ms (Rocket level)
       }
       
-      aiTimeoutRef.current = setTimeout(() => {
-        if (!isMountedRef.current) return;
-        const aiMove = getAIMove(gameState.board, difficulty, 'black');
-        if (aiMove) {
-          makeMove(aiMove.from, aiMove.to);
+      const timeoutId = setTimeout(() => {
+        try {
+          const aiMove = getAIMove(gameStateRef.current.board, difficultyRef.current, 'black');
+          if (aiMove) {
+            makeMove(aiMove.from, aiMove.to);
+          }
+        } catch (error) {
+          console.error('AI move calculation error:', error);
+        } finally {
+          setIsAIThinking(false);
         }
-        setIsAIThinking(false);
       }, thinkingTime);
+      
+      aiTimeoutRef.current = timeoutId;
+      
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [gameMode, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate]);
 
@@ -260,19 +274,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
   };
   
   const makeMove = (from: Position, to: Position) => {
-    const piece = gameState.board[from.row][from.col];
+    const currentState = gameStateRef.current;
+    const piece = currentState.board[from.row][from.col];
     if (!piece) return;
     
     let accuracyData: { accuracy: number; accuracyClass: 'excellent' | 'good' | 'inaccuracy' | 'mistake' | 'blunder' } | undefined;
     const isHumanMove = gameMode === 'pvp' || (gameMode === 'ai' && piece.color === 'white');
     
     if (isHumanMove) {
-      accuracyData = calculateMoveAccuracy(gameState.board, { from, to }, piece.color);
+      accuracyData = calculateMoveAccuracy(currentState.board, { from, to }, piece.color);
     }
     
-    const capturedPiece = gameState.board[to.row][to.col];
-    const newBoard = simulateMove(gameState.board, from, to);
-    const notation = getMoveNotation(gameState.board, from, to);
+    const capturedPiece = currentState.board[to.row][to.col];
+    const newBoard = simulateMove(currentState.board, from, to);
+    const notation = getMoveNotation(currentState.board, from, to);
     
     const move: Move = {
       from,
@@ -286,12 +301,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       })
     };
     
-    const newCapturedPieces = { ...gameState.capturedPieces };
+    const newCapturedPieces = { ...currentState.capturedPieces };
     if (capturedPiece) {
       newCapturedPieces[piece.color].push(capturedPiece);
     }
     
-    const nextPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+    const nextPlayer = currentState.currentPlayer === 'white' ? 'black' : 'white';
     const isCheck = isKingInCheck(newBoard, nextPlayer);
     const isCheckmateState = isCheckmate(newBoard, nextPlayer);
     const isStalemateState = isStalemate(newBoard, nextPlayer);
@@ -301,12 +316,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       currentPlayer: nextPlayer,
       selectedPosition: null,
       legalMoves: [],
-      moveHistory: [...gameState.moveHistory, move],
+      moveHistory: [...currentState.moveHistory, move],
       capturedPieces: newCapturedPieces,
       isCheck,
       isCheckmate: isCheckmateState,
       isStalemate: isStalemateState,
-      winner: isCheckmateState ? gameState.currentPlayer : null
+      winner: isCheckmateState ? currentState.currentPlayer : null
     };
 
     setGameState(newGameState);
@@ -320,12 +335,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
         socket.emit('endGame', { 
           roomId, 
           result: isCheckmateState ? 'checkmate' : 'stalemate',
-          winner: isCheckmateState ? gameState.currentPlayer : null
+          winner: isCheckmateState ? currentState.currentPlayer : null
         });
       }
     }
 
-    if (timerEnabled && gameState.moveHistory.length === 0) {
+    if (timerEnabled && currentState.moveHistory.length === 0) {
       setTimer(prev => ({ ...prev, isActive: true }));
     }
   };

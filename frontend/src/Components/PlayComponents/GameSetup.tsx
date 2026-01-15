@@ -44,13 +44,6 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [timerDuration, setTimerDuration] = useState(600); // 10 minutes default
 
-  const getDifficultyLabel = (value: number) => {
-    if (value < 600) return 'Beginner';
-    if (value < 1100) return 'Intermediate';
-    if (value < 1600) return 'Advanced';
-    return 'Expert';
-  };
-
   const getTimerLabel = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     return `${minutes} min`;
@@ -239,22 +232,77 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
               {/* AI Difficulty (only shown for AI mode) */}
               {selectedMode === 'ai' && (
                 <Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography color="white">AI Difficulty</Typography>
-                    <Typography color="primary">{getDifficultyLabel(difficulty)}</Typography>
-                  </Box>
-                  <Slider
-                    value={difficulty}
-                    onChange={(_, value) => setDifficulty(value as number)}
-                    min={250}
-                    max={2000}
-                    step={50}
-                    sx={{ width: '100%' }}
-                  />
-                  <Box display="flex" justifyContent="space-between" mt={2}>
-                    <Typography variant="caption" color="text.secondary">Beginner</Typography>
-                    <Typography variant="caption" color="text.secondary">Expert</Typography>
-                  </Box>
+                  <Typography color="white" mb={2}>Select Difficulty</Typography>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 250 ? 'contained' : 'outlined'}
+                        onClick={() => setDifficulty(250)}
+                        sx={{ py: 1.5 }}
+                      >
+                        ⭐ Easy
+                      </Button>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 550 ? 'contained' : 'outlined'}
+                        onClick={() => setDifficulty(550)}
+                        sx={{ py: 1.5 }}
+                      >
+                        ⭐ Medium
+                      </Button>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 900 ? 'contained' : 'outlined'}
+                        onClick={() => setDifficulty(900)}
+                        sx={{ py: 1.5 }}
+                      >
+                        ⭐ Hard
+                      </Button>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 1300 ? 'contained' : 'outlined'}
+                        onClick={() => setDifficulty(1300)}
+                        sx={{ py: 1.5 }}
+                      >
+                        ⭐ Expert
+                      </Button>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 1700 ? 'contained' : 'outlined'}
+                        onClick={() => setDifficulty(1700)}
+                        sx={{ py: 1.5 }}
+                      >
+                        ⭐ 🦝 Master
+                      </Button>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Button
+                        fullWidth
+                        variant={difficulty === 2200 ? 'contained' : 'outlined'}
+                        color={difficulty === 2200 ? 'primary' : 'inherit'}
+                        onClick={() => setDifficulty(2200)}
+                        sx={{ 
+                          py: 1.5,
+                          fontWeight: 'bold',
+                          ...(difficulty === 2200 && {
+                            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                            boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                          })
+                        }}
+                      >
+                        🚀🦝 Rocket
+                      </Button>
+                    </Grid>
+                  </Grid>
                 </Box>
               )}
 
