@@ -1,4 +1,4 @@
-import type { Board, PieceColor, Position} from '../Types/chess';
+import type { Board, PieceColor, Position } from '../Types/chess';
 
 export function createInitialBoard(): Board {
   const board: Board = Array(8).fill(null).map(() => Array(8).fill(null));
@@ -303,6 +303,26 @@ export function getAllLegalMoves(board: Board, color: PieceColor): Array<{ from:
         const from = { row, col };
         const legalMoves = getLegalMoves(board, from);
         for (const to of legalMoves) {
+          allMoves.push({ from, to });
+        }
+      }
+    }
+  }
+  
+  return allMoves;
+}
+
+// Faster version that doesn't check for check - for AI performance
+export function getAllPseudoLegalMoves(board: Board, color: PieceColor): Array<{ from: Position; to: Position }> {
+  const allMoves: Array<{ from: Position; to: Position }> = [];
+  
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (piece && piece.color === color) {
+        const from = { row, col };
+        const pseudoLegalMoves = getLegalMoves(board, from, false); // Skip check validation
+        for (const to of pseudoLegalMoves) {
           allMoves.push({ from, to });
         }
       }
