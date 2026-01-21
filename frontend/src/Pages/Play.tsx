@@ -12,6 +12,7 @@ interface GameConfig {
   difficulty: number;
   timerEnabled: boolean;
   timerDuration: number;
+  difficultyName: string;
 }
 
 
@@ -20,6 +21,7 @@ const Play = () => {
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     gameMode: 'ai',
     difficulty: 750,
+    difficultyName: 'Easy',
     timerEnabled: false,
     timerDuration: 600
   });
@@ -69,6 +71,7 @@ const Play = () => {
       <GameScreen
         gameMode={gameConfig.gameMode}
         difficulty={gameConfig.difficulty}
+        difficultyName={gameConfig.difficultyName}
         timerEnabled={gameConfig.timerEnabled}
         timerDuration={gameConfig.timerDuration}
         onBackToSetup={handleBackToSetup}

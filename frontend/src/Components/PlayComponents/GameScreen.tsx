@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ChessBoard from './ChessBoard';
 import CapturedPieces from './CapturedPieces';
 import MoveHistory from './MoveHistory';
@@ -14,6 +14,7 @@ import { ArrowLeft, RotateCcw, Undo } from 'lucide-react';
 interface GameScreenProps {
   gameMode: GameMode;
   difficulty: number;
+  difficultyName: string;
   timerEnabled: boolean;
   timerDuration: number;
   onBackToSetup: () => void;
@@ -23,7 +24,7 @@ interface GameScreenProps {
   isHost?: boolean;
 }
 
-const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false }) => {
     // myColor, myName, roomId, isHost are now available for multiplayer logic and display
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createInitialBoard(),
@@ -48,6 +49,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
   const aiTimeoutRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);  const gameStateRef = useRef(gameState);
   const difficultyRef = useRef(difficulty);  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [resolvedColor, setResolvedColor] = useState<'white' | 'black'>(myColor);
+  const [resolvedName, setResolvedName] = useState<string>(myName);
+  const pendingMovesRef = useRef<RemoteMove[]>([]);
+
+  type RemoteMove = {
+    move: { from: Position; to: Position; notation: string };
+    playerColor: 'white' | 'black';
+    playerName: string;
+    timestamp?: number;
+  };
 
   // Update refs with current gameState and difficulty
   useEffect(() => {
@@ -67,6 +78,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       }
     };
   }, []);
+
+  // Explicitly mark component as mounted when this component mounts
+  // This ensures the flag is reset if the component remounts
+  useEffect(() => {
+    isMountedRef.current = true;
+    console.log('[GameScreen] Component mounted, isMountedRef set to true');
+    return () => {
+      isMountedRef.current = false;
+      console.log('[GameScreen] Component unmounting, isMountedRef set to false');
+    };
+  }, []);
+
+  // Keep resolved color/name in sync with incoming props
+  useEffect(() => {
+    setResolvedColor(myColor);
+  }, [myColor]);
+
+  useEffect(() => {
+    setResolvedName(myName);
+  }, [myName]);
 
   // Timer countdown effect
   useEffect(() => {
@@ -164,48 +195,148 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
     }
   }, [gameMode, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate]);
 
+  const applyRemoteHistory = useCallback((remoteMoves: RemoteMove[]) => {
+    if (!Array.isArray(remoteMoves) || remoteMoves.length === 0) return;
+
+    let rebuiltBoard = createInitialBoard();
+    const rebuiltCaptured: { white: Piece[]; black: Piece[] } = { white: [], black: [] };
+    const rebuiltHistory: Move[] = [];
+    let currentPlayer: 'white' | 'black' = 'white';
+
+    for (const remote of remoteMoves) {
+      const { from, to, notation } = remote.move;
+      const movingPiece = rebuiltBoard[from.row]?.[from.col];
+
+      if (!movingPiece) {
+        console.warn('[GameScreen] Skipping sync move - no piece found at from square', remote);
+        continue;
+      }
+
+      const capturedPiece = rebuiltBoard[to.row]?.[to.col] || undefined;
+      rebuiltBoard = simulateMove(rebuiltBoard, from, to);
+
+      rebuiltHistory.push({
+        from,
+        to,
+        piece: movingPiece,
+        captured: capturedPiece,
+        notation
+      });
+
+      if (capturedPiece) {
+        rebuiltCaptured[movingPiece.color].push(capturedPiece);
+      }
+
+      currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+    }
+
+    const nextPlayer = currentPlayer;
+    const isCheck = isKingInCheck(rebuiltBoard, nextPlayer);
+    const isCheckmateState = isCheckmate(rebuiltBoard, nextPlayer);
+    const isStalemateState = isStalemate(rebuiltBoard, nextPlayer);
+
+    setGameState({
+      board: rebuiltBoard,
+      currentPlayer: nextPlayer,
+      selectedPosition: null,
+      legalMoves: [],
+      moveHistory: rebuiltHistory,
+      capturedPieces: rebuiltCaptured,
+      isCheck,
+      isCheckmate: isCheckmateState,
+      isStalemate: isStalemateState,
+      winner: isCheckmateState ? (nextPlayer === 'white' ? 'black' : 'white') : null
+    });
+
+    if (timerEnabled && remoteMoves.length > 0) {
+      setTimer(prev => ({ ...prev, isActive: true }));
+    }
+  }, [timerEnabled]);
+
   // Handle multiplayer socket events
   useEffect(() => {
-    if (gameMode !== 'pvp' || !roomId) return;
+    if (gameMode !== 'pvp' || !roomId) {
+      console.log('[GameScreen] Skipping socket setup - gameMode:', gameMode, 'roomId:', roomId);
+      return;
+    }
+
+    if (!socket.connected) {
+      console.log('[GameScreen] Socket not connected, connecting now for room:', roomId);
+      socket.connect();
+    }
+
+    console.log('[GameScreen] Setting up socket listeners for room:', roomId, 'myColor:', myColor, 'timestamp:', Date.now());
 
     const handleMoveMade = (data: { move: { from: Position; to: Position; notation: string }; playerColor: string; playerName: string }) => {
-      if (!isMountedRef.current) return;
+      console.log('[GameScreen] handleMoveMade CALLED!', {
+        timestamp: Date.now(),
+        data,
+        myColor: resolvedColor,
+        isMounted: isMountedRef.current,
+        playerColorMatch: data.playerColor === resolvedColor,
+        willApply: data.playerColor !== resolvedColor
+      });
+      
+      if (!isMountedRef.current) {
+        console.log('[GameScreen] Component not mounted, queueing move');
+        pendingMovesRef.current.push({
+          move: data.move,
+          playerColor: data.playerColor as 'white' | 'black',
+          playerName: data.playerName,
+          timestamp: Date.now()
+        });
+        return;
+      }
       
       // Only apply move if it's from opponent
-      if (data.playerColor !== myColor) {
+      if (data.playerColor !== resolvedColor) {
+        console.log('[GameScreen] Applying opponent move:', { from: data.move.from, to: data.move.to });
         const { from, to } = data.move;
-        const newBoard = simulateMove(gameState.board, from, to);
-        const capturedPiece = gameState.board[to.row][to.col];
-        
-        const move: Move = {
-          from,
-          to,
-          piece: gameState.board[from.row][from.col]!,
-          captured: capturedPiece || undefined,
-          notation: data.move.notation
-        };
 
-        const newCapturedPieces = { ...gameState.capturedPieces };
-        if (capturedPiece) {
-          newCapturedPieces[move.piece.color].push(capturedPiece);
-        }
+        setGameState(prev => {
+          const capturedPiece = prev.board[to.row][to.col];
+          const movingPiece = prev.board[from.row][from.col];
+          if (!movingPiece) return prev;
 
-        const nextPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
-        const isCheck = isKingInCheck(newBoard, nextPlayer);
-        const isCheckmateState = isCheckmate(newBoard, nextPlayer);
-        const isStalemateState = isStalemate(newBoard, nextPlayer);
+          const newBoard = simulateMove(prev.board, from, to);
+          const move: Move = {
+            from,
+            to,
+            piece: movingPiece,
+            captured: capturedPiece || undefined,
+            notation: data.move.notation
+          };
 
-        setGameState({
-          board: newBoard,
-          currentPlayer: nextPlayer,
-          selectedPosition: null,
-          legalMoves: [],
-          moveHistory: [...gameState.moveHistory, move],
-          capturedPieces: newCapturedPieces,
-          isCheck,
-          isCheckmate: isCheckmateState,
-          isStalemate: isStalemateState,
-          winner: isCheckmateState ? gameState.currentPlayer : null
+          const newCapturedPieces = {
+            white: [...prev.capturedPieces.white],
+            black: [...prev.capturedPieces.black]
+          };
+          if (capturedPiece) {
+            newCapturedPieces[movingPiece.color].push(capturedPiece);
+          }
+
+          const nextPlayer = prev.currentPlayer === 'white' ? 'black' : 'white';
+          const isCheck = isKingInCheck(newBoard, nextPlayer);
+          const isCheckmateState = isCheckmate(newBoard, nextPlayer);
+          const isStalemateState = isStalemate(newBoard, nextPlayer);
+
+          // Start timers on first received move when timers are enabled
+          if (timerEnabled && prev.moveHistory.length === 0) {
+            setTimer(t => ({ ...t, isActive: true }));
+          }
+
+          return {
+            board: newBoard,
+            currentPlayer: nextPlayer,
+            selectedPosition: null,
+            legalMoves: [],
+            moveHistory: [...prev.moveHistory, move],
+            capturedPieces: newCapturedPieces,
+            isCheck,
+            isCheckmate: isCheckmateState,
+            isStalemate: isStalemateState,
+            winner: isCheckmateState ? prev.currentPlayer : null
+          };
         });
       }
     };
@@ -222,7 +353,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       setGameState(prev => ({
         ...prev,
         isCheckmate: true,
-        winner: myColor
+        winner: resolvedColor
       }));
     };
 
@@ -230,16 +361,57 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
     socket.on('gameEnded', handleGameEnded);
     socket.on('opponentDisconnected', handleOpponentDisconnected);
 
+    // Immediately request a sync in case we missed a move during navigation
+    socket.emit('syncGameState', { roomId }, (response: { success: boolean; moveHistory?: RemoteMove[]; players?: Array<{ id: string; name: string; color: 'white' | 'black' }> }) => {
+      if (!response?.success || !Array.isArray(response.moveHistory)) {
+        return;
+      }
+
+      const remoteCount = response.moveHistory.length;
+      const localCount = gameStateRef.current.moveHistory.length;
+
+      if (response.players && response.players.length > 0) {
+        const me = response.players.find(p => p.id === socket.id);
+        if (me) {
+          setResolvedColor(me.color);
+          setResolvedName(me.name);
+        }
+      }
+
+      if (remoteCount > localCount) {
+        console.log('[GameScreen] Syncing missed moves:', { remoteCount, localCount });
+        applyRemoteHistory(response.moveHistory);
+      }
+    });
+
+    // Apply any queued moves that arrived before mount
+    if (pendingMovesRef.current.length > 0) {
+      const combined = [...gameStateRef.current.moveHistory.map(m => ({
+        move: { from: m.from, to: m.to, notation: m.notation || '' },
+        playerColor: m.piece.color,
+        playerName: resolvedName || '',
+        timestamp: Date.now()
+      })), ...pendingMovesRef.current];
+      console.log('[GameScreen] Applying queued moves after mount:', pendingMovesRef.current.length);
+      applyRemoteHistory(combined);
+      pendingMovesRef.current = [];
+    }
+
+    console.log('[GameScreen] Socket listeners registered for room:', roomId);
+
     return () => {
+      console.log('[GameScreen] Cleaning up socket listeners for room:', roomId);
       socket.off('moveMade', handleMoveMade);
       socket.off('gameEnded', handleGameEnded);
       socket.off('opponentDisconnected', handleOpponentDisconnected);
     };
-  }, [gameMode, roomId, myColor, gameState]);
+  }, [gameMode, roomId, myColor, timerEnabled, applyRemoteHistory]);
   
   const handleSquareClick = (row: number, col: number) => {
     // Prevent moves if it's not your turn in multiplayer
-    if (gameMode === 'pvp' && gameState.currentPlayer !== myColor) return;
+    const effectiveColor = resolvedColor || myColor;
+
+    if (gameMode === 'pvp' && gameState.currentPlayer !== effectiveColor) return;
     
     if (gameMode === 'ai' && (gameState.currentPlayer === 'black' || isAIThinking)) return;
     if (gameState.isCheckmate || gameState.isStalemate) return;
@@ -324,11 +496,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
       winner: isCheckmateState ? currentState.currentPlayer : null
     };
 
-    setGameState(newGameState);
-
-    // Emit move to opponent in multiplayer mode
+    // Emit move to opponent in multiplayer mode BEFORE updating state
     if (gameMode === 'pvp' && roomId) {
-      socket.emit('makeMove', { roomId, move: { from, to, notation } });
+      console.log('[GameScreen] Sending move to server:', { 
+        roomId, 
+        move: { from, to, notation }, 
+        myColor: resolvedColor,
+        socketConnected: socket.connected,
+        socketId: socket.id
+      });
+      
+      socket.emit('makeMove', { roomId, move: { from, to, notation } }, (response: any) => {
+        console.log('[GameScreen] makeMove callback received:', response);
+      });
       
       // If game ended, notify opponent
       if (isCheckmateState || isStalemateState) {
@@ -339,6 +519,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
         });
       }
     }
+
+    setGameState(newGameState);
 
     if (timerEnabled && currentState.moveHistory.length === 0) {
       setTimer(prev => ({ ...prev, isActive: true }));
@@ -459,7 +641,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, timerEnab
                 <Stack spacing={1}>
                   <Box display="flex" justifyContent="space-between">
                     <Typography color="text.secondary">Mode</Typography>
-                    <Typography>{gameMode === 'ai' ? 'vs AI' : 'PvP'}</Typography>
+                    <Typography>{gameMode === 'ai' ? `vs AI (${difficultyName})` : 'PvP'}</Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between">
                     <Typography color="text.secondary">Current Turn</Typography>

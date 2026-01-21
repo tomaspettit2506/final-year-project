@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "dev:8000": "PORT=8000 nodemon src/index.ts",
+    "dev:8001": "PORT=8001 nodemon src/index.ts",
+    "dev:8002": "PORT=8002 nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
