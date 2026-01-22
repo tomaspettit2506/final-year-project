@@ -1,12 +1,14 @@
-import { Card, Box, Accordion, AccordionSummary, AccordionDetails, Typography } from "@mui/material";
+import { Card, Box, Accordion, AccordionSummary, AccordionDetails, Typography, useTheme, useMediaQuery } from "@mui/material";
 
 const RulesComponent = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Box>
-      <Card sx={{ p: 6 }}>
-              <Typography sx={{ fontSize: "2rem", mb: 4 }}>Essential Rules</Typography>
+    <Box sx={{ mb: 4, p: isMobile ? 2 : 0 }}>
+      <Card sx={{ p: isMobile ? 2 : 6 }}>
+              <Typography sx={{ fontSize: "2rem", mb: 4 }}> ♟️ Essential Rules</Typography>
                 <Accordion defaultExpanded>
-                  <AccordionSummary>Check and Checkmate</AccordionSummary>
+                  <AccordionSummary> ♟️ Check and Checkmate</AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ spaceY: 2 }}>
                       <p><strong>Check:</strong> When your king is under attack, you are in check. You must immediately:</p>
@@ -21,7 +23,7 @@ const RulesComponent = () => {
                 </Accordion>
 
                 <Accordion>
-                  <AccordionSummary>Castling</AccordionSummary>
+                  <AccordionSummary> ♖ Castling</AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ spaceY: 2 }}>
                       <Typography>A special move involving the king and rook that helps protect your king.</Typography>
@@ -38,7 +40,7 @@ const RulesComponent = () => {
                 </Accordion>
 
                 <Accordion>
-                  <AccordionSummary>En Passant</AccordionSummary>
+                  <AccordionSummary>♟️ En Passant</AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ spaceY: 2 }}>
                       <Typography>A special pawn capture that can occur when an opponent's pawn moves two squares forward from its starting position and lands beside your pawn.</Typography>
@@ -48,7 +50,7 @@ const RulesComponent = () => {
                 </Accordion>
 
                 <Accordion>
-                  <AccordionSummary>Pawn Promotion</AccordionSummary>
+                  <AccordionSummary>♟️ Pawn Promotion</AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ spaceY: 2 }}>
                       <Typography>When a pawn reaches the opposite end of the board (8th rank for white, 1st rank for black), it must be promoted to:</Typography>
@@ -64,7 +66,7 @@ const RulesComponent = () => {
               </Accordion>
 
               <Accordion>
-                <AccordionSummary>Touch-Move Rule</AccordionSummary>
+                <AccordionSummary>♟️ Touch-Move Rule</AccordionSummary>
                 <AccordionDetails>
                   <Typography>In formal games, if you touch a piece, you must move it (if you can legally do so). If you touch an opponent's piece, you must capture it (if you can legally do so).</Typography>
                 </AccordionDetails>
@@ -72,10 +74,10 @@ const RulesComponent = () => {
             </Card>
 
             <Card className="p-6">
-              <Typography variant="h2" sx={{ fontSize: "1.875rem", mb: 4 }}>Game Phases</Typography>
+              <Typography variant="h2" sx={{ fontSize: "1.875rem", mb: 4 }}>♟️ Game Phases</Typography>
               <Box sx={{ display: "grid", md: { gridTemplateColumns: "repeat(3, 1fr)" }, gap: 4 }}>
-                <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 1 }}>
-                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>Opening</Typography>
+                <Box sx={{ p: 4, bgcolor: "rgb(240, 253, 244)", borderRadius: 1 }}>
+                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>♟️ Opening</Typography>
                   <Typography className="text-sm">The first 10-15 moves. Focus on:</Typography>
                   <ul className="list-disc list-inside text-sm mt-2 space-y-1">
                     <li>Controlling the center</li>
@@ -83,8 +85,8 @@ const RulesComponent = () => {
                     <li>King safety (castling)</li>
                   </ul>
                 </Box>
-                <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 1 }}>
-                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>Middlegame</Typography>
+                <Box sx={{ p: 4, bgcolor: "rgb(240, 253, 244)", borderRadius: 1 }}>
+                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>♟️ Middlegame</Typography>
                   <Typography className="text-sm">The tactical and strategic heart of the game:</Typography>
                   <ul className="list-disc list-inside text-sm mt-2 space-y-1">
                     <li>Attack and defend</li>
@@ -92,8 +94,8 @@ const RulesComponent = () => {
                     <li>Improve piece positions</li>
                   </ul>
                 </Box>
-                <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 1 }}>
-                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>Endgame</Typography>
+                <Box sx={{ p: 4, bgcolor: "rgb(240, 253, 244)", borderRadius: 1 }}>
+                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>♟️ Endgame</Typography>
                   <Typography className="text-sm">Few pieces remain on the board:</Typography>
                   <ul className="list-disc list-inside text-sm mt-2 space-y-1">
                     <li>King becomes active</li>

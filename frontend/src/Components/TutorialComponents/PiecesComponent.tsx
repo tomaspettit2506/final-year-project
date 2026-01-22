@@ -1,11 +1,13 @@
-import { Paper, Box, Typography } from "@mui/material";
+import { Paper, Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import PieceGuide from "./PieceGuide";
 
 const PiecesComponent = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" sx={{ mb: 2 }}>How Each Piece Moves</Typography>
+    <Box sx={{ p: isMobile ? 2 : 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Paper sx={{ p: isMobile ? 2 : 3 }}>
+        <Typography variant="h4" sx={{ mb: 2 }}> ♟️ How Each Piece Moves</Typography>
         <Typography variant="body1">
           Understanding how each piece moves is fundamental to playing chess. Each piece has unique movement patterns.
         </Typography>
@@ -16,8 +18,8 @@ const PiecesComponent = () => {
         name="King"
         description="The most important piece in chess. If your king is checkmated, you lose the game."
         movement="Moves one square in any direction: horizontally, vertically, or diagonally."
-        highlights={['e4', 'e5', 'e6', 'd6', 'f6', 'd5', 'f5', 'd4', 'f4']}
-        boardPieces={[{ position: 'e5', piece: 'white-king' }]}
+        highlights={['c5', 'c6', 'c7', 'd5', 'e5', 'e6', 'd6', 'd7', 'e7']}
+        boardPieces={[{ position: 'd6', piece: 'white-king' }]}
       />
 
       <PieceGuide

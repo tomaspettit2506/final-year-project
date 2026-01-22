@@ -1,35 +1,33 @@
 import { Card, Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { Trophy } from "lucide-react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const WinningComponent = () => {
     return (
     <Box>
        <Card sx={{ p: 6 }}>
-              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>How to Win at Chess</Typography>
+              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}> ♟️ How to Win at Chess</Typography>
               <Box sx={{ spaceY: 4 }}>
                 <Box sx={{ p: 4, backgroundColor: "#F0FDF4", borderLeft: "4px solid", borderColor: "#22C55E", borderRadius: 1, mb: 4, color:"black" }}>
                   <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                    <Trophy style={{ width: 20, height: 20 }} />
-                    Checkmate
+                    🏆 Checkmate
                   </Typography>
                   <Typography>The primary way to win: trap your opponent's king so it has no legal moves to escape capture.</Typography>
                 </Box>
 
                 <Box sx={{ p: 4, backgroundColor: "#EFF6FF", borderLeft: "4px solid", borderColor: "#3B82F6", borderRadius: 1, mb: 4, color:"black" }}>
-                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>Resignation</Typography>
+                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>🏳️ Resignation</Typography>
                   <Typography>Your opponent may resign if they believe their position is hopeless. This is common in competitive play.</Typography>
                 </Box>
 
                 <Box sx={{ p: 4, backgroundColor: "#F3E8FF", borderLeft: "4px solid", borderColor: "#A855F7", borderRadius: 1, mb: 4, color:"black" }}>
-                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>Time Forfeit</Typography>
+                  <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}> ⏰ Time Forfeit</Typography>
                   <Typography>In timed games, if your opponent runs out of time on their clock, you win (unless you have insufficient material to checkmate).</Typography>
                 </Box>
               </Box>
             </Card>
-
+            
             <Card sx={{ p: 6 }}>
-              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>Basic Checkmate Patterns</Typography>
+              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>♟️ Basic Checkmate Patterns</Typography>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     Back Rank Mate
@@ -68,7 +66,7 @@ const WinningComponent = () => {
             </Card>
 
             <Card sx={{ p: 6 }}>
-              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>Winning Strategies</Typography>
+              <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>♟️ Winning Strategies</Typography>
               <Box className="grid md:grid-cols-2 gap-4">
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="h3" sx={{ fontSize: "1.25rem" }}>Material Advantage</Typography>

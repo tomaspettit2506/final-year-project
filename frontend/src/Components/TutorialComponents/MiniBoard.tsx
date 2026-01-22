@@ -1,5 +1,6 @@
-import { Box } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 import ChessPiece from './ChessPiece';
+import { useBoardTheme } from "../../Context/BoardThemeContext";
 
 interface MiniBoardProps {
   highlights?: string[];
@@ -7,6 +8,10 @@ interface MiniBoardProps {
 }
 
 const MiniBoard: React.FC<MiniBoardProps> = ({ highlights = [], pieces = [] }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const { boardTheme } = useBoardTheme();
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -31,19 +36,18 @@ const MiniBoard: React.FC<MiniBoardProps> = ({ highlights = [], pieces = [] }) =
           {files.map((file, fileIndex) => {
             const piece = getPieceAt(file, rank);
             const highlighted = isHighlighted(file, rank);
-            const light = isLightSquare(fileIndex, rankIndex);
             
             return (
               <Box
                 key={`${file}${rank}`}
                 sx={{
-                  width: 40,
-                  height: 40,
+                  width: isMobile ? 30 : 40,
+                  height: isMobile ? 30 : 40,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   position: 'relative',
-                  bgcolor: light ? '#fcd34d' : '#b45309',
+                  bgcolor: isLightSquare(fileIndex, rankIndex) ? boardTheme == "classic" ? "#f0d9b5" : boardTheme == "modern" ? "#e1e1e1" : "#deb887" : boardTheme == "classic" ? "#b58863" : boardTheme == "modern" ? "#757575" : "#8b4513",
                   ...(highlighted && {
                     boxShadow: 'inset 0 0 0 2px #3b82f6',
                   }),

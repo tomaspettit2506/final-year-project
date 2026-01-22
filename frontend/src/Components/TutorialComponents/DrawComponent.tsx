@@ -1,16 +1,18 @@
-import {Badge, Box, Card, Typography } from '@mui/material'
+import {Badge, Box, Card, Typography, useMediaQuery, useTheme } from '@mui/material'
 
 const DrawComponent = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Box>
-      <Card sx={{p: 6, mb: 4}}>
-        <Typography variant="h2" gutterBottom>How a Game Can End in a Draw</Typography>
+    <Box sx={{ mb: 4, p: isMobile ? 2 : 0 }}>
+      <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
+        <Typography variant="h2" gutterBottom> ♟️ How a Game Can End in a Draw</Typography>
         <Typography paragraph>
           Not every chess game ends with a winner. There are several ways a game can end in a draw (tie).
         </Typography>
       </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>1. Stalemate</Typography>
               <Box sx={{p: 4, bgcolor: '#FFFBEB', borderLeft: 4, borderColor: '#F59E0B', borderRadius: 1, mb: 4, color:"black"}}>
                 <Typography><strong>Most common type of draw</strong></Typography>
@@ -24,7 +26,7 @@ const DrawComponent = () => {
               </Box>
             </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>2. Insufficient Material</Typography>
               <Typography paragraph>
                 When neither player has enough pieces to possibly deliver checkmate, the game is automatically drawn.
@@ -40,27 +42,27 @@ const DrawComponent = () => {
               </Box>
             </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>3. Threefold Repetition</Typography>
               <Typography paragraph>
                 If the exact same position occurs three times (with the same player to move), either player can claim a draw.
               </Typography>
-              <Box sx={{p: 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
+              <Box sx={{p: isMobile ? 2 : 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
                 <Typography variant="body2"><strong>Note:</strong> The positions don't have to occur consecutively. The same position at any point in the game counts toward the three repetitions.</Typography>
               </Box>
             </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>4. Fifty-Move Rule</Typography>
               <Typography paragraph>
                 If 50 moves occur (by both players) without any pawn moves or captures, either player can claim a draw.
               </Typography>
-              <Box sx={{p: 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
+              <Box sx={{p: isMobile ? 2 : 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
                 <Typography variant="body2">This rule prevents games from continuing indefinitely when neither player is making progress.</Typography>
               </Box>
             </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>5. Mutual Agreement</Typography>
               <Typography paragraph>
                 At any point during the game, both players can agree to a draw. This often happens when:
@@ -72,17 +74,17 @@ const DrawComponent = () => {
               </ul>
             </Card>
 
-            <Card sx={{p: 6, mb: 4}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4}}>
               <Typography variant="h3" gutterBottom>6. Dead Position</Typography>
               <Typography paragraph>
                 When no sequence of legal moves can lead to checkmate, the game is automatically drawn.
               </Typography>
-              <Box sx={{p: 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
+              <Box sx={{p: isMobile ? 2 : 4, bgcolor: 'grey.100', borderRadius: 1, color:"black"}}>
                 <Typography variant="body2"><strong>Example:</strong> Both players have only their kings and a few bishops all on the same color squares.</Typography>
               </Box>
             </Card>
 
-            <Card sx={{p: 6, mb: 4, bgcolor: '#EFF6FF', color: "black"}}>
+            <Card sx={{p: isMobile ? 2 : 6, mb: 4, bgcolor: '#EFF6FF', color: "black"}}>
               <Typography variant="h3" gutterBottom>Draw Strategy Tips</Typography>
               <Box sx={{spaceY: 3}}>
                 <div className="flex gap-3">

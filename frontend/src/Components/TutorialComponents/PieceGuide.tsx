@@ -1,4 +1,4 @@
-import { Paper, Box, Grid, Typography } from '@mui/material';
+import { Paper, Box, Grid, Typography, useTheme, useMediaQuery } from '@mui/material';
 import ChessPiece from './ChessPiece';
 import MiniBoard from './MiniBoard';
 
@@ -21,8 +21,10 @@ const PieceGuide: React.FC<PieceGuideProps> = ({
   highlights,
   boardPieces,
 }: PieceGuideProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper sx={{ p: isMobile ? 2 : 3 }}>
       <Grid container spacing={3}>
         <Grid size={{xs: 12, md: 6}}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>

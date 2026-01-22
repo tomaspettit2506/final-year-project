@@ -3,7 +3,7 @@ interface ChessPieceProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const ChessPiece: React.FC<ChessPieceProps> = ({ piece, size = 'md' }) => {
+const ChessPiece: React.FC<ChessPieceProps> = ({ piece, size = 'lg' }) => {
   const pieceSymbols: { [key: string]: string } = {
     'white-king': '♔',
     'white-queen': '♕',
