@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { socket } from '../../Services/socket';
+import { useAuth } from '../../Context/AuthContext';
 import type { GameMode } from '../../Types/chess';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Slider from '@mui/material/Slider';
-import Typography from '@mui/material/Typography';
-import { Users, Bot, Crown, Clock } from 'lucide-react';
-import { Box, Grid, TextField, Alert, CircularProgress, Switch } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, TextField, Typography, Alert, CircularProgress, Switch, Slider, useTheme, useMediaQuery } from '@mui/material';
 
 interface RoomUser {
   id: string;
@@ -28,7 +23,11 @@ interface GameSetupProps {
 }
 
 const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [difficulty, setDifficulty] = useState<number>(750);
   const [difficultyName, setDifficultyName] = useState<string>('Medium');
@@ -76,6 +75,26 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     };
   }, []);
 
+  // Handle URL parameters for auto-joining
+  useEffect(() => {
+    const roomIdParam = searchParams.get('roomId');
+    const autoJoinParam = searchParams.get('autoJoin');
+    
+    if (roomIdParam && autoJoinParam === 'true') {
+      console.log('[GameSetup] Auto-join detected, roomId:', roomIdParam);
+      setSelectedMode('pvp');
+      setMpStep('join');
+      setRoomId(roomIdParam);
+      
+      // Auto-fill name from authenticated user
+      if (user) {
+        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Player');
+        setName(displayName);
+        console.log('[GameSetup] Auto-filled name:', displayName);
+      }
+    }
+  }, [searchParams, user]);
+
   const handleModeChange = (mode: GameMode) => {
     setSelectedMode(mode);
     // If switching to PvP, show multiplayer setup
@@ -83,6 +102,20 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       setMpStep('choose');
     }
   };
+
+  // Auto-join when coming from challenge with roomId
+  useEffect(() => {
+    const roomIdParam = searchParams.get('roomId');
+    const autoJoinParam = searchParams.get('autoJoin');
+    
+    if (roomIdParam && autoJoinParam === 'true' && name && mpStep === 'join' && !joining && socketReady) {
+      console.log('[GameSetup] Auto-joining room with name:', name);
+      // Small delay to ensure socket is ready
+      setTimeout(() => {
+        handleJoinRoom();
+      }, 500);
+    }
+  }, [name, mpStep, socketReady]);
 
   // Multiplayer socket listeners
   useEffect(() => {
@@ -112,14 +145,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       setTimeout(() => {
         if (onRoomJoined && actualRoomId) {
           console.log('Calling onRoomJoined with:', { actualRoomId, resolvedName, resolvedColor, isHost });
-          onRoomJoined(
-            actualRoomId,
-            resolvedName,
-            resolvedColor,
-            isHost,
-            data.timerDuration || timerDuration,
-            data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled
-          );
+          onRoomJoined(actualRoomId, resolvedName, resolvedColor, isHost, data.timerDuration || timerDuration, data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled);
         }
       }, 0);
     };
@@ -283,16 +309,15 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
   return (
     <Box
-      minHeight="100vh"
       sx={{
-        background: 'linear-gradient(135deg, #0f172a, #6d28d9, #0f172a)',
+        background: 'linear-gradient(135deg, #7696df, #6d28d9, #0f172a)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 8
+        p: isMobile ? 2 : 4,
       }}
     >
-      <Box maxWidth="md" width="100%">
+      <Box width="100%">
         <Box textAlign="center" mb={8}>
           {/* If you not ready to play, Tutorial Btn */}
           <Box mb={2}>
@@ -305,8 +330,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
             </Button>
           </Box>
           <Box display="flex" alignItems="center" justifyContent="center" gap={3} mb={4}>
-            <Crown className="w-12 h-12" style={{ color: '#facc15' }} />
-            <Typography variant="h3" color="white">Are you ready to play?</Typography>
+            <Typography variant="h3" color="white">👑Are you ready to play?👑</Typography>
           </Box>
           <Typography color="text.secondary">Configure your game settings and start playing</Typography>
         </Box>
@@ -323,7 +347,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       onClick={() => handleModeChange('ai')}
                       variant={selectedMode === 'ai' ? 'contained' : 'outlined'}
                       sx={{
-                        p: 3,
+                        p: isMobile ? 2 : 3,
                         borderRadius: 2,
                         borderWidth: 2,
                         bgcolor: selectedMode === 'ai' ? 'primary.main' : 'background.paper',
@@ -336,7 +360,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       }}
                     >
                       <Box>
-                        <Bot className="w-12 h-12 mx-auto mb-3" style={{ color: selectedMode === 'ai' ? '#a78bfa' : '#94a3b8' }} />
+                        <Typography sx={{ fontSize: '2rem' }}>🤖</Typography>
                         <Typography color="text.secondary" mb={1}>Play vs AI</Typography>
                         <Typography variant="body1" color="text.secondary">Challenge the computer</Typography>
                       </Box>
@@ -347,7 +371,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       onClick={() => handleModeChange('pvp')}
                       variant={selectedMode === 'pvp' ? 'contained' : 'outlined'}
                       sx={{
-                        p: 3,
+                        p: isMobile ? 2 : 3,
                         borderRadius: 2,
                         borderWidth: 2,
                         bgcolor: selectedMode === 'pvp' ? 'primary.main' : 'background.paper',
@@ -360,8 +384,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       }}
                     >
                       <Box>
-                        <Users className="w-12 h-12 mx-auto mb-3" style={{ color: selectedMode === 'pvp' ? '#a78bfa' : '#94a3b8' }} />
-                        <Typography color="text.secondary" mb={1}>Player vs Player</Typography>
+                        <Typography sx={{ fontSize: '2rem' }}>👥</Typography>
+                        <Typography color="text.secondary" mb={1} sx={{ fontSize: '1rem' }}>Player vs Player</Typography>
                         <Typography variant="body2" color="text.secondary">Play with a friend</Typography>
                       </Box>
                     </Button>
@@ -373,8 +397,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
               {selectedMode === 'ai' && (
                 <Box>
                   <Typography color="white" mb={2}>Select Difficulty</Typography>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 250 && difficultyName === 'Easy' ? 'contained' : 'outlined'}
@@ -384,14 +408,14 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         }}
                         sx={{ py: 1.5,
                           ...(difficulty === 250 && difficultyName === 'Easy' && {
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 75%)',
                             color: 'white'
                           }) }}
                       >
                         🎯 Easy
                       </Button>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 550 && difficultyName === 'Medium' ? 'contained' : 'outlined'}
@@ -408,7 +432,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         🧠 Medium
                       </Button>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 900 && difficultyName === 'Hard' ? 'contained' : 'outlined'}
@@ -425,7 +449,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         ⭐ Hard
                       </Button>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 1300 && difficultyName === 'Expert' ? 'contained' : 'outlined'}
@@ -442,7 +466,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         🏆 Expert
                       </Button>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 1700 && difficultyName === 'Master' ? 'contained' : 'outlined'}
@@ -459,7 +483,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         🤖 Master
                       </Button>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
                         variant={difficulty === 2200 && difficultyName === 'Rocket' ? 'contained' : 'outlined'}
@@ -491,10 +515,10 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Typography variant="h6" color="white" mb={3}>Multiplayer Setup</Typography>
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                          <Button fullWidth variant="contained" color="primary" onClick={() => setMpStep('create')}>Create Room</Button>
+                          <Button fullWidth variant="contained" color="primary" onClick={() => setMpStep('create')}>Create Room 🚀</Button>
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                          <Button fullWidth variant="outlined" color="primary" onClick={() => setMpStep('join')}>Join Room</Button>
+                          <Button fullWidth variant="outlined" color="primary" onClick={() => setMpStep('join')}>Join Room 🚀</Button>
                         </Grid>
                       </Grid>
                     </>
@@ -517,8 +541,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         <>
                           <Box display="flex" alignItems="center" justifyContent="space-between" mt={3} mb={2}>
                             <Box display="flex" alignItems="center" gap={1}>
-                              <Clock className="w-5 h-5" style={{ color: 'white' }} />
-                              <Typography color="white">Enable Timer</Typography>
+                              <Typography color="white">⏲️Enable Timer</Typography>
                             </Box>
                             <Switch
                               checked={timerEnabled}
@@ -632,7 +655,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                 </Box>
               )}
 
-              <Typography sx={{ fontSize: "18px"}} variant="body2" color="text.secondary">How To Play:
+              <Typography sx={{ fontSize: "18px"}} variant="body2" color="text.secondary"> 🚀 How To Play:
               <ul>
                 <li>Choose your game mode: Play against AI or a friend.</li>
                 <li>If playing against AI, select your desired difficulty level.</li>

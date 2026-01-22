@@ -17,7 +17,7 @@ const BottomNav: React.FC = () => {
   };
 
   const getIconColor = (path: string) => {
-    return location.pathname === path ? "#5500aa" : "#666666";
+    return location.pathname === path ? "#dfd0ef" : "#000000";
   };
 
   return (
@@ -42,10 +42,11 @@ const BottomNav: React.FC = () => {
         label="Home"
         value="/"
         icon={<HomeIcon sx={{ color: getIconColor("/") }} />}
+        className="icon-button"
         sx={{
-          color: location.pathname === "/" ? "#5500aa" : "#666666",
+          color: location.pathname === "/" ? "#dfd0ef" : "#000000",
           "&.Mui-selected": {
-            color: "#5500aa",
+            color: "#dfd0ef",
           }
         }}
       />
@@ -53,10 +54,11 @@ const BottomNav: React.FC = () => {
         label="Play"
         value="/play"
         icon={<PlayCircleFilledWhiteIcon sx={{ color: getIconColor("/play") }} />}
+        className="icon-button"
         sx={{
-          color: location.pathname === "/play" ? "#5500aa" : "#666666",
+          color: location.pathname === "/play" ? "#dfd0ef" : "#000000",
           "&.Mui-selected": {
-            color: "#5500aa",
+            color: "#dfd0ef",
           }
         }}
       />
@@ -64,10 +66,11 @@ const BottomNav: React.FC = () => {
         label="Tutorial"
         value="/tutorial"
         icon={<SchoolIcon sx={{ color: getIconColor("/tutorial") }} />}
+        className="icon-button"
         sx={{
-          color: location.pathname === "/tutorial" ? "#5500aa" : "#666666",
+          color: location.pathname === "/tutorial" ? "#dfd0ef" : "#000000",
           "&.Mui-selected": {
-            color: "#5500aa",
+            color: "#dfd0ef",
           }
         }}
       />
@@ -75,10 +78,11 @@ const BottomNav: React.FC = () => {
         label="Friends"
         value="/friends"
         icon={<GroupIcon sx={{ color: getIconColor("/friends") }} />}
+        className="icon-button"
         sx={{
-          color: location.pathname === "/friends" ? "#5500aa" : "#666666",
+          color: location.pathname === "/friends" ? "#dfd0ef" : "#000000",
           "&.Mui-selected": {
-            color: "#5500aa",
+            color: "#dfd0ef",
           }
         }}
       />
@@ -86,10 +90,11 @@ const BottomNav: React.FC = () => {
         label="Profile"
         value="/profile"
         icon={<AccountCircleIcon sx={{ color: getIconColor("/profile") }} />}
+        className="icon-button"
         sx={{
-          color: location.pathname === "/profile" ? "#5500aa" : "#666666",
+          color: location.pathname === "/profile" ? "#dfd0ef" : "#000000",
           "&.Mui-selected": {
-            color: "#5500aa",
+            color: "#dfd0ef",
           }
         }}
       />

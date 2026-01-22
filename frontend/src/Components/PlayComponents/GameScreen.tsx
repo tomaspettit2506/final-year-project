@@ -9,7 +9,6 @@ import type { GameState, Position, Move, Piece, GameMode, TimerState } from '../
 import {createInitialBoard, getLegalMoves, simulateMove, isCheckmate, isStalemate, isKingInCheck, getMoveNotation } from '../../Utils/chessLogic';
 import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
 import { socket } from '../../Services/socket';
-import { ArrowLeft, RotateCcw, Undo } from 'lucide-react';
 
 interface GameScreenProps {
   gameMode: GameMode;
@@ -606,7 +605,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           <Button
             variant="contained"
             onClick={() => setConfirmDialogOpen(true)}
-            startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
+            startIcon={"⬅️"}
           >
             Back to Setup
           </Button>
@@ -616,7 +615,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
                 variant="contained"
                 onClick={handleUndo}
                 disabled={gameState.moveHistory.length < 2}
-                startIcon={<Undo style={{ width: 20, height: 20 }} />}
+                startIcon={"↩️"}
               >
                 Undo
               </Button>
@@ -624,7 +623,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
             <Button
               variant="contained"
               onClick={handleNewGame}
-              startIcon={<RotateCcw style={{ width: 20, height: 20 }} />}
+              startIcon={"🔄️"}
             >
               New Game
             </Button>

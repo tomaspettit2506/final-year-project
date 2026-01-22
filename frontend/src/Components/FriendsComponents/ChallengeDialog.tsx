@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography,
-    Box, Button, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+    Box, Button, FormControl, InputLabel, Select, MenuItem, Alert, CircularProgress } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import type { SelectChangeEvent } from "@mui/material/Select";
@@ -9,16 +9,26 @@ interface ChallengeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   friendName: string;
-  onChallenge: (timeControl: string, rated: boolean) => void;
+  onChallenge: (timeControl: string, rated: boolean) => Promise<string>;
 }
 
 const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, friendName, onChallenge }) => {
   const [timeControl, setTimeControl] = useState("10");
   const [rated, setRated] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChallenge = () => {
-    onChallenge(timeControl, rated);
-    onOpenChange(false);
+  const handleChallenge = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      await onChallenge(timeControl, rated);
+      onOpenChange(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to send challenge");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTimeChange = (e: SelectChangeEvent<string>) => {
@@ -29,16 +39,29 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
     setRated(e.target.value === "rated");
   };
 
+  const handleClose = () => {
+    if (!loading) {
+      setError("");
+      onOpenChange(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogContent sx={{ py: 2 }}>
         <DialogTitle>Challenge {friendName}</DialogTitle>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Choose your game settings and send a challenge
+          Choose your game settings and send an invite with your room ID
         </Typography>
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         <Box display="grid" gap={2} py={1}>
-          <FormControl fullWidth size="small">
+          <FormControl fullWidth size="small" disabled={loading}>
             <InputLabel id="time-control-label">
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                 <AccessTimeIcon fontSize="small" /> Time Control
@@ -57,7 +80,7 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
             </Select>
           </FormControl>
 
-          <FormControl fullWidth size="small">
+          <FormControl fullWidth size="small" disabled={loading}>
             <InputLabel id="game-type-label">
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                 <EmojiEventsIcon fontSize="small" /> Game Type
@@ -78,8 +101,17 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button variant="outlined" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button variant="contained" onClick={handleChallenge}>Send Challenge</Button>
+        <Button variant="outlined" onClick={handleClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button 
+          variant="contained" 
+          onClick={handleChallenge}
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : undefined}
+        >
+          {loading ? "Sending..." : "Send Challenge"}
+        </Button>
       </DialogActions>
     </Dialog>
   );

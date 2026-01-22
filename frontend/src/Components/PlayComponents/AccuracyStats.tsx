@@ -1,6 +1,5 @@
 import type { Move } from '../../Types/chess';
 import { Badge, Box, Card, LinearProgress, Typography } from '@mui/material';
-import { Target, Zap } from 'lucide-react';
 
 interface AccuracyStatsProps {
   moves: Move[];
@@ -32,8 +31,7 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
   return (
     <Card sx={{ p: 4, bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-        <Target style={{ width: 25, height: 25, color: 'blue' }} />
-        <Typography variant="h4" sx={{color: "text.secondary"}}>Accuracy Stats</Typography>
+        <Typography variant="h4" sx={{color: "text.secondary"}}> 🎯 Accuracy Stats</Typography>
       </Box>
       
       <Box sx={{ spaceY: 4 }}>
@@ -43,12 +41,8 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
             <Typography sx={{ fontSize: 'sm' }}>Overall Accuracy</Typography>
             <Typography sx={{ fontSize: 'sm' }}>{avgAccuracy}%</Typography>
           </Box>
-          <LinearProgress value={avgAccuracy} variant="determinate" sx={{
-                            mt: 0.5,
-                            height: 8,
-                            borderRadius: 2,
-                            bgcolor: "#f0e6ff",
-                            "& .MuiLinearProgress-bar": {
+          <LinearProgress value={avgAccuracy} variant="determinate" sx={{mt: 0.5, height: 8, borderRadius: 2,
+                            bgcolor: "#f0e6ff", "& .MuiLinearProgress-bar": {
                               bgcolor: "green",
                             },
                           }} />
@@ -95,8 +89,7 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
         {bestMove && (
           <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: 'sm', mb: 1 }}>
-              <Zap style={{ width: 25, height: 25, color: 'yellow' }} />
-              <Badge>Best Move</Badge>
+              <Badge>⚡Best Move</Badge>
             </Box>
             <Typography sx={{ fontSize: 'xs', color: 'text.secondary' }}>
               {bestMove.notation} ({bestMove.accuracy}%)

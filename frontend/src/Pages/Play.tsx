@@ -58,7 +58,7 @@ const Play = () => {
     return (
       <Box>
         <AppBarComponent title="Game Setup" isBackButton={true} isSettings={true} isExit={true}/>
-        <Box sx={{ mt: 2 }}>
+        <Box>
           <GameSetup onStartGame={handleStartGame} onRoomJoined={handleRoomJoined} />
         </Box>
       </Box>

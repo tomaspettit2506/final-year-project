@@ -1,14 +1,11 @@
-import { useState } from "react";
+// Page: frontend/src/Pages/Friends.tsx
+import { useState, useEffect } from "react";
 import { Box, Container, Typography, Tabs, Tab, Badge } from "@mui/material";
-
-import PeopleIcon from "@mui/icons-material/People";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-
+import { useAuth } from "../Context/AuthContext";
 import FriendsList from "../Components/FriendsComponents/FriendsList";
 import AddFriend from "../Components/FriendsComponents/AddFriend";
 import PendingRequests from "../Components/FriendsComponents/PendingRequests";
-
+import GameInvites from "../Components/FriendsComponents/GameInvites";
 import AppBarComponent from "../Components/AppBarComponent";
 
 interface Friend {
@@ -31,77 +28,155 @@ interface PendingRequest {
   receivedAt: string;
 }
 
-// Mock data
-const initialFriends: Friend[] = [
-  {
-    id: "1",
-    name: "Alex Martinez",
-    username: "alex_chess",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-    rating: 1850,
-    online: true,
-  },
-  {
-    id: "2",
-    name: "Jessica Lee",
-    username: "jess_knight",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica",
-    rating: 1620,
-    online: false,
-    lastSeen: "2h ago",
-  },
-  {
-    id: "3",
-    name: "Robert Brown",
-    username: "rob_tactician",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Robert",
-    rating: 1950,
-    online: true,
-  },
-  {
-    id: "4",
-    name: "Maria Garcia",
-    username: "maria_queen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
-    rating: 1780,
-    online: false,
-    lastSeen: "1d ago",
-  },
-  {
-    id: "5",
-    name: "Kevin Zhang",
-    username: "kevin_strategy",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kevin",
-    rating: 2000,
-    online: true,
-  },
-];
-
-const initialRequests: PendingRequest[] = [
-  {
-    id: "req1",
-    name: "Tom Wilson",
-    username: "tom_chess_pro",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tom",
-    rating: 1700,
-    online: true,
-    receivedAt: "5m ago",
-  },
-  {
-    id: "req2",
-    name: "Nina Patel",
-    username: "nina_endgame",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nina",
-    rating: 1880,
-    online: false,
-    receivedAt: "1h ago",
-  },
-];
+interface GameInvite {
+  id: string;
+  fromUserId: string;
+  fromUserName: string;
+  fromUserAvatar?: string;
+  fromUserRating?: number;
+  roomId: string;
+  timeControl: string;
+  rated: boolean;
+  createdAt: string;
+}
 
 const Friends = () => {
-  const [friends, setFriends] = useState<Friend[]>(initialFriends);
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialRequests);
+  const { user, userData } = useAuth();
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
   const [tab, setTab] = useState<string>("friends");
+  const [mongoUserId, setMongoUserId] = useState<string | null>(null);
+
+  const mapFriendFromApi = (friend: any): Friend => {
+    const name = friend.friendName || friend.friendEmail || 'Unknown';
+    const username = (friend.friendEmail && friend.friendEmail.split?.('@')?.[0]) || name.replace(/\s+/g, '_').toLowerCase();
+
+    return {
+      id: friend.friendFirebaseUid || friend.friendUser || friend._id,
+      name,
+      username,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+      rating: friend.friendRating ?? 1200,
+      online: false,
+      lastSeen: friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : undefined,
+    };
+  };
+
+  const fetchFriends = async () => {
+    if (!user?.uid) return;
+
+    try {
+      const res = await fetch(`/user/${user.uid}/friends`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      setFriends((data || []).map(mapFriendFromApi));
+    } catch (err) {
+      console.error('Failed to fetch friends', err);
+    }
+  };
+
+  // Sync user to MongoDB when component mounts
+  useEffect(() => {
+    const syncUser = async () => {
+      if (!user?.email) return;
+      
+      try {
+        const res = await fetch(`/user/email/${user.email}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name: user.displayName || userData?.name || user.email.split('@')[0],
+            rating: userData?.rating || 500,
+            firebaseUid: user.uid
+          }),
+        });
+        if (res.ok) {
+          const mongoUser = await res.json();
+          setMongoUserId(mongoUser._id);
+          // Once the user is ensured to exist in MongoDB, load their friends
+          fetchFriends();
+        }
+      } catch (err) {
+        console.error('Failed to sync user to MongoDB:', err);
+      }
+    };
+    
+    syncUser();
+  }, [user, userData]);
+
+  // Fetch pending requests from backend
+  const fetchPendingRequests = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const res = await fetch(`/request?userId=${user.uid}`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      
+      // Map backend data to PendingRequest interface
+      const mapped: PendingRequest[] = (data || []).map((req: any) => {
+        const name = req.fromUser?.name || req.fromUser?.email || 'Unknown';
+        return {
+          id: req._id || req.id,
+          name,
+          username: (req.fromUser?.email && req.fromUser.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+          rating: req.fromUser?.rating ?? 1200,
+          online: false,
+          receivedAt: req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recently',
+        };
+      });
+      setPendingRequests(mapped);
+    } catch (err: any) {
+      console.error('Failed to fetch pending requests', err);
+    }
+  };
+
+  // Fetch pending requests when switching to requests tab
+  useEffect(() => {
+    if (tab === 'requests') {
+      fetchPendingRequests();
+    }
+    if (tab === 'invites') {
+      fetchGameInvites();
+    }
+  }, [tab]);
+
+  // Fetch game invites from backend
+  const fetchGameInvites = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const res = await fetch(`/game-invite?toUserId=${user.uid}`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      
+      // Map backend data to GameInvite interface
+      const mapped: GameInvite[] = (data || []).map((invite: any) => {
+        const fromUserName = invite.fromUser?.name || invite.fromUser?.email || 'Unknown';
+        return {
+          id: invite._id || invite.id,
+          fromUserId: invite.fromUserId,
+          fromUserName,
+          fromUserAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fromUserName)}`,
+          fromUserRating: invite.fromUser?.rating ?? 1200,
+          roomId: invite.roomId,
+          timeControl: invite.timeControl,
+          rated: invite.rated,
+          createdAt: invite.createdAt || new Date().toISOString(),
+        };
+      });
+      setGameInvites(mapped);
+    } catch (err: any) {
+      console.error('Failed to fetch game invites', err);
+    }
+  };
+
+  // Load friends on initial render or when auth user changes
+  useEffect(() => {
+    fetchFriends();
+  }, [user]);
 
   const handleRemoveFriend = (friendId: string) => {
     setFriends(friends.filter((friend) => friend.id !== friendId));
@@ -109,31 +184,89 @@ const Friends = () => {
 
   const handleSendRequest = (userId: string) => {
     console.log("Friend request sent to:", userId);
+    // Refresh pending requests after a short delay to allow backend to process
+    setTimeout(() => {
+      fetchPendingRequests();
+    }, 500);
   };
 
-  const handleAcceptRequest = (requestId: string) => {
-    const request = pendingRequests.find((req) => req.id === requestId);
-    if (request) {
-      const newFriend: Friend = {
-        id: request.id,
-        name: request.name,
-        username: request.username,
-        avatar: request.avatar,
-        rating: request.rating,
-        online: request.online,
-      };
-      setFriends([...friends, newFriend]);
+  const handleAcceptRequest = async (requestId: string) => {
+    try {
+      // Accept the friend request via API
+      const res = await fetch(`/request/${requestId}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+
+      if (Array.isArray(data?.friends)) {
+        setFriends(data.friends.map(mapFriendFromApi));
+      } else {
+        // Fallback: refresh from backend
+        fetchFriends();
+      }
+
       setPendingRequests(pendingRequests.filter((req) => req.id !== requestId));
+    } catch (err: any) {
+      console.error('Failed to accept friend request', err);
+      // Refresh the list in case of error
+      fetchPendingRequests();
     }
   };
 
-  const handleDeclineRequest = (requestId: string) => {
-    setPendingRequests(pendingRequests.filter((req) => req.id !== requestId));
+  const handleDeclineRequest = async (requestId: string) => {
+    try {
+      // Decline the friend request via API
+      const res = await fetch(`/request/${requestId}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      
+      // Remove from UI
+      setPendingRequests(pendingRequests.filter((req) => req.id !== requestId));
+    } catch (err: any) {
+      console.error('Failed to decline friend request', err);
+      // Refresh the list in case of error
+      fetchPendingRequests();
+    }
+  };
+
+  const handleAcceptGameInvite = async (invite: GameInvite) => {
+    // Mark invite as accepted (navigation handled by GameInvites component)
+    try {
+      await fetch(`/game-invite/${invite.id}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      // Remove from local state
+      setGameInvites(gameInvites.filter((inv) => inv.id !== invite.id));
+    } catch (err: any) {
+      console.error('Failed to accept game invite', err);
+    }
+  };
+
+  const handleDeclineGameInvite = async (inviteId: string) => {
+    try {
+      await fetch(`/game-invite/${inviteId}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      // Remove from UI
+      setGameInvites(gameInvites.filter((inv) => inv.id !== inviteId));
+    } catch (err: any) {
+      console.error('Failed to decline game invite', err);
+      // Refresh the list in case of error
+      fetchGameInvites();
+    }
   };
 
   return (
     <>
-    <AppBarComponent title="Friends" isBackButton={false}  isSettings={true} isExit={true}/>
+    <AppBarComponent title={"Friends"} isBackButton={true} isSettings={true} isExit={true} />
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: 6 }}>
       <Container maxWidth="md">
         <Box mb={4}>
@@ -153,15 +286,25 @@ const Friends = () => {
             value="friends"
             icon={
               <Badge badgeContent={friends.length} color="secondary">
-                <PeopleIcon />
+                👥
               </Badge>
             }
             iconPosition="start"
             label="Friends"
           />
           <Tab
+            value="invites"
+            icon={
+              <Badge badgeContent={gameInvites.length} color={gameInvites.length ? "error" : "default"}>
+                🎮
+              </Badge>
+            }
+            iconPosition="start"
+            label="Game Invites"
+          />
+          <Tab
             value="add"
-            icon={<PersonAddIcon />}
+            icon={"➕"}
             iconPosition="start"
             label="Add Friends"
           />
@@ -169,7 +312,7 @@ const Friends = () => {
             value="requests"
             icon={
               <Badge badgeContent={pendingRequests.length} color={pendingRequests.length ? "error" : "default"}>
-                <AccessTimeIcon />
+                🕔
               </Badge>
             }
             iconPosition="start"
@@ -180,6 +323,13 @@ const Friends = () => {
         <Box mt={3}>
           {tab === "friends" && (
             <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+          )}
+          {tab === "invites" && (
+            <GameInvites
+              invites={gameInvites}
+              onAccept={handleAcceptGameInvite}
+              onDecline={handleDeclineGameInvite}
+            />
           )}
           {tab === "add" && <AddFriend onSendRequest={handleSendRequest} />}
           {tab === "requests" && (

@@ -1,7 +1,6 @@
 import React from 'react';
 import type { PieceColor } from '../../Types/chess';
 import { Card } from '@mui/material';
-import { Clock } from 'lucide-react';
 
 interface TimerProps {
   whiteTime: number;
@@ -29,8 +28,7 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
     <Card className="p-4">
       <div className="space-y-3">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span>Game Timer</span>
+          <span>⏲️ Game Timer</span>
         </div>
         
         <div className="space-y-2">

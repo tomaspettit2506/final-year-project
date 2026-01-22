@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Card, Box, Stack, TextField, InputAdornment, 
-    Button, Avatar, Badge, Chip, Typography,
- } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Card, Box, Stack, TextField, InputAdornment, Button, Avatar, Badge, Chip, Typography } from "@mui/material";
+import { useAuth } from "../../Context/AuthContext";
 
 interface User {
   id: string;
@@ -21,6 +18,7 @@ interface AddFriendProps {
 }
 
 const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]); // initially empty; populated from backend
   const [hasSearched, setHasSearched] = useState(false);
@@ -35,11 +33,12 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
       const res = await fetch(`/users`);
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
-      // Map backend user shape to UI User shape
+      
+      // Map backend user shape to UI User shape and ensure they have firebaseUid
       const mapped: User[] = (data || []).map((u: any) => {
         const name = u.name || u.email || 'Unknown';
         return {
-          id: u._id || u.id || (u.email ?? name),
+          id: u.firebaseUid || u._id || u.id || (u.email ?? name),
           name,
           username: (u.email && u.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
@@ -59,17 +58,26 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
     }
   };
 
-  const handleSendRequest = (userId: string) => {
-    setUsers(users.map(user => user.id === userId ? { ...user, isPending: true } : user ));
+  const handleSendRequest = async (userId: string) => {
+    if (!user?.uid) {
+      console.error('User not authenticated');
+      return;
+    }
+    
+    setUsers(users.map(u => u.id === userId ? { ...u, isPending: true } : u ));
     onSendRequest(userId);
     // POST Request
-    fetch('/request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toUserId: userId }),
-    }).catch(err => {
+    try {
+      const res = await fetch('/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromUserId: user.uid, toUserId: userId }),
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+    } catch (err: any) {
       console.error('Failed to send friend request', err);
-    });
+      setUsers(users.map(u => u.id === userId ? { ...u, isPending: false } : u ));
+    }
   };
 
   const filteredUsers = hasSearched
@@ -94,13 +102,13 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
+                  🔍
                 </InputAdornment>
               ),
             }}
             size="small"
           />
-          <Button variant="contained" onClick={handleSearch} startIcon={<SearchIcon />}>
+          <Button variant="contained" onClick={handleSearch} startIcon={"🔍"}>
             Search
           </Button>
         </Box>
@@ -155,7 +163,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                         <Button
                           variant="outlined"
                           size="small"
-                          startIcon={<PersonAddIcon />}
+                          startIcon={"👤"}
                           onClick={() => handleSendRequest(user.id)}
                         >
                           Add Friend

@@ -1,23 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import {
-  CircularProgress,
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  Avatar,
-  Divider,
-  Modal,
-  TextField,
-  LinearProgress,
-} from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import SchoolIcon from "@mui/icons-material/School";
+import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
+  TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, FormControl,
+  InputLabel, MenuItem, Select as MuiSelect } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
@@ -27,22 +13,53 @@ const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
+  const [mongoUserId, setMongoUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [rating, setRating] = useState("");
-    // --- Recent Games State ---
   const [recentGames, setRecentGames] = useState<any[]>([]);
+  const [filteredGames, setFilteredGames] = useState<any[]>([]);
+  const [gameFilter, setGameFilter] = useState("all");
   const [loadingRecentGames, setLoadingRecentGames] = useState(false);
+
+  const computeStatsFromGames = (games: any[]) => {
+    return games.reduce(
+      (acc, game) => {
+        const result = (game?.result || "").toLowerCase();
+        if (["win", "won"].includes(result)) acc.wins += 1;
+        else if (["loss", "lose", "lost"].includes(result)) acc.losses += 1;
+        else if (["draw", "tie"].includes(result)) acc.draws += 1;
+        return acc;
+      },
+      { wins: 0, losses: 0, draws: 0 }
+    );
+  };
 
   // Fetch recent games from backend
   const fetchRecentGames = async () => {
     setLoadingRecentGames(true);
     try {
-      const res = await fetch('/games');
+      // If we have a MongoDB user ID, fetch their specific games
+      let endpoint = '/games';
+      if (mongoUserId) {
+        endpoint = `/user/${mongoUserId}/games`;
+      }
+
+      const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch recent games');
       const data = await res.json();
       setRecentGames(data);
+      setFilteredGames(applyGameFilter(data, gameFilter));
+
+      // Update local stats based on recent games and persist to Firestore for display consistency
+      const stats = computeStatsFromGames(data);
+      setUserData((prev: any) => ({ ...(prev || {}), ...stats }));
+
+      if (user) {
+        const userRef = doc(firestore, "users", user.uid);
+        await setDoc(userRef, stats, { merge: true });
+      }
     } catch (err) {
       console.error('Error fetching recent games:', err);
     } finally {
@@ -53,18 +70,33 @@ const Profile = () => {
   // Add a demo recent game (for testing)
   const addDemoRecentGame = async () => {
     try {
+      // Ensure we have a MongoDB user ID
+      let userId = mongoUserId;
+      if (!userId && user?.email) {
+        // Get or create MongoDB user
+        const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: user.displayName || name, rating: parseInt(rating) || 500 })
+        });
+        if (!userRes.ok) throw new Error('Failed to get or create user');
+        const mongoUser = await userRes.json();
+        userId = mongoUser._id;
+        setMongoUserId(userId);
+      }
+
       const res = await fetch('/game', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           opponent: 'Demo Opponent',
           date: new Date().toISOString(),
-          result: 'win',
+          result: 'loss',
           timeControl: 10,
           moves: 42,
           myAccuracy: 95,
-          opponentAccuracy: 80
-
+          opponentAccuracy: 80,
+          userId: userId
         })
       });
       if (!res.ok) throw new Error('Failed to add demo game');
@@ -76,48 +108,93 @@ const Profile = () => {
 
   // Delete a recent game
   const deleteRecentGame = async (gameId: string) => {
+    if (!gameId) {
+      console.error('Error: Game ID is undefined');
+      return;
+    }
     try {
-      const res = await fetch(`/game/${gameId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete game');
+      const res = await fetch(`/game/${gameId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(`Failed to delete game (${res.status}): ${msg}`);
+      }
       await fetchRecentGames();
     } catch (err) {
       console.error('Error deleting game:', err);
     }
   };
 
+  const applyGameFilter = (games: any[], filter: string) => {
+    if (filter === "all") return games;
+    return games.filter((game) => {
+      const result = (game?.result || "").toLowerCase();
+      if (filter === "wins") return ["win", "won"].includes(result);
+      if (filter === "losses") return ["loss", "lose", "lost"].includes(result);
+      if (filter === "draws") return ["draw", "tie"].includes(result);
+      return true;
+    });
+  };
+
+  const handleFilterChange = (e: any) => {
+    const newFilter = e.target.value;
+    setGameFilter(newFilter);
+    setFilteredGames(applyGameFilter(recentGames, newFilter));
+  };
+
   useEffect(() => {
     if (user) {
       const fetchUserData = async () => {
-        const userRef = doc(firestore, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        try {
+          // Get or create MongoDB user
+          if (user.email) {
+            const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: user.displayName || '', rating: 500 })
+            });
+            if (userRes.ok) {
+              const mongoUser = await userRes.json();
+              setMongoUserId(mongoUser._id);
+            }
+          }
 
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setUserData(data);
-          setName(data.name || "");
-          setRating(data.rating || "");
+          // Fetch from Firestore
+          const userRef = doc(firestore, "users", user.uid);
+          const userSnap = await getDoc(userRef);
 
-          // 🔹 Always show modal if name or rating is missing
-          if (!data.name || !data.rating) {
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            setUserData(data);
+            setName(data.name || "");
+            setRating(data.rating || "");
+
+            // 🔹 Always show modal if name or rating is missing
+            if (!data.name || !data.rating) {
+              setIsModalOpen(true);
+            }
+          } else {
+            // 🔹 If user is new (no Firestore entry), create a profile and ask for details
+            await setDoc(userRef, {
+              name: user.displayName || "",
+              email: user.email,
+              rating: 500,
+              wins: 0,
+              losses: 0,
+              draws: 0,
+            });
             setIsModalOpen(true);
           }
-          // Fetch user's histories
-          await fetchRecentGames();
-        } else {
-          // 🔹 If user is new (no Firestore entry), create a profile and ask for details
-          await setDoc(userRef, {
-            name: user.displayName || "",
-            email: user.email,
-            rating: 500,
-          });
-          setIsModalOpen(true);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
-      fetchUserData();
-      fetchRecentGames();
+      const loadProfile = async () => {
+        await fetchUserData();
+        await fetchRecentGames();
+      };
+      loadProfile();
     } else {
       setLoading(false);
     }
@@ -173,82 +250,170 @@ const Profile = () => {
           Email: {user?.email}
         </Typography>
         <Typography variant="body1" sx={{ mt: 1, color: "#ddaaff" }}>
-          <SchoolIcon sx={{ verticalAlign: "middle", mr: 1, color: "#5500aa" }} />
+          🎓
           Rating: {userData?.rating || "No rating set"}
         </Typography>
       </Paper>
 
       <Divider sx={{ mb: 3, bgcolor: "#ddaaff" }} />
 
-      {/* Recent Games Section */}
-      <Divider sx={{ my: 3, bgcolor: "#ddaaff" }} />
-      <Typography variant="h6" sx={{ mb: 2 }} color="#5500aa" fontWeight="bold">Recent Games</Typography>
-      {loadingRecentGames ? (
-        <Box sx={{ width: '100%' }}>
-          <LinearProgress sx={{ height: 8, borderRadius: 5, bgcolor: "#f0e6ff", "& .MuiLinearProgress-bar": { bgcolor: "#5500aa" } }} />
-        </Box>
-      ) : recentGames.length > 0 ? (
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          {recentGames.map((game) => (
-            <Grid size={{xs: 12}} key={game._id || game.id}>
-              <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#fff" }}>
-                <CardContent>
-                  <Typography variant="h6" color="#5500aa">Opponent: {game.opponent}</Typography>
-                  <Typography variant="body2" color="text.secondary">Result: {game.result}</Typography>
-                  <Typography variant="body2" color="text.secondary">Time Control: {game.timeControl} min</Typography>
-                  <Typography variant="body2" color="text.secondary">Moves: {game.moves}</Typography>
-                  <Typography variant="body2" color="text.secondary">Date: {game.date ? new Date(game.date).toLocaleString() : 'N/A'}</Typography>
-                  <Typography variant="body2" color="text.secondary">My Accuracy: {game.myAccuracy}%</Typography>
-                  <LinearProgress 
-                    value={game.myAccuracy} 
-                    variant="determinate"
-                    sx={{ mb: 1, height: 8, borderRadius: 2 }}/>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Opponent Accuracy: {game.opponentAccuracy}%</Typography>
-                  <LinearProgress 
-                    value={game.opponentAccuracy} 
-                    variant="determinate"
-                    sx={{ mb: 1, height: 8, borderRadius: 2 }}/>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    sx={{ mt: 2, borderColor: "#ff5555", color: "#ff5555", '&:hover': { borderColor: '#ff0000', bgcolor: '#ffe6e6' } }}
-                    onClick={() => deleteRecentGame(game._id || game.id)}>Delete Game</Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+      {/* Game Statistics Section */}
+      <Typography variant="h6" sx={{ mb: 2 }} color="#5500aa" fontWeight="bold">Game Statistics</Typography>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{xs: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#ffffff" }}>
+            <CardContent>
+              <Typography variant="h6" color="#5500aa">Total Games</Typography>
+              <Typography variant="h4" fontWeight="bold" color="#5500aa">{(userData?.wins || 0) + (userData?.losses || 0) + (userData?.draws || 0)}</Typography>
+            </CardContent>
+          </Card>
         </Grid>
-      ) : (
-        <Box>
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 2 }}>
-            No recent games found.
-          </Typography>
-          {/* Add Play Button */}
-      <Button
-        variant="contained"
-        sx={{ 
-          mt: 3, 
-          px: 4, 
-          py: 1.5,
-          bgcolor: "#5500aa",
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(85, 0, 170, 0.2)',
-          '&:hover': {
-            bgcolor: '#7722cc',
-            boxShadow: '0 6px 16px rgba(85, 0, 170, 0.3)',
-          }
-        }}
-        startIcon={<AddCircleIcon />}
-        onClick={() => navigate("/play")}
-      >
-        Let's Play
-      </Button>
-        </Box>
-      )}
+        <Grid size={{xs: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#41fe4a" }}>
+            <CardContent>
+              <Typography variant="h6" color="#5500aa">Wins</Typography>
+              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.wins || 0}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{xs: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#f39980" }}>
+            <CardContent>
+              <Typography variant="h6" color="#5500aa">Losses</Typography>
+              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.losses || 0}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{xs: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#dddddd" }}>
+            <CardContent>
+              <Typography variant="h6" color="#5500aa">Draws</Typography>
+              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.draws || 0}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Recent Games Section */}
+      <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6" sx={{ color: "#5500aa", fontWeight: "bold" }}>Recent Games</Typography>
+            <FormControl sx={{ minWidth: 150 }}>
+              <InputLabel sx={{ color: "#5500aa" }}>Filter</InputLabel>
+              <MuiSelect
+                value={gameFilter}
+                label="Filter"
+                onChange={handleFilterChange}
+                sx={{
+                  color: "#5500aa",
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: "#ddaaff" },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: "#5500aa" },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: "#5500aa" },
+                }}
+              >
+                <MenuItem value="all">All Games</MenuItem>
+                <MenuItem value="wins">Wins</MenuItem>
+                <MenuItem value="losses">Losses</MenuItem>
+                <MenuItem value="draws">Draws</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </Box>
+
+          {filteredGames.length > 0 ? (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: "#f9f0ff" }}>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Date</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Opponent</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Result</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Moves</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Time Control</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Details</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Delete</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredGames.map((game) => {
+                    const gameId = game._id || game.id;
+                    return (
+                    <TableRow 
+                      key={gameId}
+                      sx={{
+                        backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : 'transparent',
+                        '&:hover': { backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : '#fafafa' }
+                      }}
+                    >
+                      <TableCell>{new Date(game.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{game.opponent}</TableCell>
+                      <TableCell>
+                        <Typography 
+                          sx={{ 
+                            fontWeight: "bold",
+                            color: game.result === 'win' ? '#22c55e' : game.result === 'loss' ? '#ef4444' : '#666'
+                          }}
+                        >
+                          {game.result?.charAt(0).toUpperCase() + game.result?.slice(1)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{game.moves}</TableCell>
+                      <TableCell>{game.timeControl}+0</TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          sx={{ color: "#5500aa", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
+                          onClick={() => navigate(`/game/${gameId}`)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                      <TableCell sx={{ textAlign: "center" }}>
+                        <IconButton
+                          aria-label="delete"
+                          color="error"
+                          onClick={() => deleteRecentGame(gameId)}
+                        >
+                          🗑️
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Box sx={{ textAlign: "center", py: 3 }}>
+              <Typography variant="body1" sx={{ color: "text.secondary", mb: 2 }}>
+                No recent games found.
+              </Typography>
+              <Button
+                variant="contained"
+                sx={{ 
+                  bgcolor: "#ccaaef",
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(85, 0, 170, 0.2)',
+                  '&:hover': {
+                    bgcolor: '#b875ff',
+                    boxShadow: '0 6px 16px rgba(85, 0, 170, 0.3)',
+                  }
+                }}
+                startIcon={"➕"}
+                onClick={() => navigate("/play")}
+              >
+                Let's Play
+              </Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
       <Button
         variant="outlined"
         sx={{ mb: 3, color: "#5500aa", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
-        startIcon={<AddCircleIcon />}
+        startIcon={"➕"}
         onClick={addDemoRecentGame}
       >
         Add Demo Recent Game
@@ -299,6 +464,7 @@ const Profile = () => {
             <TextField
               variant="outlined"
               fullWidth
+              type="number"
               value={rating}
               onChange={(e) => setRating(e.target.value)}
               sx={{

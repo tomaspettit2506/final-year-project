@@ -2,35 +2,11 @@ import React, { useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useBoardTheme } from "../Context/BoardThemeContext";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  Snackbar,
-  Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Select,
-  MenuItem,
-  FormControl,
-  FormLabel,
-  CircularProgress
-} from "@mui/material";
-import CachedIcon from "@mui/icons-material/Cached";
-import WarningIcon from "@mui/icons-material/Warning";
+import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, Dialog, DialogActions, 
+  DialogContent, DialogContentText,DialogTitle, Select, MenuItem, FormControl, FormLabel, 
+  CircularProgress } from "@mui/material";
 import InstallPWA from "../Components/InstallPWA";
-import PaletteIcon from '@mui/icons-material/Palette';
 import GridOnIcon from '@mui/icons-material/GridOn';
-import TextureIcon from '@mui/icons-material/Texture';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import LensIcon from '@mui/icons-material/Lens';
 import AppBarComponent from "../Components/AppBarComponent";
 
 const Settings: React.FC = () => {
@@ -129,7 +105,7 @@ const Settings: React.FC = () => {
             </Typography>
             <Button 
               variant="outlined" 
-              startIcon={isClearing ? <CircularProgress size={20} /> : <CachedIcon />}
+              startIcon={isClearing ? <CircularProgress size={20} /> : "🔄️"}
               onClick={() => setConfirmDialogOpen(true)} 
               disabled={isClearing}
               fullWidth
@@ -188,7 +164,7 @@ const Settings: React.FC = () => {
                 sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="classic">
-                  <PaletteIcon sx={{ color: "#795548", mr: 1 }} />
+                  🎨
                   Classic
                 </MenuItem>
                 <MenuItem value="modern">
@@ -196,7 +172,7 @@ const Settings: React.FC = () => {
                   Modern
                 </MenuItem>
                 <MenuItem value="wooden">
-                  <TextureIcon sx={{ color: "#a1887f", mr: 1 }} />
+                  🪵
                   Wooden
                 </MenuItem>
               </Select>
@@ -214,15 +190,15 @@ const Settings: React.FC = () => {
                 sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="standard">
-                  <EmojiEventsIcon sx={{ color: "#ffd600", mr: 1 }} />
+                  🏆
                   Standard
                 </MenuItem>
                 <MenuItem value="fancy">
-                  <StarIcon sx={{ color: "#f50057", mr: 1 }} />
+                  ⭐
                   Fancy
                 </MenuItem>
                 <MenuItem value="minimal">
-                  <LensIcon sx={{ color: "#607d8b", mr: 1 }} />
+                  ⚫
                   Minimal
                 </MenuItem>
               </Select>
@@ -256,7 +232,7 @@ const Settings: React.FC = () => {
         PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1 }}>
-          <WarningIcon color="warning" />
+          ⚠️
           <Typography fontWeight="bold">Warning: This Will Log You Out</Typography>
         </DialogTitle>
         <DialogContent>

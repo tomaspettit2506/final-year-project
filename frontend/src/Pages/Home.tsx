@@ -10,6 +10,7 @@ const Home = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState<boolean>(true);
     const [userData, setUserData] = useState<any>(null);
+    const [mongoUserId, setMongoUserId] = useState<string | null>(null);
     const [recentGames, setRecentGames] = useState<any[]>([]);
     const [loadingRecentGames, setLoadingRecentGames] = useState<boolean>(false);
 
@@ -22,6 +23,19 @@ const Home = () => {
         setLoading(true);
         const data = await getUserRating(user.uid);
         setUserData(data);
+
+        // Get or create MongoDB user
+        if (user.email) {
+          const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: user.displayName || data.name || '', rating: data.rating || 500 })
+          });
+          if (userRes.ok) {
+            const mongoUser = await userRes.json();
+            setMongoUserId(mongoUser._id);
+          }
+        }
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -36,7 +50,13 @@ const Home = () => {
   const fetchRecentGames = async () => {
     setLoadingRecentGames(true);
     try {
-      const res = await fetch('/games');
+      // If we have a MongoDB user ID, fetch their specific games
+      let endpoint = '/games';
+      if (mongoUserId) {
+        endpoint = `/user/${mongoUserId}/games`;
+      }
+
+      const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch recent games');
       const data = await res.json();
       setRecentGames(data);
@@ -47,10 +67,10 @@ const Home = () => {
     }
   };
 
-  // Call fetchRecentGames on mount
+  // Call fetchRecentGames on mount and when mongoUserId changes
   useEffect(() => {
     fetchRecentGames();
-  }, []);
+  }, [mongoUserId]);
 
   // Show loading indicator while fetching data
   if (loading) {
@@ -74,8 +94,8 @@ const Home = () => {
     <Box sx={{ p: 3, pb: 10 }}>
       {/* Welcome Section */}
       <Box sx={{ mb: 4, textAlign: "center" }}>
-        <Typography variant="h4" color="#5500aa" fontWeight="bold" gutterBottom>
-          Welcome, {userData?.name || "Chess Player"}!
+        <Typography variant="h4" color="#a042ff" fontWeight="bold" fontFamily={"Times New Roman"} gutterBottom>
+          Welcome, {userData?.name || "Chess Player"}
         </Typography>
         {userData?.rating && (
           <Typography variant="body1" color="text.secondary">
@@ -83,11 +103,11 @@ const Home = () => {
           </Typography>
         )}
       </Box>
-        {/* Study Histories Section */}
+        {/* Game Recents Section */}
         <Box sx={{ mb: 4 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h5" color="#5500aa" fontWeight="bold" gutterBottom>
-                Your Study Histories
+            <Typography variant="h5" color="#a042ff" fontWeight="bold" gutterBottom>
+                Your Game Recents 🎮
             </Typography>
             <Button color="primary" onClick={() => navigate("/profile")} sx={{ fontWeight: "bold" }}>
                 See All
@@ -128,7 +148,7 @@ const Home = () => {
                       variant="outlined"
                       color="primary"
                       onClick={() => navigate(`/game/${game.id}`)}
-                      sx={{ fontWeight: "bold", borderRadius: "8px" }}
+                      sx={{ fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                     >
                       View Game
                     </Button>
@@ -142,7 +162,7 @@ const Home = () => {
     {/* Quick Info Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h5" fontWeight="bold" color="#5500aa" gutterBottom>
-          Quick Access
+          Quick Access 🚀
         </Typography>
         <Grid container spacing={2}>
           <Grid size={{xs: 12, sm: 6}}>
@@ -156,19 +176,19 @@ const Home = () => {
             >
               <CardContent>
                 <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Tutorial
+                  <Typography variant="h5" fontWeight="bold" gutterBottom>
+                    🎓 Tutorial
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px" }}>
                     Review your study the chess pieces 
                   </Typography>
                   <Button
-                    variant="outlined"
-                    color="primary"
+                    variant="contained"
+                    color="secondary"
                     onClick={() => navigate("/tutorial")}
-                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px" }}
+                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                   >
-                    Open Tutorial
+                    Open Tutorial 🎓
                   </Button>
                 </Box>
               </CardContent>
@@ -185,19 +205,19 @@ const Home = () => {
             >
               <CardContent>
                 <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    Invite Friends
+                  <Typography variant="h5" fontWeight="bold" gutterBottom>
+                    📩 Invite Friends
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px" }}>
                     You can invite your friends to play with you
                   </Typography>
                   <Button
-                    variant="outlined"
-                    color="primary"
+                    variant="contained"
+                    color="success"
                     onClick={() => navigate("/friends")}
-                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px" }}
+                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                   >
-                    Join Them
+                    Join Them 📩
                   </Button>
                 </Box>
               </CardContent>
@@ -211,16 +231,16 @@ const Home = () => {
         sx={{
           borderRadius: "12px",
           boxShadow: "0 4px 12px rgba(85, 0, 170, 0.1)",
-          bgcolor: "#5500aa",
+          bgcolor: "#a046f9",
           mb: 5,
         }}
       >
         <CardContent>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
             💡 Daily Learning Tip
           </Typography>
           <Typography variant="body2">
-            Consistent practice is key to improving your chess skills. Dedicate time each day to study tactics, openings, and endgames to see steady progress!
+            Consistent practice is key to improving your chess skills. Dedicate time each day to study tactics, openings, and endgames to see steady progress! 
           </Typography>
         </CardContent>
       </Card>

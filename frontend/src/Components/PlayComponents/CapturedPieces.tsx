@@ -54,8 +54,7 @@ const CapturedPieces: React.FC<CapturedPiecesProps> = ({ whiteCaptured, blackCap
             {blackCaptured.map((piece, index) => (
               <Typography 
                 key={index} 
-                sx={{ color: "text.black", filter: "drop-shadow(0 1px 1px rgba(255,255,255,0.3))", fontSize: '24px', lineHeight: 1 }}
-              >
+                sx={{ color: "text.black", filter: "drop-shadow(0 1px 1px rgba(255,255,255,0.3))", fontSize: '24px', lineHeight: 1 }}>
                 {PIECE_SYMBOLS[`${piece.color}-${piece.type}`]}
               </Typography>
             ))}
