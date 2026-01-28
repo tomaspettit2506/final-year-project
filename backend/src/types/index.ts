@@ -25,4 +25,6 @@ export interface Room {
   createdAt: number;
   timeoutHandle?: NodeJS.Timeout;
   moveHistory?: RoomMove[];
+  isPaused?: boolean;
+  pausedBy?: string; // player color who paused the game
 }

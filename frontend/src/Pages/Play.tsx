@@ -20,10 +20,8 @@ const Play = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('setup');
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     gameMode: 'ai',
-    difficulty: 750,
-    difficultyName: 'Easy',
-    timerEnabled: false,
-    timerDuration: 600
+    difficulty: 750, difficultyName: 'Easy',
+    timerEnabled: false, timerDuration: 600
   });
   const [myColor, setMyColor] = useState<'white' | 'black'>('white');
   const [myName, setMyName] = useState<string>('');
@@ -41,6 +39,7 @@ const Play = () => {
   };
 
   const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean, timerDuration?: number, timerEnabled?: boolean) => {
+    console.log('[Play] Room joined with timer settings:', { timerEnabled, timerDuration });
     setRoomId(joinedRoomId);
     setMyName(name);
     setMyColor(color);
@@ -70,19 +69,14 @@ const Play = () => {
       <AppBarComponent title={`Player vs ${gameConfig.gameMode}`} isBackButton={false} isSettings={false} isExit={false}/>
       <GameScreen
         gameMode={gameConfig.gameMode}
-        difficulty={gameConfig.difficulty}
-        difficultyName={gameConfig.difficultyName}
-        timerEnabled={gameConfig.timerEnabled}
-        timerDuration={gameConfig.timerDuration}
+        difficulty={gameConfig.difficulty} difficultyName={gameConfig.difficultyName}
+        timerEnabled={gameConfig.timerEnabled} timerDuration={gameConfig.timerDuration}
         onBackToSetup={handleBackToSetup}
-        myColor={myColor}
-        myName={myName}
-        roomId={roomId}
-        isHost={isHost}
+        myColor={myColor} myName={myName}
+        roomId={roomId} isHost={isHost}
         // multiplayer props can be passed here in future
       />
     </Box>
   );
 };
-
 export default Play;

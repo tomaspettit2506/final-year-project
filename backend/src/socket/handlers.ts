@@ -12,7 +12,8 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       const roomId = generateRoomId();
       const newRoom = createRoom();
       newRoom.users = [{ id: socket.id, name, color: 'white' }];
-      newRoom.timerEnabled = timerEnabled || false;
+      // Timer enabled by default for multiplayer
+      newRoom.timerEnabled = timerEnabled !== undefined ? timerEnabled : true;
       newRoom.timerDuration = timerDuration || 600;
 
       rooms[roomId] = newRoom;
@@ -29,7 +30,7 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
         users: rooms[roomId].users,
         status: rooms[roomId].status
       });
-      console.log(`Room created: ${roomId} by ${name}. Waiting for Player 2...`);
+      console.log(`Room created: ${roomId} by ${name}. Timer: ${newRoom.timerEnabled ? newRoom.timerDuration + 's' : 'disabled'}. Waiting for Player 2...`);
     });
 
     socket.on('joinRoom', ({ name, roomId }, callback) => {
@@ -78,6 +79,7 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       if (room.users.length === 2) {
         room.status = 'playing';
         room.gameStartTime = Date.now();
+        console.log(`Game ready in room ${roomId}. Timer: ${room.timerEnabled ? room.timerDuration + 's' : 'disabled'}`);
         io.to(roomId).emit('gameReady', {
           players: room.users,
           status: room.status,
@@ -172,6 +174,50 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
 
       room.status = 'finished';
       io.to(roomId).emit('gameEnded', { result, winner, players: room.users });
+      if (callback) callback({ success: true });
+    });
+
+    socket.on('pauseGame', ({ roomId }, callback) => {
+      const room = rooms[roomId];
+      if (!room) {
+        if (callback) callback({ success: false, message: 'Room not found' });
+        return;
+      }
+
+      if (room.status !== 'playing') {
+        if (callback) callback({ success: false, message: 'Game is not in progress' });
+        return;
+      }
+
+      room.isPaused = true;
+      room.pausedBy = socket.data.playerColor;
+      io.to(roomId).emit('gamePaused', { 
+        isPaused: true, 
+        pausedBy: socket.data.playerColor,
+        pausedByName: socket.data.playerName 
+      });
+      console.log(`Game paused in room ${roomId} by ${socket.data.playerName} (${socket.data.playerColor})`);
+
+      if (callback) callback({ success: true });
+    });
+
+    socket.on('resumeGame', ({ roomId }, callback) => {
+      const room = rooms[roomId];
+      if (!room) {
+        if (callback) callback({ success: false, message: 'Room not found' });
+        return;
+      }
+
+      if (!room.isPaused) {
+        if (callback) callback({ success: false, message: 'Game is not paused' });
+        return;
+      }
+
+      room.isPaused = false;
+      room.pausedBy = undefined;
+      io.to(roomId).emit('gameResumed', { isPaused: false });
+      console.log(`Game resumed in room ${roomId}`);
+
       if (callback) callback({ success: true });
     });
 

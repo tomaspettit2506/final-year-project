@@ -1,5 +1,5 @@
 import type { Position, Piece } from "../../Types/chess";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box, Grid, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { useBoardTheme } from "../../Context/BoardThemeContext";
 
@@ -36,6 +36,15 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   const { boardTheme, pieceSet } = useBoardTheme();
   const [draggedFrom, setDraggedFrom] = useState<Position | null>(null);
   const [dragOverSquare, setDragOverSquare] = useState<Position | null>(null);
+  const [draggedPiece, setDraggedPiece] = useState<{
+    piece: Piece;
+    from: Position;
+  } | null>(null);
+  const [touchDragPosition, setTouchDragPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -74,15 +83,78 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     setDraggedFrom(null);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!boardRef.current) return;
+
+    const touch = e.touches[0];
+    const boardRect = boardRef.current.getBoundingClientRect();
+    const squareSize = boardRect.width / 8;
+
+    const col = Math.floor((touch.clientX - boardRect.left) / squareSize);
+    const row = Math.floor((touch.clientY - boardRect.top) / squareSize);
+
+    if (row < 0 || row >= 8 || col < 0 || col >= 8) return;
+
+    const piece = board[row][col];
+    if (!piece) return;
+
+    // Mirror click behavior so selection and legal moves populate immediately
+    onSquareClick(row, col);
+    setDraggedPiece({ piece, from: { row, col } });
+    setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggedPiece) return;
+
+    // Rely on touch-action: none to prevent scrolling; no preventDefault to avoid passive warnings
+    const touch = e.touches[0];
+    setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!draggedPiece || !boardRef.current) {
+      setDraggedPiece(null);
+      setTouchDragPosition(null);
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const boardRect = boardRef.current.getBoundingClientRect();
+    const squareSize = boardRect.width / 8;
+
+    const col = Math.floor((touch.clientX - boardRect.left) / squareSize);
+    const row = Math.floor((touch.clientY - boardRect.top) / squareSize);
+
+    if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+      const isLegal = isLegalMove(row, col);
+
+      if (isLegal && onPieceDrop) {
+        onPieceDrop(draggedPiece.from, { row, col });
+      } else {
+        // Treat as a tap/click to update selection
+        onSquareClick(row, col);
+      }
+    }
+
+    setDraggedPiece(null);
+    setTouchDragPosition(null);
+  };
+
   return (
     <Box
+      ref={boardRef}
       sx={{
         display: "inline-block",
         backgroundColor: "#27272a",
         p: 3,
         borderRadius: 2,
         boxShadow: 5,
+        touchAction: "none",
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Chess Grid */}
       <Grid
@@ -103,7 +175,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
               dragOverSquare?.row === r && dragOverSquare?.col === c;
 
             return (
-              <Grid size={{xs:1}} key={`${r}-${c}`}>
+              <Grid size={{ xs: 1 }} key={`${r}-${c}`}>
                 <Box
                   onClick={() => onSquareClick(r, c)}
                   onDrop={(e) => handleDrop(e, r, c)}
@@ -121,7 +193,17 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                     justifyContent: "center",
                     transition: "0.15s",
                     cursor: "pointer",
-                    bgcolor: isLightSquare(r, c) ? boardTheme == "classic" ? "#f0d9b5" : boardTheme == "modern" ? "#e1e1e1" : "#deb887" : boardTheme == "classic" ? "#b58863" : boardTheme == "modern" ? "#757575" : "#8b4513",
+                    bgcolor: isLightSquare(r, c)
+                      ? boardTheme == "classic"
+                        ? "#f0d9b5"
+                        : boardTheme == "modern"
+                        ? "#e1e1e1"
+                        : "#deb887"
+                      : boardTheme == "classic"
+                      ? "#b58863"
+                      : boardTheme == "modern"
+                      ? "#757575"
+                      : "#8b4513",
                     "&:hover": !dragOver ? { filter: "brightness(1.1)" } : undefined,
                     outline:
                       selected
@@ -139,8 +221,13 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                       onDragEnd={() => setDraggedFrom(null)}
                       sx={{
                         fontSize: "40px",
-                        fontFamily: pieceSet === "standard" ? "Arial" : pieceSet === "fancy" ? "Times New Roman" : "Courier New",
-                        opacity: dragging ? 0.5 : 1,
+                        fontFamily:
+                          pieceSet === "standard"
+                            ? "Arial"
+                            : pieceSet === "fancy"
+                            ? "Times New Roman"
+                            : "Courier New",
+                        opacity: draggedPiece?.from.row === r && draggedPiece?.from.col === c ? 0.3 : dragging ? 0.5 : 1,
                         cursor: "grab",
                         userSelect: "none",
                         color: piece.color === "white" ? "white" : "black",
@@ -184,24 +271,77 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
         )}
       </Grid>
 
-      {/* Coordinates */}
+      {/* Coordinates, Example a1 to h1, vertical and horizontal. Fitted in */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-around",
-          mt: 2,
+          position: "absolute",
+          top: "calc(50% - 256px)",
+          left: "calc(50% - 256px)",
           width: isMobile ? "350px" : "512px",
+          height: isMobile ? "350px" : "512px",
+          pointerEvents: "none",
         }}
       >
-        {["a", "b", "c", "d", "e", "f", "g", "h"].map((f) => (
+        {/* Files */}
+        {[...Array(8)].map((_, i) => (
           <Typography
-            key={f}
-            sx={{ width: "64px", textAlign: "center", color: "#e7e5e4" }}
+            key={i}
+            sx={{
+              position: "absolute",
+              bottom: -20,
+              left: `calc(${(i + 0.5) * (100 / 8)}% - 8px)`,
+              fontSize: isMobile ? "12px" : "14px",
+              color: "#a1a1aa",
+            }}
           >
-            {f}
+            {String.fromCharCode(97 + i)}
+          </Typography>
+        ))}
+
+        {/* Ranks */}
+        {[...Array(8)].map((_, i) => (
+          <Typography
+            key={i}
+            sx={{
+              position: "absolute",
+              top: `calc(${(7 - i + 0.5) * (100 / 8)}% - 8px)`,
+              left: -20,
+              fontSize: isMobile ? "12px" : "14px",
+              color: "#a1a1aa",
+            }}
+          >
+            {i + 1}
           </Typography>
         ))}
       </Box>
+
+      {/* Dragged piece following touch */}
+      {draggedPiece && touchDragPosition && (
+        <Box
+          position="fixed"
+          left={touchDragPosition.x}
+          top={touchDragPosition.y}
+          sx={{
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+            zIndex: 1000,
+            fontSize: isMobile ? "40px" : "60px",
+            fontFamily:
+              pieceSet === "standard"
+                ? "Arial"
+                : pieceSet === "fancy"
+                ? "Times New Roman"
+                : "Courier New",
+            color: draggedPiece.piece.color === "white" ? "white" : "black",
+            textShadow:
+              draggedPiece.piece.color === "white"
+                ? "0 2px 2px rgba(0,0,0,0.8)"
+                : "0 1px 1px rgba(255,255,255,0.3)",
+          }}
+        >
+          {PIECE_SYMBOLS[`${draggedPiece.piece.color}-${draggedPiece.piece.type}`]}
+        </Box>
+      )}
     </Box>
   );
 };
