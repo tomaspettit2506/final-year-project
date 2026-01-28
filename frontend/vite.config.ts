@@ -9,6 +9,7 @@ export default defineConfig({
       // Proxy API routes to backend
       '/users': 'http://localhost:8000',
       '/user': 'http://localhost:8000',
+      '/user/email/:email': 'http://localhost:8000',
       '/games': 'http://localhost:8000',
       '/game': 'http://localhost:8000',
       '/requests': 'http://localhost:8000',
