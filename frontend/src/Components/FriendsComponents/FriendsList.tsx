@@ -4,6 +4,8 @@ import { Card, Box, Stack, TextField, InputAdornment, Avatar,
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ProfileDialog from "./ProfileDialog";
+import GameDialog from "./GameDialog";
 
 import ChallengeDialog from "./ChallengeDialog";
 
@@ -15,11 +17,15 @@ interface Friend {
   rating: number;
   online: boolean;
   lastSeen?: string;
+  games?: any[];
+  firebaseUid?: string;
+  mongoId?: string;
+  email?: string;
 }
 
 interface FriendsListProps {
   friends: Friend[];
-  onRemoveFriend: (friendId: string) => void;
+  onRemoveFriend: (friend: Friend) => Promise<void> | void;
   onChallengeStarted?: (roomId: string) => void;
 }
 
@@ -37,11 +43,90 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     severity: "success"
   });
 
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [gameDialogOpen, setGameDialogOpen] = useState(false);
+  const [friendGames, setFriendGames] = useState<any[]>([]);
+  const [profileStats, setProfileStats] = useState({ wins: 0, losses: 0, draws: 0 });
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingGames, setLoadingGames] = useState(false);
+  const [gamesError, setGamesError] = useState<string | null>(null);
   const filteredFriends = friends.filter(
     (friend) =>
       friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const computeStatsFromGames = (games: any[]) => {
+    return games.reduce(
+      (acc, game) => {
+        const result = (game?.result || '').toLowerCase();
+        if (['win', 'won'].includes(result)) acc.wins += 1;
+        else if (['loss', 'lose', 'lost'].includes(result)) acc.losses += 1;
+        else if (['draw', 'tie'].includes(result)) acc.draws += 1;
+        return acc;
+      },
+      { wins: 0, losses: 0, draws: 0 }
+    );
+  };
+
+  const fetchFriendGames = async (friend: Friend) => {
+    let targetId = friend.mongoId;
+
+    // If we don't have a MongoDB id yet but we do have an email, ensure the user exists and capture the _id
+    if (!targetId && friend.email) {
+      try {
+        const res = await fetch(`/user/email/${encodeURIComponent(friend.email)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: friend.name, rating: friend.rating })
+        });
+        if (res.ok) {
+          const mongoUser = await res.json();
+          targetId = mongoUser?._id;
+          // Persist the mongoId on the selected friend state so subsequent requests reuse it
+          setSelectedFriend((prev) => prev && prev.id === friend.id ? { ...prev, mongoId: targetId } : prev);
+        }
+      } catch (err) {
+        console.error('Error ensuring friend exists in MongoDB:', err);
+      }
+    }
+
+    targetId = targetId || friend.id;
+    if (!targetId) {
+      setGamesError('Could not determine friend ID');
+      setFriendGames([]);
+      setProfileStats({ wins: 0, losses: 0, draws: 0 });
+      setSnackbar({ open: true, message: 'Could not determine friend ID for games', severity: 'error' });
+      return [];
+    }
+
+    setLoadingGames(true);
+    setGamesError(null);
+    try {
+      const res = await fetch(`/user/${targetId}/games`);
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || `Failed to load games (status ${res.status})`);
+      }
+      const data = await res.json();
+      setFriendGames(data || []);
+      setProfileStats(computeStatsFromGames(data || []));
+      return data || [];
+    } catch (error: any) {
+      console.error('Error fetching friend games:', error);
+      setGamesError(error?.message || 'Failed to load games');
+      setFriendGames([]);
+      setProfileStats({ wins: 0, losses: 0, draws: 0 });
+      setSnackbar({
+        open: true,
+        message: error?.message || 'Failed to load games',
+        severity: 'error'
+      });
+      return [];
+    } finally {
+      setLoadingGames(false);
+    }
+  };
 
   const handleChallenge = (friend: Friend) => {
     setSelectedFriend(friend);
@@ -58,10 +143,38 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       throw new Error('User information missing');
     }
 
+    // Ensure the recipient exists in MongoDB and capture their _id for reliable lookup
+    const ensureRecipientMongoId = async () => {
+      if (selectedFriend.mongoId) return selectedFriend.mongoId;
+      if (!selectedFriend.email) return null;
+
+      try {
+        const res = await fetch(`/user/email/${encodeURIComponent(selectedFriend.email)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: selectedFriend.name,
+            rating: selectedFriend.rating,
+            firebaseUid: selectedFriend.firebaseUid
+          })
+        });
+        if (res.ok) {
+          const mongoUser = await res.json();
+          setSelectedFriend((prev) => prev && prev.id === selectedFriend.id ? { ...prev, mongoId: mongoUser?._id } : prev);
+          return mongoUser?._id;
+        }
+      } catch (err) {
+        console.error('Failed to ensure recipient in MongoDB', err);
+      }
+      return null;
+    };
+
     try {
+      const ensuredMongoId = await ensureRecipientMongoId();
+
       // Generate a unique room ID without creating the socket room yet
       // Both players will join the room when they navigate to the game
-      const roomId = `ROOM-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const roomId = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
       // Send game invite to friend via REST API
       const response = await fetch('/game-invite', {
@@ -69,9 +182,9 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromUserId: user.uid,
-          toUserId: selectedFriend.id,
+          toUserId: ensuredMongoId || selectedFriend.mongoId || selectedFriend.firebaseUid || selectedFriend.id,
           roomId,
-          timeControl,
+          timeControl, // timeControl is in minutes (string)
           rated
         })
       });
@@ -82,15 +195,11 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       }
 
       setCurrentRoomId(roomId);
-      setSnackbar({
-        open: true,
-        message: `Challenge sent to ${selectedFriend.name}! Joining game...`,
+      setSnackbar({ open: true, message: `Challenge sent to ${selectedFriend.name}! Joining game...`,
         severity: "success"
       });
 
-      if (onChallengeStarted) {
-        onChallengeStarted(roomId);
-      }
+      if (onChallengeStarted) onChallengeStarted(roomId);
 
       // Navigate challenger to play page to join their own room
       setTimeout(() => {
@@ -115,8 +224,28 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setMenuAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
+  const handleMenuClose = () => { setMenuAnchorEl(null); };
+
+  const openProfileDialog = async (friend: Friend) => {
+    setSelectedFriend(friend);
+    setProfileDialogOpen(true);
+    setLoadingProfile(true);
+    if (friend.games) {
+      setFriendGames(friend.games);
+      setProfileStats(computeStatsFromGames(friend.games));
+    }
+    await fetchFriendGames(friend);
+    setLoadingProfile(false);
+  };
+
+  const openGameDialog = async (friend: Friend) => {
+    setSelectedFriend(friend);
+    setGameDialogOpen(true);
+    if (friend.games) {
+      setFriendGames(friend.games);
+      setProfileStats(computeStatsFromGames(friend.games));
+    }
+    await fetchFriendGames(friend);
   };
 
   return (
@@ -185,12 +314,17 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       Challenge
                     </Button>
 
+                    {/* Chat button can be added here in the future */}
                     <Button
                       variant="outlined"
                       size="small"
                       startIcon={"💬"}
-                      disabled={!friend.online}
-                    />
+                      onClick={() => {
+                        navigate(`/chat/${friend.id}`);
+                      }}
+                    >
+                      Chat
+                    </Button>
 
                     <IconButton
                       size="small"
@@ -215,9 +349,18 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
+          <MenuItem onClick={() => {
+            if (selectedFriend) openProfileDialog(selectedFriend);
+            handleMenuClose();
+          }}>View Profile</MenuItem>
+
+          <MenuItem onClick={() => {
+            if (selectedFriend) openGameDialog(selectedFriend);
+            handleMenuClose();
+          }}>View Games</MenuItem>
           <MenuItem
             onClick={() => {
-              if (selectedFriend) onRemoveFriend(selectedFriend.id);
+              if (selectedFriend) onRemoveFriend(selectedFriend);
               handleMenuClose();
             }}
             sx={{ color: "error.main" }}
@@ -262,6 +405,30 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {selectedFriend && (
+        <ProfileDialog
+          open={profileDialogOpen}
+          onClose={() => setProfileDialogOpen(false)}
+          friendName={selectedFriend.name}
+          friendEmail={selectedFriend.email || selectedFriend.username}
+          friendRating={selectedFriend.rating}
+          wins={profileStats.wins}
+          losses={profileStats.losses}
+          draws={profileStats.draws}
+          isLoading={loadingProfile}
+        />
+      )}
+      {selectedFriend && (
+        <GameDialog
+          open={gameDialogOpen}
+          onClose={() => setGameDialogOpen(false)}
+          friendName={selectedFriend.name}
+          games={friendGames || []}
+          loading={loadingGames}
+          error={gamesError}
+        />
+      )}
     </>
   );
 }

@@ -66,6 +66,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET Game Invite by Room ID (for fetching timer settings)
+router.get('/room/:roomId', async (req, res) => {
+  const { roomId } = req.params;
+  try {
+    const invite = await GameInvite.findOne({ roomId })
+      .populate('fromUser', 'name email rating firebaseUid')
+      .populate('toUser', 'name email rating firebaseUid');
+    
+    if (!invite) {
+      return res.status(404).json({ error: 'Game invite not found for this room' });
+    }
+
+    return res.json(invite);
+  } catch (error) {
+    console.error('Error fetching game invite by room:', error);
+    return res.status(500).json({ error: 'Failed to fetch game invite' });
+  }
+});
+
 // POST Game Invite (send challenge with room ID to a friend)
 router.post('/', async (req, res) => {
   const { fromUserId, toUserId, roomId, timeControl, rated } = req.body;

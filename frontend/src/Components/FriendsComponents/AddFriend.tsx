@@ -30,7 +30,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/users`);
+      const res = await fetch(`/user`);
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       

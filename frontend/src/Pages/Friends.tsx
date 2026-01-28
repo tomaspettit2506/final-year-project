@@ -9,13 +9,17 @@ import GameInvites from "../Components/FriendsComponents/GameInvites";
 import AppBarComponent from "../Components/AppBarComponent";
 
 interface Friend {
-  id: string;
+  id: string; // Prefer Firebase UID when available, otherwise Mongo _id
   name: string;
   username: string;
   avatar: string;
   rating: number;
   online: boolean;
   lastSeen?: string;
+  firebaseUid?: string;
+  mongoId?: string;
+  email?: string;
+  games?: any[];
 }
 
 interface PendingRequest {
@@ -46,20 +50,28 @@ const Friends = () => {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
   const [tab, setTab] = useState<string>("friends");
-  const [mongoUserId, setMongoUserId] = useState<string | null>(null);
+  const [_mongoUserId, setMongoUserId] = useState<string | null>(null);
 
   const mapFriendFromApi = (friend: any): Friend => {
-    const name = friend.friendName || friend.friendEmail || 'Unknown';
-    const username = (friend.friendEmail && friend.friendEmail.split?.('@')?.[0]) || name.replace(/\s+/g, '_').toLowerCase();
+    const populatedUser = typeof friend.friendUser === 'object' ? friend.friendUser : undefined;
+    const mongoId = typeof friend.friendUser === 'string' ? friend.friendUser : populatedUser?._id;
+    const firebaseUid = friend.friendFirebaseUid || populatedUser?.firebaseUid;
+    const email = friend.friendEmail || populatedUser?.email;
+    const name = friend.friendName || email || 'Unknown';
+    const username = (email && email.split?.('@')?.[0]) || name.replace(/\s+/g, '_').toLowerCase();
 
     return {
-      id: friend.friendFirebaseUid || friend.friendUser || friend._id,
+      id: firebaseUid || mongoId || friend._id || username,
+      firebaseUid,
+      mongoId,
+      email,
       name,
       username,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
-      rating: friend.friendRating ?? 1200,
+      rating: friend.friendRating ?? populatedUser?.rating ?? 1200,
       online: false,
       lastSeen: friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : undefined,
+      games: populatedUser?.gameRecents,
     };
   };
 
@@ -178,8 +190,29 @@ const Friends = () => {
     fetchFriends();
   }, [user]);
 
-  const handleRemoveFriend = (friendId: string) => {
-    setFriends(friends.filter((friend) => friend.id !== friendId));
+  const handleRemoveFriend = async (friend: Friend) => {
+    if (!user?.uid) return;
+
+    const targetId = friend.firebaseUid || friend.mongoId || friend.id;
+    if (!targetId) return;
+
+    try {
+      const res = await fetch(`/user/${user.uid}/friend/${encodeURIComponent(targetId)}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+
+      if (Array.isArray(data?.friends)) {
+        setFriends(data.friends.map(mapFriendFromApi));
+      } else {
+        // Fallback: remove locally
+        setFriends((prev) => prev.filter((f) => f.id !== targetId && f.firebaseUid !== targetId && f.mongoId !== targetId));
+      }
+    } catch (err: any) {
+      console.error('Failed to remove friend', err);
+    }
   };
 
   const handleSendRequest = (userId: string) => {
@@ -220,7 +253,7 @@ const Friends = () => {
     try {
       // Decline the friend request via API
       const res = await fetch(`/request/${requestId}/decline`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
       
@@ -249,18 +282,17 @@ const Friends = () => {
     }
   };
 
+  // DELETE Game Invite
   const handleDeclineGameInvite = async (inviteId: string) => {
     try {
       await fetch(`/game-invite/${inviteId}/decline`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
-      // Remove from UI
+      // Remove from local state
       setGameInvites(gameInvites.filter((inv) => inv.id !== inviteId));
     } catch (err: any) {
       console.error('Failed to decline game invite', err);
-      // Refresh the list in case of error
-      fetchGameInvites();
     }
   };
 
