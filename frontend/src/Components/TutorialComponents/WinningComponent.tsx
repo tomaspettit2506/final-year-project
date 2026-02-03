@@ -1,34 +1,36 @@
 import { Card, Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
 const WinningComponent = () => {
-    return (
+  const { isDark } = useAppTheme();
+  return (
     <Box>
-       <Card sx={{ p: 6 }}>
+      <Card sx={{ p: 6, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
               <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}> ♟️ How to Win at Chess</Typography>
               <Box sx={{ spaceY: 4 }}>
-                <Box sx={{ p: 4, backgroundColor: "#F0FDF4", borderLeft: "4px solid", borderColor: "#22C55E", borderRadius: 1, mb: 4, color:"black" }}>
+                <Box sx={{ p: 4, backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : "#F0FDF4", borderLeft: "4px solid", borderColor: "#22C55E", borderRadius: 1, mb: 4, color: isDark ? '#DCFCE7' : "black" }}>
                   <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                     🏆 Checkmate
                   </Typography>
                   <Typography>The primary way to win: trap your opponent's king so it has no legal moves to escape capture.</Typography>
                 </Box>
 
-                <Box sx={{ p: 4, backgroundColor: "#EFF6FF", borderLeft: "4px solid", borderColor: "#3B82F6", borderRadius: 1, mb: 4, color:"black" }}>
+                <Box sx={{ p: 4, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.12)' : "#EFF6FF", borderLeft: "4px solid", borderColor: "#3B82F6", borderRadius: 1, mb: 4, color: isDark ? '#DBEAFE' : "black" }}>
                   <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}>🏳️ Resignation</Typography>
                   <Typography>Your opponent may resign if they believe their position is hopeless. This is common in competitive play.</Typography>
                 </Box>
 
-                <Box sx={{ p: 4, backgroundColor: "#F3E8FF", borderLeft: "4px solid", borderColor: "#A855F7", borderRadius: 1, mb: 4, color:"black" }}>
+                <Box sx={{ p: 4, backgroundColor: isDark ? 'rgba(168, 85, 247, 0.12)' : "#F3E8FF", borderLeft: "4px solid", borderColor: "#A855F7", borderRadius: 1, mb: 4, color: isDark ? '#E9D5FF' : "black" }}>
                   <Typography variant="h3" sx={{ fontSize: "1.25rem", mb: 2 }}> ⏰ Time Forfeit</Typography>
                   <Typography>In timed games, if your opponent runs out of time on their clock, you win (unless you have insufficient material to checkmate).</Typography>
                 </Box>
               </Box>
             </Card>
             
-            <Card sx={{ p: 6 }}>
+            <Card sx={{ p: 6, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
               <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>♟️ Basic Checkmate Patterns</Typography>
-                <Accordion>
+                <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : 'transparent', color: isDark ? '#E2E8F0' : 'inherit' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     Back Rank Mate
                   </AccordionSummary>
@@ -37,7 +39,7 @@ const WinningComponent = () => {
                   </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : 'transparent', color: isDark ? '#E2E8F0' : 'inherit' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     Queen and King Mate
                   </AccordionSummary>
@@ -46,7 +48,7 @@ const WinningComponent = () => {
                   </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : 'transparent', color: isDark ? '#E2E8F0' : 'inherit' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     Two Rooks Mate
                   </AccordionSummary>
@@ -55,7 +57,7 @@ const WinningComponent = () => {
                   </AccordionDetails>
                 </Accordion>
 
-                <Accordion>
+                <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : 'transparent', color: isDark ? '#E2E8F0' : 'inherit' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     Scholar's Mate
                   </AccordionSummary>
@@ -65,7 +67,7 @@ const WinningComponent = () => {
                 </Accordion>
             </Card>
 
-            <Card sx={{ p: 6 }}>
+            <Card sx={{ p: 6, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
               <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}>♟️ Winning Strategies</Typography>
               <Box className="grid md:grid-cols-2 gap-4">
                 <Box sx={{ mb: 3 }}>

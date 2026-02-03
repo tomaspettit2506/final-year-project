@@ -1,15 +1,17 @@
-import { Box, Card, Typography, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Card, Typography, useTheme as useMuiTheme, useMediaQuery } from "@mui/material";
+import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
 const BasicComponent = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+    const { isDark } = useAppTheme();
+    const muiTheme = useMuiTheme();
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
     
     return (
         <Card sx={{ 
             p: isMobile ? 3 : 6, 
             boxShadow: 3, 
             borderRadius: 5, 
-            bgcolor: 'background.paper', 
+            bgcolor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)', 
             maxWidth: '100%', 
             margin: '0 auto',
             width: isMobile ? '100%' : 800
@@ -50,5 +52,6 @@ const BasicComponent = () => {
             </Box>
           </Card>
     )
-}
+};
+
 export default BasicComponent;

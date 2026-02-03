@@ -4,8 +4,9 @@ import PieceGuide from "./PieceGuide";
 const PiecesComponent = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
   return (
-    <Box sx={{ p: isMobile ? 2 : 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ p: isMobile ? 2 : 3, display: 'flex', flexDirection: 'column', gap: 3, bgcolor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' }}>
       <Paper sx={{ p: isMobile ? 2 : 3 }}>
         <Typography variant="h4" sx={{ mb: 2 }}> ♟️ How Each Piece Moves</Typography>
         <Typography variant="body1">

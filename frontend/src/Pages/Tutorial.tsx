@@ -3,6 +3,8 @@ import { Box, Tab, useMediaQuery } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import { useTheme } from "../Context/ThemeContext";
+import ChessGalaxyTheme from "../assets/chess_galaxy.jpg";
 
 // Tutorial Components
 import AppBarComponent from "../Components/AppBarComponent";
@@ -13,6 +15,7 @@ import WinningComponent from "../Components/TutorialComponents/WinningComponent"
 import DrawComponent from "../Components/TutorialComponents/DrawComponent";
 
 function Tutorial() {
+  const { isDark } = useTheme();
   const [value, setValue] = React.useState('basic');
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
@@ -25,10 +28,33 @@ function Tutorial() {
   return (
     <>
       <AppBarComponent title="Chess Tutorial" isBackButton={true} isSettings={true}  isExit={true}/>
-      <Box sx={{ width: isMobile ? '100%' : 'auto', typography: "body1", p: 3 }}>
+      <Box sx={{ width: isMobile ? '100%' : 'auto', typography: "body1", p: 3, backgroundImage: `url(${ChessGalaxyTheme})`, backgroundSize: 'cover', borderRadius: 2 }}>
         <TabContext value={value}>
           <Box sx={{ borderColor: "divider", display: "flex", justifyContent: "center" }}>
-            <TabList onChange={handleChange} sx={{borderRadius: 15, bgcolor: 'background.paper', boxShadow: 3 }} variant="scrollable" scrollButtons="auto">
+            <TabList
+              onChange={handleChange}
+              sx={{
+                width: '65%',
+                minWidth: isMobile ? '100%' : '400px',
+                bgcolor: isDark ? '#1E293B' : '#E0F2FE',
+                borderRadius: 15,
+                '& .MuiTab-root': {
+                  color: isDark ? '#7DD3FC' : '#1D4ED8',
+                  fontSize: isMobile ? '0.9rem' : '1.05rem',
+                  textTransform: 'none',
+                },
+                '& .MuiTab-root.Mui-selected': {
+                  color: isDark ? '#E0F2FE' : '#0B5FFF',
+                  fontWeight: 700,
+                },
+                '& .MuiTab-root .MuiTab-iconWrapper': {
+                  fontSize: isMobile ? '1rem' : '1.1rem',
+                },
+              }}
+              variant="fullWidth"
+              scrollButtons="auto"
+              aria-label="tutorial tabs"
+            >
               {/* Each Tab representing a tutorial section with Icon*/}
               <Tab icon={"📖"} iconPosition="start" label="Basic" value="basic" className="icon-button" />
               <Tab icon={"⚔️"} iconPosition="start" label="Pieces" value="pieces" className="icon-button" />

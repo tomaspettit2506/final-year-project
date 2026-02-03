@@ -47,7 +47,21 @@ const MiniBoard: React.FC<MiniBoardProps> = ({ highlights = [], pieces = [] }) =
                   alignItems: 'center',
                   justifyContent: 'center',
                   position: 'relative',
-                  bgcolor: isLightSquare(fileIndex, rankIndex) ? boardTheme == "classic" ? "#f0d9b5" : boardTheme == "modern" ? "#e1e1e1" : "#deb887" : boardTheme == "classic" ? "#b58863" : boardTheme == "modern" ? "#757575" : "#8b4513",
+                  bgcolor: isLightSquare(fileIndex, rankIndex) ? boardTheme === "dark"
+                        ? "#4b5563c1"
+                        : boardTheme === "wooden"
+                        ? "#f3e8ff"
+                        : boardTheme === "modern"
+                        ? "#e0e7ff"
+                        : "#f0d9b5"
+                      : boardTheme === "dark"
+                      ? "#1f2937dd"
+                      : boardTheme === "wooden"
+                      ? "#a78bfa"
+                      : boardTheme === "modern"
+                      ? "#6366f1"
+                      : "#b58863",
+                    
                   ...(highlighted && {
                     boxShadow: 'inset 0 0 0 2px #3b82f6',
                   }),

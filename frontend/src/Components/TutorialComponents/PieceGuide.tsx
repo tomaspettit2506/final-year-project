@@ -23,8 +23,9 @@ const PieceGuide: React.FC<PieceGuideProps> = ({
 }: PieceGuideProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
   return (
-    <Paper sx={{ p: isMobile ? 2 : 3 }}>
+    <Paper sx={{ p: isMobile ? 2 : 3, bgcolor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' }}>
       <Grid container spacing={3}>
         <Grid size={{xs: 12, md: 6}}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
