@@ -27,9 +27,10 @@ router.get('/user/:id', async (req, res) => {
 
 // POST Game (add game and link to user's gameRecents)
 router.post('/', async (req, res) => {
-  const { opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, userId } = req.body;
+  const { myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, userId } = req.body;
   try {
     const newGame = new Game({
+      myRating,
       opponent,
       opponentRating,
       date,
@@ -49,7 +50,7 @@ router.post('/', async (req, res) => {
         {
           $push: {
             gameRecents: {
-              opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, _id: newGame._id
+              myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, _id: newGame._id
             }
           }
         },

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const gameSchema = new mongoose.Schema({
+  myRating: Number,
   opponent: String,
   opponentRating: Number,
   date: { type: Date, default: Date.now },
