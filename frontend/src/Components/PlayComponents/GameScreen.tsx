@@ -25,9 +25,10 @@ interface GameScreenProps {
   myName?: string;
   roomId?: string;
   isHost?: boolean;
+  isRated?: boolean;
 }
 
-const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false, isRated = false }) => {
     // myColor, myName, roomId, isHost are now available for multiplayer logic and display
   const { user, userData } = useAuth();
   const [gameState, setGameState] = useState<GameState>(() => ({
@@ -215,6 +216,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
             opponentRating: userData?.rating || 1200,
             date: new Date().toISOString(),
             result,
+            isRated: isRated || false,
             timeControl: timerEnabled ? timerDuration : 0,
             termination,
             moves: gameState.moveHistory.length,
@@ -233,7 +235,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       
       saveGameData();
     }
-  }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled]);
+  }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled, isRated]);
   const applyRemoteHistory = useCallback((remoteMoves: RemoteMove[]) => {
     if (!Array.isArray(remoteMoves) || remoteMoves.length === 0) return;
 
@@ -581,6 +583,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       white: [...currentState.capturedPieces.white],
       black: [...currentState.capturedPieces.black]
     };
+    
     if (capturedPiece && capturedPiece.color !== piece.color) newCapturedPieces[piece.color].push(capturedPiece);
     
     const nextPlayer = currentState.currentPlayer === 'white' ? 'black' : 'white';
@@ -696,9 +699,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     
     for (const move of newHistory) {
       const isCastling = move.isCastling ?? isCastlingMove(newBoard, move.from, move.to);
-      if (move.captured && move.captured.color !== move.piece.color) {
-        newCapturedPieces[move.piece.color].push(move.captured);
-      }
+      if (move.captured && move.captured.color !== move.piece.color) newCapturedPieces[move.piece.color].push(move.captured);
+
       newBoard = isCastling
         ? executeCastling(newBoard, move.from, move.to)
         : simulateMove(newBoard, move.from, move.to);
@@ -879,14 +881,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       {/* Game Controller - Bottom Navigation */}
       <GameController
         gameMode={gameMode}
-        onUndo={handleUndo}
-        onPlay={handleResumeGame}
-        onPause={handlePauseGame}
-        onRedo={handleRedo}
-        onResign={() => setConfirmDialogOpen(true)}
-        onFlip={handleFlipBoard}
-        isPaused={isPaused}
-        canUndo={gameState.moveHistory.length >= (gameMode === 'ai' ? 2 : 1)}
+        onUndo={handleUndo} onPlay={handleResumeGame} 
+        onPause={handlePauseGame} onRedo={handleRedo}
+        onResign={() => setConfirmDialogOpen(true)} onFlip={handleFlipBoard}
+        isPaused={isPaused} canUndo={gameState.moveHistory.length >= (gameMode === 'ai' ? 2 : 1)}
         canRedo={redoMoves.length > 0}
       />
 

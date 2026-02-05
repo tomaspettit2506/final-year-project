@@ -61,6 +61,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   const isLightSquare = (row: number, col: number) =>
     (row + col) % 2 === 0;
 
+  const mapDisplayToBoard = (row: number, col: number) => {
+    if (!flipped) return { row, col };
+    return { row: 7 - row, col: 7 - col };
+  };
+
   const handleDragStart = (e: React.DragEvent, row: number, col: number) => {
     const piece = board[row][col];
     if (!piece) return;
@@ -91,10 +96,12 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     const boardRect = boardRef.current.getBoundingClientRect();
     const squareSize = boardRect.width / 8;
 
-    const col = Math.floor((touch.clientX - boardRect.left) / squareSize);
-    const row = Math.floor((touch.clientY - boardRect.top) / squareSize);
+    const displayCol = Math.floor((touch.clientX - boardRect.left) / squareSize);
+    const displayRow = Math.floor((touch.clientY - boardRect.top) / squareSize);
 
-    if (row < 0 || row >= 8 || col < 0 || col >= 8) return;
+    if (displayRow < 0 || displayRow >= 8 || displayCol < 0 || displayCol >= 8) return;
+
+    const { row, col } = mapDisplayToBoard(displayRow, displayCol);
 
     const piece = board[row][col];
     if (!piece) return;
@@ -124,10 +131,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     const boardRect = boardRef.current.getBoundingClientRect();
     const squareSize = boardRect.width / 8;
 
-    const col = Math.floor((touch.clientX - boardRect.left) / squareSize);
-    const row = Math.floor((touch.clientY - boardRect.top) / squareSize);
+    const displayCol = Math.floor((touch.clientX - boardRect.left) / squareSize);
+    const displayRow = Math.floor((touch.clientY - boardRect.top) / squareSize);
 
-    if (row >= 0 && row < 8 && col >= 0 && col < 8) {
+    if (displayRow >= 0 && displayRow < 8 && displayCol >= 0 && displayCol < 8) {
+      const { row, col } = mapDisplayToBoard(displayRow, displayCol);
       const isLegal = isLegalMove(row, col);
 
       if (isLegal && onPieceDrop) onPieceDrop(draggedPiece.from, { row, col });
@@ -163,12 +171,16 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
           width: isMobile ? "350px" : "512px",
           height: isMobile ? "350px" : "512px",
           border: "3px solid #3f3f46",
-          transform: flipped ? "rotate(180deg)" : "none",
+          // flip via coordinates, not CSS rotation
+          transform: "none",
           transition: "transform 0.3s ease-in-out",
         }}
       >
-        {board.map((row, r) =>
-          row.map((piece, c) => {
+        {Array.from({ length: 8 }).map((_, displayRow) =>
+          Array.from({ length: 8 }).map((_, displayCol) => {
+            const { row: r, col: c } = mapDisplayToBoard(displayRow, displayCol);
+            const piece = board[r][c];
+
             const selected = isSquareSelected(r, c);
             const legal = isLegalMove(r, c);
             const dragging = draggedFrom?.row === r && draggedFrom?.col === c;
@@ -176,7 +188,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
               dragOverSquare?.row === r && dragOverSquare?.col === c;
 
             return (
-              <Grid size={{ xs: 1 }} key={`${r}-${c}`}>
+              <Grid size={{ xs: 1 }} key={`${displayRow}-${displayCol}`}>
                 <Box
                   onClick={() => onSquareClick(r, c)}
                   onDrop={(e) => handleDrop(e, r, c)}
@@ -236,7 +248,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                         cursor: "grab",
                         userSelect: "none",
                         color: piece.color === "white" ? "white" : "black",
-                        transform: flipped ? "rotate(180deg)" : "none",
+                        // no rotation needed
+                        transform: "none",
                         textShadow:
                           piece.color === "white"
                             ? "0 2px 2px rgba(0,0,0,0.8)"
@@ -285,40 +298,47 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
           left: `calc(50% - ${boardOffset}px)`,
           width: isMobile ? "350px" : "512px",
           height: isMobile ? "350px" : "512px",
-          pointerEvents: "none",
+          pointerEvents: "none"
         }}
       >
         {/* Files */}
-        {[...Array(8)].map((_, i) => (
-          <Typography
-            key={i}
-            sx={{
-              position: "absolute",
-              bottom: isMobile ? -5 : 5,
-              left: `calc(${(i + 0.5) * (100 / 8)}% - -13px)`,
-              fontSize: isMobile ? "10px" : "14px",
-              color: isDark ? "#ffffff" : "#000000",
-            }}
-          >
-            {String.fromCharCode(97 + i)}
-          </Typography>
-        ))}
+        {[...Array(8)].map((_, i) => {
+          const displayFile = flipped ? 7 - i : i;
+          return (
+            <Typography
+              key={i}
+              sx={{
+                position: "absolute",
+                bottom: isMobile ? -5 : 5,
+                left: `calc(${(i + 0.5) * (100 / 8)}% - -13px)`,
+                fontSize: isMobile ? "10px" : "14px",
+                color: isDark ? "#ffffff" : "#000000",
+                transform: "none",
+              }}
+            >
+              {String.fromCharCode(97 + displayFile)}
+            </Typography>
+          );
+        })}
 
         {/* Ranks */}
-        {[...Array(8)].map((_, i) => (
-          <Typography
-            key={i}
-            sx={{
-              position: "absolute",
-              top: `calc(${(7 - i + 0.5) * (100 / 8)}% - ${isMobile ? "17px" : "34px"})`,
-              left: isMobile ? 5 : 0,
-              fontSize: isMobile ? "10px" : "14px",
-              color: isDark ? "#ffffff" : "#000000",
-            }}
-          >
-            {i + 1}
-          </Typography>
-        ))}
+        {[...Array(8)].map((_, i) => {
+          const displayRank = flipped ? 8 - i : i + 1;
+          return (
+            <Typography
+              key={i}
+              sx={{
+                position: "absolute",
+                top: `calc(${(7 - i + 0.5) * (100 / 8)}% - ${isMobile ? "17px" : "34px"})`,
+                left: isMobile ? 5 : 0,
+                fontSize: isMobile ? "10px" : "14px",
+                color: isDark ? "#ffffff" : "#000000",
+              }}
+            >
+              {displayRank}
+            </Typography>
+          );
+        })}
       </Box>
 
       {/* Dragged piece following touch */}

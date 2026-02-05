@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { socket } from '../../Services/socket';
 import { useAuth } from '../../Context/AuthContext';
 import type { GameMode } from '../../Types/chess';
-import { Box, Button, Card, CardContent, Grid, TextField, Typography, Alert, CircularProgress, Switch, Slider, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, TextField, Typography, Alert, CircularProgress, 
+  Switch, Select, MenuItem, FormControl, InputLabel, useTheme, useMediaQuery } from '@mui/material';
+import GameSetupTheme from '../../assets/game_setup.jpg';
+import { useTheme as useAppTheme } from '../../Context/ThemeContext';
 
 interface RoomUser {
   id: string;
@@ -19,11 +22,12 @@ interface GameSetupProps {
     timerEnabled: boolean;
     timerDuration: number;
   }) => void;
-  onRoomJoined?: (roomId: string, name: string, color: 'white' | 'black', isHost: boolean, timerDuration?: number, timerEnabled?: boolean) => void;
+  onRoomJoined?: (roomId: string, name: string, color: 'white' | 'black', isHost: boolean, timerDuration?: number, timerEnabled?: boolean, isRated?: boolean) => void;
 }
 
 const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -46,11 +50,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const [timerDuration, setTimerDuration] = useState(600); // 10 minutes default
   const [waitingTime, setWaitingTime] = useState(0); // seconds
   const [socketReady, setSocketReady] = useState(false);
-
-  const getTimerLabel = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
-  };
+  const [isRated, setIsRated] = useState(false); // Track if the game is rated or casual
 
   const formatWaitingTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -104,7 +104,10 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
               const minutes = parseInt(invite.timeControl || '10');
               const duration = minutes * 60;
               setTimerDuration(duration);
-              setTimerEnabled(true); // Always enable timer for game invites
+              // Only enable timer for RATED games, disable for casual games
+              setTimerEnabled(invite.rated === true);
+              setIsRated(invite.rated === true);
+              console.log('[GameSetup] Game is', invite.rated ? 'RATED (timer enabled)' : 'CASUAL (timer disabled)');
             }
           })
           .catch(err => console.error('[GameSetup] Failed to load invite settings:', err));
@@ -115,9 +118,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const handleModeChange = (mode: GameMode) => {
     setSelectedMode(mode);
     // If switching to PvP, show multiplayer setup
-    if (mode === 'pvp') {
-      setMpStep('choose');
-    }
+    if (mode === 'pvp') setMpStep('choose');
   };
 
   // Auto-join when coming from challenge with roomId
@@ -136,12 +137,13 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
   // Multiplayer socket listeners
   useEffect(() => {
-    const handleGameReady = (data: { players: RoomUser[]; status: string; startTime: number; timerEnabled?: boolean; timerDuration?: number }) => {
+    const handleGameReady = (data: { players: RoomUser[]; status: string; startTime: number; timerEnabled?: boolean; timerDuration?: number; rated?: boolean }) => {
       console.log('Game is ready, both players have joined!', data);
-      console.log('[GameSetup] Timer settings from server:', { timerEnabled: data.timerEnabled, timerDuration: data.timerDuration });
+      console.log('[GameSetup] Timer settings from server:', { timerEnabled: data.timerEnabled, timerDuration: data.timerDuration, rated: data.rated });
       setRoomUsers(data.players);
       if (data.timerEnabled !== undefined) setTimerEnabled(data.timerEnabled);
       if (data.timerDuration !== undefined) setTimerDuration(data.timerDuration);
+      if (data.rated !== undefined) setIsRated(data.rated);
 
       // Resolve the current player details from the payload (helps Player 2 who may receive
       // gameReady before the join callback finishes setting state)
@@ -150,12 +152,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       const resolvedName = myPlayer?.name || name;
 
       // Persist derived values so UI stays in sync
-      if (!playerColor && myPlayer?.color) {
-        setPlayerColor(myPlayer.color);
-      }
-      if (!name && myPlayer?.name) {
-        setName(myPlayer.name);
-      }
+      if (!playerColor && myPlayer?.color) setPlayerColor(myPlayer.color);
+      if (!name && myPlayer?.name) setName(myPlayer.name);
 
       const actualRoomId = createdRoomId || roomId;
 
@@ -163,7 +161,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       setTimeout(() => {
         if (onRoomJoined && actualRoomId) {
           console.log('Calling onRoomJoined with:', { actualRoomId, resolvedName, resolvedColor, isHost });
-          onRoomJoined(actualRoomId, resolvedName, resolvedColor, isHost, data.timerDuration || timerDuration, data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled);
+          onRoomJoined(actualRoomId, resolvedName, resolvedColor, isHost, data.timerDuration || timerDuration, data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled, isRated);
         }
       }, 0);
     };
@@ -197,7 +195,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       socket.off('roomTimeout', handleRoomTimeout);
       socket.off('opponentDisconnected', handleOpponentDisconnected);
     };
-  }, [playerColor, createdRoomId, roomId, name, isHost, onRoomJoined, timerDuration, timerEnabled]);
+  }, [playerColor, createdRoomId, roomId, name, isHost, onRoomJoined, timerDuration, timerEnabled, isRated]);
 
   // Create Room
   const handleCreateRoom = () => {
@@ -213,8 +211,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       socket.connect();
     }
     
-    console.log('[handleCreateRoom] Emitting createRoom with:', { name, timerEnabled, timerDuration });
-    socket.emit('createRoom', { name, timerEnabled, timerDuration }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
+    console.log('[handleCreateRoom] Emitting createRoom with:', { name, timerEnabled, timerDuration, isRated });
+    socket.emit('createRoom', { name, timerEnabled, timerDuration, isRated }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
       console.log('[handleCreateRoom] Received callback:', res);
       if (res.success && res.roomId && res.color) {
         setCreatedRoomId(res.roomId);
@@ -222,7 +220,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
         setIsHost(true);
         setRoomUsers([{ id: socket.id || '', name, color: res.color }]);
         setMpStep('waiting');
-        console.log(`Room created: ${res.roomId}. You are ${res.color}. Timer: ${timerEnabled ? timerDuration + 's' : 'disabled'}. Waiting for opponent...`);
+        console.log(`Room created: ${res.roomId}. You are ${res.color}. Game Type: ${isRated ? 'RATED' : 'CASUAL'} (Timer: ${timerEnabled ? timerDuration + 's' : 'disabled'}). Waiting for opponent...`);
       } else {
         setError('Failed to create room.');
       }
@@ -328,7 +326,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #7696df, #6d28d9, #0f172a)',
+        backgroundImage: `url(${GameSetupTheme})`,
+        backgroundSize: 'cover',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -338,27 +337,34 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       <Box width="100%">
         <Box textAlign="center" mb={8}>
           {/* If you not ready to play, Tutorial Btn */}
-          <Box mb={2}>
+          <Box mb={isMobile ? 4 : 6}>
             <Button
               variant="contained"
               color="warning"
               onClick={() => navigate('/tutorial')}
+              sx={{ fontSize: isMobile ? '0.9rem' : '1.1rem', px: 3, py: 1.5 }}
             >
               🎓 Need Help? View Tutorial
             </Button>
           </Box>
           <Box display="flex" alignItems="center" justifyContent="center" gap={3} mb={4}>
-            <Typography variant="h3" color="white" sx={{fontSize: isMobile ? '1.5rem' : '3rem'}}>👑Are you ready to play?👑</Typography>
+            <Typography variant="h3" color="white" sx={{ fontSize: isMobile ? '1.6rem' : '3.2rem', fontWeight: 600 }}>
+              👑 Are you ready to play? 👑
+            </Typography>
           </Box>
-          <Typography color="text.secondary">Configure your game settings and start playing</Typography>
+          <Typography color="text.secondary" sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>
+            Configure your game settings and start playing
+          </Typography>
         </Box>
 
-        <Card sx={{ p: 8, bgcolor: 'blue', borderColor: 'divider', backdropFilter: 'blur(4px)' }}>
+        <Card sx={{ p: isMobile ? 4 : 8, bgcolor: isDark ? 'rgba(33, 34, 34, 0.92)' : 'rgba(240, 248, 255, 0.92)', borderColor: 'divider' }}>
           <CardContent>
             <Box display="flex" flexDirection="column" gap={8}>
               {/* Game Mode Selection */}
               <Box>
-                <Typography variant="h6" color="white" mb={4}>Select Game Mode</Typography>
+                <Typography variant="h6" color="text.primary" mb={4} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
+                  Select Game Mode
+                </Typography>
                 <Grid container spacing={isMobile ? 2 : 4} sx={{ justifyContent: 'center' }}>
                   <Grid size={{xs: isMobile ? 12 : 6}}>
                     <Button
@@ -368,20 +374,26 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         p: isMobile ? 2 : 3,
                         borderRadius: 2,
                         borderWidth: 2,
-                        backgroundImage: selectedMode === 'ai' ? 'linear-gradient(to right, #141e30, #243b55)' : 'none',
-                        color: 'white',
+                        bgcolor: selectedMode === 'ai' ? 'rgba(79, 70, 229, 0.25)' : 'transparent',
+                        borderColor: selectedMode === 'ai' ? '#4F46E5' : '#CBD5E1',
+                        color: selectedMode === 'ai' ? '#ebebef' : '#ebebef',
                         boxShadow: selectedMode === 'ai' ? 3 : 0,
                         width: '100%',
                         height: '100%',
+                        fontSize: isMobile ? '1rem' : '1.1rem',
                         "&:hover": {
-                          backgroundImage: selectedMode === 'ai' ? 'linear-gradient(to right, #0f172a, #1e293b)' : 'none',
+                          bgcolor: selectedMode === 'ai' ? 'rgba(79, 70, 229, 0.25)' : 'rgba(0, 0, 0, 0.04)',
                         }
                       }}
                     >
-                      <Box>
-                        <Typography sx={{ fontSize: '2rem' }}>🤖</Typography>
-                        <Typography color="text.secondary" mb={1}>Play vs AI</Typography>
-                        <Typography variant="body1" color="text.secondary">Challenge the computer</Typography>
+                      <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
+                        <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>🤖</Typography>
+                        <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600, mb: 1 }}>
+                          Play vs AI
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                          Challenge the computer
+                        </Typography>
                       </Box>
                     </Button>
                   </Grid>
@@ -393,20 +405,26 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         p: isMobile ? 2 : 3,
                         borderRadius: 2,
                         borderWidth: 2,
-                        backgroundImage: selectedMode === 'pvp' ? 'linear-gradient(to right, #141e30, #243b55)' : 'none',
-                        color: selectedMode === 'pvp' ? 'white' : 'text.secondary',
+                        bgcolor: selectedMode === 'pvp' ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
+                        borderColor: selectedMode === 'pvp' ? '#4F46E5' : '#CBD5E1',
+                        color: selectedMode === 'pvp' ? '#ebebef' : '#ebebef',
                         boxShadow: selectedMode === 'pvp' ? 3 : 0,
                         width: '100%',
                         height: '100%',
+                        fontSize: isMobile ? '1rem' : '1.1rem',
                         "&:hover": {
-                          backgroundImage: selectedMode === 'pvp' ? 'linear-gradient(to right, #0f172a, #1e293b)' : 'none',
+                          bgcolor: selectedMode === 'pvp' ? 'rgba(79, 70, 229, 0.25)' : 'rgba(0, 0, 0, 0.04)',
                         }
                       }}
                     >
-                      <Box>
-                        <Typography sx={{ fontSize: '2rem' }}>👥</Typography>
-                        <Typography color="text.secondary" mb={1} sx={{ fontSize: '1rem' }}>Player vs Player</Typography>
-                        <Typography variant="body1" color="text.secondary">Play with a friend</Typography>
+                      <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
+                        <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>👥</Typography>
+                        <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600, mb: 1 }}>
+                          Player vs Player
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                          Play with a friend
+                        </Typography>
                       </Box>
                     </Button>
                   </Grid>
@@ -415,22 +433,30 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
               {/* AI Difficulty (only shown for AI mode) */}
               {selectedMode === 'ai' && (
-                <Box>
-                  <Typography color="white" mb={2}>Select Difficulty</Typography>
+                <Box sx={{ mt: 4, bgcolor: isDark ? 'rgba(230, 230, 250, 0.6)' : 'rgba(50, 50, 50, 0.6)', p: isMobile ? 3 : 4, borderRadius: 2 }}>
+                  <Typography color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 600 }}>
+                    Select Difficulty
+                  </Typography>
                   <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 250 && difficultyName === 'Easy' ? 'outlined' : 'contained'}
+                        variant={difficulty === 250 && difficultyName === 'Easy' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(250);
                           setDifficultyName('Easy');
                         }}
-                        sx={{ py: 1.5,
+                        sx={{ 
+                          py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           ...(difficulty === 250 && difficultyName === 'Easy' && {
-                            background: 'linear-gradient(135deg, #0883ff 0%, #f7263b 35%, #cfd2da, red 75%)',
-                            color: 'white'
-                          }) }}
+                            bgcolor: 'rgb(34, 197, 94)',
+                            borderColor: '#22C55E',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(34, 197, 94)' }
+                          }) 
+                        }}
                       >
                         🎯 Easy
                       </Button>
@@ -438,16 +464,22 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 550 && difficultyName === 'Medium' ? 'outlined' : 'contained'}
+                        variant={difficulty === 550 && difficultyName === 'Medium' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(550);
                           setDifficultyName('Medium');
                         }}
-                        sx={{ py: 1.5,
+                        sx={{ 
+                          py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           ...(difficulty === 550 && difficultyName === 'Medium' && {
-                            background: 'linear-gradient(135deg, #e1bbd7 0%, #cfd2da 100%)',
-                            color: 'white'
-                          }) }}
+                            bgcolor: 'rgb(59, 130, 246)',
+                            borderColor: '#3B82F6',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(59, 130, 246)' }
+                          }) 
+                        }}
                       >
                         🧠 Medium
                       </Button>
@@ -455,16 +487,22 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 900 && difficultyName === 'Hard' ? 'outlined' : 'contained'}
+                        variant={difficulty === 900 && difficultyName === 'Hard' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(900);
                           setDifficultyName('Hard');
                         }}
-                        sx={{ py: 1.5,
+                        sx={{ 
+                          py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           ...(difficulty === 900 && difficultyName === 'Hard' && {
-                            background: 'linear-gradient(135deg, #dbee6f 0%, #b3cd20 100%)',
-                            color: 'white'
-                          }) }}
+                            bgcolor: 'rgb(245, 158, 11)',
+                            borderColor: '#F59E0B',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(245, 158, 11)' }
+                          }) 
+                        }}
                       >
                         ⭐ Hard
                       </Button>
@@ -472,16 +510,22 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 1300 && difficultyName === 'Expert' ? 'outlined' : 'contained'}
+                        variant={difficulty === 1300 && difficultyName === 'Expert' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(1300);
                           setDifficultyName('Expert');
                         }}
-                        sx={{ py: 1.5,
+                        sx={{ 
+                          py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           ...(difficulty === 1300 && difficultyName === 'Expert' && {
-                            background: 'linear-gradient(135deg, #f0f63b 0%, #50561e 100%)',
-                            color: 'white'
-                          }) }}
+                            bgcolor: 'rgb(239, 68, 68)',
+                            borderColor: '#EF4444',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(239, 68, 68)' }
+                          }) 
+                        }}
                       >
                         🏆 Expert
                       </Button>
@@ -489,16 +533,22 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 1700 && difficultyName === 'Master' ? 'outlined' : 'contained'}
+                        variant={difficulty === 1700 && difficultyName === 'Master' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(1700);
                           setDifficultyName('Master');
                         }}
-                        sx={{ py: 1.5,
+                        sx={{ 
+                          py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           ...(difficulty === 1700 && difficultyName === 'Master' && {
-                            background: 'linear-gradient(135deg, #f3f3f3 0%, #0ea1e4 100%)',
-                            color: 'white'
-                          }) }}
+                            bgcolor: 'rgb(139, 92, 246)',
+                            borderColor: '#8B5CF6',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(139, 92, 246)' }
+                          }) 
+                        }}
                       >
                         🤖 Master
                       </Button>
@@ -506,17 +556,21 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
-                        variant={difficulty === 2200 && difficultyName === 'Rocket' ? 'outlined' : 'contained'}
+                        variant={difficulty === 2200 && difficultyName === 'Rocket' ? 'contained' : 'outlined'}
+                        color="inherit"
                         onClick={() => {
                           setDifficulty(2200);
                           setDifficultyName('Rocket');
                         }}
                         sx={{ 
                           py: 1.5,
+                          fontSize: isMobile ? '1rem' : '1.1rem',
+                          fontFamily: 'Arial Black, Gadget, sans-serif',
                           ...(difficulty === 2200 && difficultyName === 'Rocket' && {
-                            background: 'linear-gradient(45deg, #3e4c53 30%, #e1eaec 90%)',
-                            boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
-                            color: 'white'
+                            bgcolor: 'rgb(20, 184, 166)',
+                            borderColor: '#14B8A6',
+                            color: '#f9f9f9',
+                            '&:hover': { bgcolor: 'rgb(20, 184, 166)' }
                           })
                         }}
                       >
@@ -532,13 +586,15 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                 <Box>
                   {mpStep === 'choose' && (
                     <>
-                      <Typography variant="h6" color="white" mb={3}>Multiplayer Setup</Typography>
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                          <Button fullWidth variant="contained" color="primary" onClick={() => setMpStep('create')}>Create Room 🚀</Button>
+                      <Typography variant="h6" color="text.primary" mb={3} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
+                        Multiplayer Setup
+                      </Typography>
+                      <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+                        <Grid size={{ xl: 12 }}>
+                          <Button variant="contained" onClick={() => setMpStep('create')}>Create Room 🚀</Button>
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <Button fullWidth variant="outlined" color="primary" onClick={() => setMpStep('join')}>Join Room 🚀</Button>
+                        <Grid size={{ xl: 12 }}>
+                          <Button variant="outlined" onClick={() => setMpStep('join')}>Join Room 🚀</Button>
                         </Grid>
                       </Grid>
                     </>
@@ -546,7 +602,9 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
                   {mpStep === 'create' && (
                     <>
-                      <Typography variant="h6" color="white" mb={2}>Create Room</Typography>
+                      <Typography variant="h6" color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
+                        Create Room
+                      </Typography>
                       <TextField
                         label="Your Name"
                         value={name}
@@ -561,31 +619,34 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         <>
                           <Box display="flex" alignItems="center" justifyContent="space-between" mt={3} mb={2}>
                             <Box display="flex" alignItems="center" gap={1}>
-                              <Typography color="white">⏲️Enable Timer</Typography>
+                              <Typography color="text.primary" sx={{ fontSize: isMobile ? '1rem' : '1.1rem' }}>
+                                ⏲️ Enable Timer (Rated Game)
+                              </Typography>
                             </Box>
                             <Switch
                               checked={timerEnabled}
-                              onChange={(_, checked) => setTimerEnabled(checked)}
+                              onChange={(_, checked) => {
+                                setTimerEnabled(checked);
+                                setIsRated(checked); // Rated games require a timer
+                              }}
                             />
                           </Box>
                           {timerEnabled && (
                             <Box mb={3}>
-                              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                <Typography color="text.secondary">Time per player</Typography>
-                                <Typography color="primary">{getTimerLabel(timerDuration)}</Typography>
-                              </Box>
-                              <Slider
-                                value={timerDuration}
-                                onChange={(_, value) => setTimerDuration(value as number)}
-                                min={300}
-                                max={3600}
-                                step={60}
-                                sx={{ width: '100%' }}
-                              />
-                              <Box display="flex" justifyContent="space-between" mt={1}>
-                                <Typography variant="caption" color="text.secondary">5 min</Typography>
-                                <Typography variant="caption" color="text.secondary">60 min</Typography>
-                              </Box>
+                              <FormControl fullWidth>
+                                <InputLabel id="timer-select-label">Time per player</InputLabel>
+                                <Select
+                                  labelId="timer-select-label"
+                                  value={timerDuration}
+                                  label="Time per player"
+                                  onChange={(e) => setTimerDuration(e.target.value as number)}
+                                >
+                                  <MenuItem value={600}>10 minutes</MenuItem>
+                                  <MenuItem value={900}>15 minutes</MenuItem>
+                                  <MenuItem value={1800}>30 minutes</MenuItem>
+                                  <MenuItem value={3600}>60 minutes</MenuItem>
+                                </Select>
+                              </FormControl>
                             </Box>
                           )}
                         </>
@@ -605,23 +666,16 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
                   {mpStep === 'join' && (
                     <>
-                      <Typography variant="h6" color="white" mb={2}>Join Room</Typography>
-                      <TextField
-                        label="Your Name"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        fullWidth
-                        margin="normal"
-                        sx={{ color: 'white' }}
-                      />
-                      <TextField
-                        label="Room ID"
-                        value={roomId}
+                      <Typography variant="h6" color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
+                        Join Room
+                      </Typography>
+                      <TextField label="Your Name" value={name}
+                        onChange={e => setName(e.target.value)} fullWidth
+                        margin="normal" sx={{ color: 'white' }} />
+                        
+                      <TextField label="Room ID" value={roomId}
                         onChange={e => setRoomId(e.target.value.toUpperCase())}
-                        fullWidth
-                        margin="normal"
-                        sx={{ color: 'white' }}
-                      />
+                        fullWidth margin="normal" sx={{ color: 'white' }} />
                       <Button fullWidth variant="contained" color="primary" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={joining}>
                         {joining ? 'Joining...' : 'Join'}
                       </Button>
@@ -631,7 +685,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
                   {mpStep === 'waiting' && (
                     <>
-                      <Typography variant="h6" color="white" mb={3}>
+                      <Typography variant="h6" color="text.primary" mb={3} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
                         {roomUsers.length === 2 ? 'Starting Game...' : 'Waiting for opponent...'}
                       </Typography>
                       <Box display="flex" justifyContent="center" mb={3}>
@@ -676,10 +730,10 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
               )}
 
               <Box>
-                <Typography sx={{ fontSize: '18px' }} variant="body2" color="text.secondary" component="div">
+                <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600 }} variant="body2" color="text.primary" component="div">
                   🚀 How To Play:
                 </Typography>
-                <Box component="ul" sx={{ pl: 3, color: 'text.secondary', mt: 1 }}>
+                <Box component="ul" sx={{ pl: 3, color: 'text.secondary', mt: 1, fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
                   <li>Choose your game mode: Play against AI or a friend.</li>
                   <li>If playing against AI, select your desired difficulty level.</li>
                   <li>If playing with a friend, create or join a room using the Room ID.</li>
@@ -696,8 +750,14 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                 <Button
                   onClick={handleStartGame}
                   variant="contained"
-                  color="primary"
-                  sx={{ width: '100%', height: 48, bgcolor: 'purple.600', ':hover': { bgcolor: 'purple.700' } }}
+                  sx={{ 
+                    width: '100%', 
+                    height: 56, 
+                    bgcolor: 'rgba(124, 58, 237, 0.85)', 
+                    fontSize: isMobile ? '1.1rem' : '1.3rem',
+                    fontWeight: 600,
+                    ':hover': { bgcolor: 'rgba(109, 40, 217, 0.9)' } 
+                  }}
                   size="large"
                 >
                   Start Game
@@ -707,9 +767,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
           </CardContent>
         </Card>
 
-
         <Box mt={6} textAlign="center">
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
             Use drag & drop or click to move pieces
           </Typography>
         </Box>
