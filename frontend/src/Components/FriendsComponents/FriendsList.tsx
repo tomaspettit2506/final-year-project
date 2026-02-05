@@ -6,7 +6,7 @@ import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ProfileDialog from "./ProfileDialog";
 import GameDialog from "./GameDialog";
-
+import ChatDialog from "./ChatDialog";
 import ChallengeDialog from "./ChallengeDialog";
 
 interface Friend {
@@ -37,6 +37,8 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: "",
@@ -219,6 +221,23 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
+  const handleOpenChat = (friend: Friend) => {
+    setSelectedFriend(friend);
+    setChatDialogOpen(true);
+    setChatMessages([]); // Reset messages when opening chat
+  };
+
+  const handleSendMessage = (text: string) => {
+    const newMessage = {
+      id: Math.random().toString(36).substring(2, 11),
+      senderId: user?.uid || "",
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+    setChatMessages([...chatMessages, newMessage]);
+  };
+
   const handleMenuOpen = (friend: Friend, event: React.MouseEvent<HTMLElement>) => {
     setSelectedFriend(friend);
     setMenuAnchorEl(event.currentTarget);
@@ -314,14 +333,11 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       Challenge
                     </Button>
 
-                    {/* Chat button can be added here in the future */}
                     <Button
                       variant="outlined"
                       size="small"
                       startIcon={"💬"}
-                      onClick={() => {
-                        navigate(`/chat/${friend.id}`);
-                      }}
+                      onClick={() => handleOpenChat(friend)}
                     >
                       Chat
                     </Button>
@@ -375,6 +391,17 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
             onOpenChange={setChallengeDialogOpen}
             friendName={selectedFriend.name}
             onChallenge={handleSendChallenge}
+          />
+        )}
+
+        {selectedFriend && (
+          <ChatDialog
+            open={chatDialogOpen}
+            onOpenChange={setChatDialogOpen}
+            friend={selectedFriend}
+            messages={chatMessages}
+            currentUserId={user?.uid || ""}
+            onSendMessage={handleSendMessage}
           />
         )}
       </Stack>
