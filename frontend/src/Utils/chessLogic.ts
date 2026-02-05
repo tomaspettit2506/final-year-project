@@ -39,7 +39,8 @@ export function isValidPosition(pos: Position): boolean {
 export function getLegalMoves(
   board: Board,
   position: Position,
-  checkForCheck: boolean = true
+  checkForCheck: boolean = true,
+  includeCastling: boolean = true
 ): Position[] {
   const piece = board[position.row][position.col];
   if (!piece) return [];
@@ -63,7 +64,7 @@ export function getLegalMoves(
       moves = getQueenMoves(board, position, piece.color);
       break;
     case 'king':
-      moves = getKingMoves(board, position, piece.color);
+      moves = getKingMoves(board, position, piece.color, includeCastling);
       break;
   }
   
@@ -187,7 +188,12 @@ function getQueenMoves(board: Board, pos: Position, color: PieceColor): Position
   return [...getRookMoves(board, pos, color), ...getBishopMoves(board, pos, color)];
 }
 
-function getKingMoves(board: Board, pos: Position, color: PieceColor): Position[] {
+function getKingMoves(
+  board: Board,
+  pos: Position,
+  color: PieceColor,
+  includeCastling: boolean = true
+): Position[] {
   const moves: Position[] = [];
   const offsets = [
     [-1, -1], [-1, 0], [-1, 1],
@@ -205,6 +211,11 @@ function getKingMoves(board: Board, pos: Position, color: PieceColor): Position[
     }
   }
   
+  if (includeCastling) {
+    const castlingMoves = getCastlingMoves(board, pos, color);
+    moves.push(...castlingMoves);
+  }
+  
   return moves;
 }
 
@@ -214,6 +225,13 @@ export function simulateMove(board: Board, from: Position, to: Position): Board 
   newBoard[to.row][to.col] = piece ? { ...piece, hasMoved: true } : null;
   newBoard[from.row][from.col] = null;
   return newBoard;
+}
+
+// Applies a move, automatically handling special moves such as castling
+export function applyMove(board: Board, from: Position, to: Position): Board {
+  return isCastlingMove(board, from, to)
+    ? executeCastling(board, from, to)
+    : simulateMove(board, from, to);
 }
 
 export function findKing(board: Board, color: PieceColor): Position | null {
@@ -239,7 +257,8 @@ export function isKingInCheck(board: Board, color: PieceColor): boolean {
     for (let col = 0; col < 8; col++) {
       const piece = board[row][col];
       if (piece && piece.color === opponentColor) {
-        const moves = getLegalMoves(board, { row, col }, false);
+        // Do not include castling when computing attacks to avoid recursion
+        const moves = getLegalMoves(board, { row, col }, false, false);
         if (moves.some(move => move.row === kingPos.row && move.col === kingPos.col)) {
           return true;
         }
@@ -279,6 +298,10 @@ export function getPositionNotation(pos: Position): string {
 export function getMoveNotation(board: Board, from: Position, to: Position): string {
   const piece = board[from.row][from.col];
   if (!piece) return '';
+  
+  if (isCastlingMove(board, from, to)) {
+    return to.col > from.col ? 'O-O' : 'O-O-O';
+  }
   
   const capturedPiece = board[to.row][to.col];
   const pieceSymbol = piece.type === 'pawn' ? '' : piece.type[0].toUpperCase();
@@ -321,7 +344,8 @@ export function getAllPseudoLegalMoves(board: Board, color: PieceColor): Array<{
       const piece = board[row][col];
       if (piece && piece.color === color) {
         const from = { row, col };
-        const pseudoLegalMoves = getLegalMoves(board, from, false); // Skip check validation
+        // Skip check validation and skip castling (avoids expensive check computations)
+        const pseudoLegalMoves = getLegalMoves(board, from, false, false);
         for (const to of pseudoLegalMoves) {
           allMoves.push({ from, to });
         }
@@ -330,4 +354,142 @@ export function getAllPseudoLegalMoves(board: Board, color: PieceColor): Array<{
   }
   
   return allMoves;
+}
+
+// Castling logic
+export function canCastle(board: Board, kingPos: Position, color: PieceColor): boolean {
+  const king = board[kingPos.row][kingPos.col];
+  if (!king || king.type !== 'king' || king.hasMoved) return false;
+  if (isKingInCheck(board, color)) return false;
+  
+  return canCastleKingside(board, kingPos, color) || canCastleQueenside(board, kingPos, color);
+}
+
+function canCastleKingside(board: Board, kingPos: Position, color: PieceColor): boolean {
+  const rookCol = 7;
+  const rook = board[kingPos.row][rookCol];
+  
+  if (!rook || rook.type !== 'rook' || rook.color !== color || rook.hasMoved) {
+    return false;
+  }
+  
+  // Check if squares between king and rook are empty
+  for (let col = kingPos.col + 1; col < rookCol; col++) {
+    if (board[kingPos.row][col]) {
+      return false;
+    }
+  }
+  
+  // Check if king passes through or lands on attacked square
+  const testBoard1 = simulateMove(board, kingPos, { row: kingPos.row, col: kingPos.col + 1 });
+  const testBoard2 = simulateMove(board, kingPos, { row: kingPos.row, col: kingPos.col + 2 });
+  
+  return !isKingInCheck(testBoard1, color) && !isKingInCheck(testBoard2, color);
+}
+
+function canCastleQueenside(board: Board, kingPos: Position, color: PieceColor): boolean {
+  const rookCol = 0;
+  const rook = board[kingPos.row][rookCol];
+  
+  if (!rook || rook.type !== 'rook' || rook.color !== color || rook.hasMoved) {
+    return false;
+  }
+  
+  // Check if squares between king and rook are empty
+  for (let col = kingPos.col - 1; col > rookCol; col--) {
+    if (board[kingPos.row][col]) {
+      return false;
+    }
+  }
+  
+  // Check if king passes through or lands on attacked square
+  const testBoard1 = simulateMove(board, kingPos, { row: kingPos.row, col: kingPos.col - 1 });
+  const testBoard2 = simulateMove(board, kingPos, { row: kingPos.row, col: kingPos.col - 2 });
+  
+  return !isKingInCheck(testBoard1, color) && !isKingInCheck(testBoard2, color);
+}
+
+function getCastlingMoves(board: Board, kingPos: Position, color: PieceColor): Position[] {
+  const moves: Position[] = [];
+  
+  // Kingside castling
+  if (canCastleKingside(board, kingPos, color)) {
+    moves.push({ row: kingPos.row, col: kingPos.col + 2 });
+  }
+  
+  // Queenside castling
+  if (canCastleQueenside(board, kingPos, color)) {
+    moves.push({ row: kingPos.row, col: kingPos.col - 2 });
+  }
+  
+  return moves;
+}
+
+export function isCastlingMove(board: Board, from: Position, to: Position): boolean {
+  const piece = board[from.row][from.col];
+  if (!piece || piece.type !== 'king') return false;
+  
+  return Math.abs(to.col - from.col) === 2 && to.row === from.row;
+}
+
+export function executeCastling(board: Board, from: Position, to: Position): Board {
+  const newBoard = simulateMove(board, from, to);
+  
+  // Move the rook
+  if (to.col > from.col) {
+    // Kingside castling
+    const rookFrom = { row: from.row, col: 7 };
+    const rookTo = { row: from.row, col: 5 };
+    const rook = newBoard[rookFrom.row][rookFrom.col];
+    if (rook) {
+      newBoard[rookTo.row][rookTo.col] = { ...rook, hasMoved: true };
+      newBoard[rookFrom.row][rookFrom.col] = null;
+    }
+  } else {
+    // Queenside castling
+    const rookFrom = { row: from.row, col: 0 };
+    const rookTo = { row: from.row, col: 3 };
+    const rook = newBoard[rookFrom.row][rookFrom.col];
+    if (rook) {
+      newBoard[rookTo.row][rookTo.col] = { ...rook, hasMoved: true };
+      newBoard[rookFrom.row][rookFrom.col] = null;
+    }
+  }
+  
+  return newBoard;
+}
+
+// Pawn Promotion logic
+export function canPromote(board: Board, position: Position): boolean {
+  const piece = board[position.row][position.col];
+  if (!piece || piece.type !== 'pawn') return false;
+  
+  // White pawn reaches row 0, black pawn reaches row 7
+  const promotionRow = piece.color === 'white' ? 0 : 7;
+  return position.row === promotionRow;
+}
+
+export function promotePawn(board: Board, position: Position, promotionPiece: 'queen' | 'rook' | 'bishop' | 'knight'): Board {
+  const newBoard = board.map(row => [...row]);
+  const pawn = newBoard[position.row][position.col];
+  
+  if (pawn && pawn.type === 'pawn') {
+    newBoard[position.row][position.col] = {
+      type: promotionPiece,
+      color: pawn.color,
+      hasMoved: true
+    };
+  }
+  
+  return newBoard;
+}
+
+export function getPawnPromotionMoves(board: Board, position: Position, color: PieceColor): Position[] {
+  const moves = getPawnMoves(board, position, color);
+  
+  // Filter to only moves that would result in promotion
+  return moves.filter(move => {
+    const promotionRow = color === 'white' ? 0 : 7;
+    return move.row === promotionRow;
+  });
 }

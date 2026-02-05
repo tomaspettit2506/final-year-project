@@ -1,5 +1,5 @@
 import type { Board, PieceColor, Position } from '../Types/chess';
-import { getAllLegalMoves, simulateMove, isCheckmate } from './chessLogic';
+import { getAllLegalMoves, isCheckmate, applyMove } from './chessLogic';
 
 const PIECE_VALUES = {
   pawn: 100,
@@ -123,7 +123,7 @@ function minimax(
   if (isMaximizing) {
     let maxScore = -Infinity;
     for (const move of moves) {
-      const newBoard = simulateMove(board, move.from, move.to);
+      const newBoard = applyMove(board, move.from, move.to);
       const score = minimax(newBoard, depth - 1, alpha, beta, false, color);
       maxScore = Math.max(maxScore, score);
       alpha = Math.max(alpha, score);
@@ -133,7 +133,7 @@ function minimax(
   } else {
     let minScore = Infinity;
     for (const move of moves) {
-      const newBoard = simulateMove(board, move.from, move.to);
+      const newBoard = applyMove(board, move.from, move.to);
       const score = minimax(newBoard, depth - 1, alpha, beta, true, color);
       minScore = Math.min(minScore, score);
       beta = Math.min(beta, score);
@@ -187,13 +187,13 @@ export function calculateMoveAccuracy(
   }
   
   // Evaluate the played move
-  const playedBoard = simulateMove(board, move.from, move.to);
+  const playedBoard = applyMove(board, move.from, move.to);
   const playedScore = evaluateBoard(playedBoard, playerColor);
   
   // Find the best move
   let bestScore = -Infinity;
   for (const possibleMove of allMoves) {
-    const newBoard = simulateMove(board, possibleMove.from, possibleMove.to);
+    const newBoard = applyMove(board, possibleMove.from, possibleMove.to);
     const score = minimax(newBoard, 2, -Infinity, Infinity, false, playerColor);
     bestScore = Math.max(bestScore, score);
   }
@@ -264,7 +264,7 @@ function getIntermediateMove(
 ): { from: Position; to: Position } {
   // Evaluate each move and add some randomness
   const evaluatedMoves = moves.map(move => {
-    const newBoard = simulateMove(board, move.from, move.to);
+    const newBoard = applyMove(board, move.from, move.to);
     const score = evaluateBoard(newBoard, aiColor);
     const randomFactor = Math.random() * 150 - 75; // Add ±75 random value
     return { move, score: score + randomFactor };
@@ -288,7 +288,7 @@ function getHardMove(
   let bestScore = -Infinity;
   
   for (const move of moves) {
-    const newBoard = simulateMove(board, move.from, move.to);
+    const newBoard = applyMove(board, move.from, move.to);
     const score = minimax(newBoard, depth, -Infinity, Infinity, false, aiColor);
     
     if (score > bestScore) {
