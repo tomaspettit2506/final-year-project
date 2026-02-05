@@ -17,7 +17,7 @@ code {
 
 /* 🔹 Style Buttons */
 button {
-  background-color: #5500aa; /* Dark purple from logo */
+  background-color: #91aa00; /* Dark purple from logo */
   color: white;
   border: none;
   padding: 10px 16px;
@@ -29,7 +29,7 @@ button {
 }
 
 button:hover {
-  background-color: #7733bb; /* Slightly lighter purple on hover */
+  background-color: #dad6df; /* Slightly lighter purple on hover */
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(85, 0, 170, 0.2);
 }

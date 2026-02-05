@@ -25,7 +25,7 @@
 }
 
 .App-link {
-  color: #8cc9da;
+  color: #acede6;
 }
 
 @keyframes App-logo-spin {
@@ -60,11 +60,31 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: none;
 }
 
 button:hover {
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.571);
   color: white;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0);
+}
+
+/* Icon Buttons */
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+  box-shadow: none;
+}
+
+.icon-button:hover {
+  background-color: rgba(144, 47, 242, 0.363);
+  box-shadow: 0 4px 8px rgba(85, 0, 170, 0.2);
+  border-radius: 10%;
 }
 
 /* 🛠 Custom Swiper Arrow Fix */

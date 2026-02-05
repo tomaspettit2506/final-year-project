@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type BoardTheme = "classic" | "modern" | "wooden";
-type PieceSet = "standard" | "fancy" | "minimal";
+type BoardTheme = "classic" | "modern" | "wooden" | "dark";
+type PieceSet = "standard" | "fancy" | "minimal" | "retro";
 
 interface BoardThemeContextType {
   boardTheme: BoardTheme;
