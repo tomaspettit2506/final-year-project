@@ -9,8 +9,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, firestore } from "../firebase"; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
-import ChessTheme from "../assets/chess_board.jpg";
-import { getApiBaseUrl } from "../Services/api";
+import LandingTheme from "../assets/landing_theme.jpg";
 
 // Features for the slideshow
 const slides = [
@@ -53,7 +52,7 @@ const Landing = () => {
         await setDoc(doc(firestore, "users", user.uid), {
           name: form.name,
           rating: form.rating,
-          email: form.email,
+          email: form.email || "",
         });
         // Notify backend about new user
         try {
@@ -72,8 +71,8 @@ const Landing = () => {
       } else {
         await signInWithEmailAndPassword(auth, form.email, form.password);
       }
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error: unknown) {
+      alert((error as Error).message);
     }
   };
 
@@ -90,27 +89,12 @@ const Landing = () => {
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           name: user.displayName || "",
-          email: user.email,
+          email: user.email || "",
           rating: 500, // Default rating
         });
-        // Notify backend about new Google user
-        try {
-          await fetch(`${getApiBaseUrl()}/user`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: user.uid,
-              name: user.displayName || "",
-              email: user.email,
-              rating: 500,
-            }),
-          });
-        } catch (err) {
-          console.error("Failed to POST Google user to backend:", err);
-        }
       }
-    } catch (error: any) {
-      alert("Google Sign-In Error: " + error.message);
+    } catch (error: unknown) {
+      alert("Google Sign-In Error: " + (error as Error).message);
     }
   };
 
@@ -125,7 +109,9 @@ const Landing = () => {
         textAlign: "center",
         color: "white",
         padding: "1.5rem",
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.8), rgba(0, 0, 0, 0.5)), url(${ChessTheme})`,
+        backgroundImage: `url(${LandingTheme})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
       {/* LANDING PAGE WITH SLIDESHOW */}

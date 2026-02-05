@@ -34,21 +34,23 @@ function Tutorial() {
             <TabList
               onChange={handleChange}
               sx={{
-                width: '65%',
-                minWidth: isMobile ? '100%' : '400px',
+                width: isMobile ? '100%' : '75%',
+                minWidth: isMobile ? 'auto' : '550px',
                 bgcolor: isDark ? '#1E293B' : '#E0F2FE',
                 borderRadius: 15,
                 '& .MuiTab-root': {
                   color: isDark ? '#7DD3FC' : '#1D4ED8',
-                  fontSize: isMobile ? '0.9rem' : '1.05rem',
+                  fontSize: isMobile ? '0.75rem' : '1.05rem',
                   textTransform: 'none',
+                  padding: isMobile ? '8px 4px' : '12px 16px',
                 },
                 '& .MuiTab-root.Mui-selected': {
                   color: isDark ? '#E0F2FE' : '#0B5FFF',
                   fontWeight: 700,
                 },
                 '& .MuiTab-root .MuiTab-iconWrapper': {
-                  fontSize: isMobile ? '1rem' : '1.1rem',
+                  fontSize: isMobile ? '0.9rem' : '1.1rem',
+                  marginRight: isMobile ? '4px' : '8px',
                 },
               }}
               variant="fullWidth"

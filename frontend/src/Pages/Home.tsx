@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
 import AppBarComponent from "../Components/AppBarComponent";
+import GameDetails from "../Components/GameDetails";
 import { getUserRating } from "../Utils/FirestoreService";
+import HomeTheme from "../assets/home_theme.jpg";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -13,6 +15,8 @@ const Home = () => {
     const [mongoUserId, setMongoUserId] = useState<string | null>(null);
     const [recentGames, setRecentGames] = useState<any[]>([]);
     const [loadingRecentGames, setLoadingRecentGames] = useState<boolean>(false);
+    const [selectedGameDetails, setSelectedGameDetails] = useState<any>(null);
+    const [isGameDetailsOpen, setIsGameDetailsOpen] = useState(false);
 
     useEffect(() => {
     // Fetch user's modules when the component mounts
@@ -51,9 +55,9 @@ const Home = () => {
     setLoadingRecentGames(true);
     try {
       // If we have a MongoDB user ID, fetch their specific games
-      let endpoint = '/games';
+      let endpoint = '/game';
       if (mongoUserId) {
-        endpoint = `/user/${mongoUserId}/games`;
+        endpoint = `/game/user/${mongoUserId}`;
       }
 
       const res = await fetch(endpoint);
@@ -72,6 +76,16 @@ const Home = () => {
     fetchRecentGames();
   }, [mongoUserId]);
 
+  const handleViewGameDetails = (game: any) => {
+    setSelectedGameDetails(game);
+    setIsGameDetailsOpen(true);
+  };
+
+  const handleCloseGameDetails = () => {
+    setIsGameDetailsOpen(false);
+    setSelectedGameDetails(null);
+  };
+
   // Show loading indicator while fetching data
   if (loading) {
     return (
@@ -89,7 +103,7 @@ const Home = () => {
   }
 
     return(
-      <>
+      <Box sx={{ backgroundImage: `url(${HomeTheme})`, backgroundSize: 'cover', minHeight: '100vh' }}>
       <AppBarComponent title="Home" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ p: 3, pb: 10 }}>
       {/* Welcome Section */}
@@ -109,14 +123,14 @@ const Home = () => {
             <Typography variant="h5" color="#a042ff" fontWeight="bold" gutterBottom>
                 Your Game Recents 🎮
             </Typography>
-            <Button color="primary" onClick={() => navigate("/profile")} sx={{ fontWeight: "bold" }}>
+            <Button color="primary" onClick={() => navigate("/profile")} sx={{ color: "white", fontWeight: "bold" }}>
                 See All
             </Button>
           </Box>
 
           <Box sx={{ display: "flex", overflowX: "auto", pb: 1 }}>
             {loadingRecentGames ? (
-              <CircularProgress sx={{ color: "#5500aa" }} />
+              <CircularProgress sx={{ color: "white" }} />
             ) : recentGames.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 No recent games found.
@@ -134,20 +148,23 @@ const Home = () => {
                     flexShrink: 0,
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ color: "#333" }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {game.opponentName || "Opponent"}
+                      {game.opponent || "Opponent"}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      Result: {game.result}
+                      <strong>Result:</strong> {game.result}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      Date: {new Date(game.date).toLocaleDateString()}
+                      <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      <strong>Accuracy Move:</strong> <LinearProgress variant="determinate" value={game.myAccuracy} />
                     </Typography>
                     <Button
                       variant="outlined"
                       color="primary"
-                      onClick={() => navigate(`/game/${game.id}`)}
+                      onClick={() => handleViewGameDetails(game)}
                       sx={{ fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                     >
                       View Game
@@ -161,7 +178,7 @@ const Home = () => {
 
     {/* Quick Info Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" fontWeight="bold" color="#5500aa" gutterBottom>
+        <Typography variant="h5" fontWeight="bold" color="white" gutterBottom>
           Quick Access 🚀
         </Typography>
         <Grid container spacing={2}>
@@ -179,7 +196,7 @@ const Home = () => {
                   <Typography variant="h5" fontWeight="bold" gutterBottom>
                     🎓 Tutorial
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px" }}>
+                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px", color: "white" }}>
                     Review your study the chess pieces 
                   </Typography>
                   <Button
@@ -245,7 +262,16 @@ const Home = () => {
         </CardContent>
       </Card>
     </Box>
-    </>
+
+          {/* Game Details Modal */}
+          {selectedGameDetails && (
+            <GameDetails
+              open={isGameDetailsOpen}
+              onClose={handleCloseGameDetails}
+              gameDetails={selectedGameDetails}
+            />
+          )}
+    </Box>
     );
 };
 

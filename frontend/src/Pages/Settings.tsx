@@ -8,6 +8,7 @@ import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, D
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
 import AppBarComponent from "../Components/AppBarComponent";
+import GalaxySettings from "../assets/galaxy-settings.png";
 
 const Settings: React.FC = () => {
   const { logout } = useAuth();
@@ -70,7 +71,12 @@ const Settings: React.FC = () => {
   return (
     <>
     <AppBarComponent title="Settings" isBackButton={true} isSettings={false} isExit={true}/>
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", p: 2 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", p: 2,
+      backgroundImage: `url(${GalaxySettings})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+     }}>
       <Card sx={{ 
         width: "100%",
         maxWidth: "450px", 
@@ -78,9 +84,10 @@ const Settings: React.FC = () => {
         textAlign: "center", 
         boxShadow: 3,
         borderRadius: 3,
+        backdropFilter: 'blur(10px)',
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
       }}>
         <CardContent>
-          
           <Divider sx={{ mb: 3 }} />
 
           <Typography variant="body1" sx={{ mb: 3, color: "text.secondary" }}>
@@ -174,6 +181,10 @@ const Settings: React.FC = () => {
                 <MenuItem value="wooden">
                   🪵
                   Wooden
+                </MenuItem>
+                <MenuItem value="dark">
+                  🌑
+                  Dark
                 </MenuItem>
               </Select>
             </FormControl>

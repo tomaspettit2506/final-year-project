@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
+import { useTheme } from "../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
   TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, FormControl,
-  InputLabel, MenuItem, Select as MuiSelect } from "@mui/material";
+  InputLabel, MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBarComponent from "../Components/AppBarComponent";
+import GameDetails from "../Components/GameDetails";
+import ProfileLight from "../assets/profile_light.jpg";
+import ProfileDark from "../assets/profile_dark.jpg";
 
 const Profile = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [mongoUserId, setMongoUserId] = useState<string | null>(null);
@@ -19,9 +26,12 @@ const Profile = () => {
   const [name, setName] = useState("");
   const [rating, setRating] = useState("");
   const [recentGames, setRecentGames] = useState<any[]>([]);
+
   const [filteredGames, setFilteredGames] = useState<any[]>([]);
   const [gameFilter, setGameFilter] = useState("all");
-  const [loadingRecentGames, setLoadingRecentGames] = useState(false);
+  const [selectedGameDetails, setSelectedGameDetails] = useState<any>(null);
+  const [_loadingRecentGames, setLoadingRecentGames] = useState(false);
+  const [isGameDetailsOpen, setIsGameDetailsOpen] = useState(false);
 
   const computeStatsFromGames = (games: any[]) => {
     return games.reduce(
@@ -41,9 +51,9 @@ const Profile = () => {
     setLoadingRecentGames(true);
     try {
       // If we have a MongoDB user ID, fetch their specific games
-      let endpoint = '/games';
+      let endpoint = '/game';
       if (mongoUserId) {
-        endpoint = `/user/${mongoUserId}/games`;
+        endpoint = `/game/user/${mongoUserId}`;
       }
 
       const res = await fetch(endpoint);
@@ -89,13 +99,17 @@ const Profile = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          opponent: 'Demo Opponent',
+          myRating: parseInt(rating) || 500,
+          opponent: "Demo Opponent",
+          opponentRating: 480,
           date: new Date().toISOString(),
-          result: 'loss',
+          result: "win",
           timeControl: 10,
-          moves: 42,
-          myAccuracy: 95,
-          opponentAccuracy: 80,
+          termination: "checkmate",
+          moves: 35,
+          duration: 300,
+          myAccuracy: 92.5,
+          opponentAccuracy: 85.0,
           userId: userId
         })
       });
@@ -209,6 +223,16 @@ const Profile = () => {
     }
   };
 
+  const handleViewGameDetails = (game: any) => {
+    setSelectedGameDetails(game);
+    setIsGameDetailsOpen(true);
+  };
+
+  const handleCloseGameDetails = () => {
+    setIsGameDetailsOpen(false);
+    setSelectedGameDetails(null);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -222,7 +246,7 @@ const Profile = () => {
   }
 
   return (
-    <>
+    <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', minHeight: '100vh', pb: 5 }}>
     <AppBarComponent title="Settings" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ padding: 3, textAlign: "center", maxWidth: 700, mx: "auto" }}>
       {/* User Info Section */}
@@ -321,7 +345,7 @@ const Profile = () => {
           </Box>
 
           {filteredGames.length > 0 ? (
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: isMobile ? 300 : 400 }}>
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#f9f0ff" }}>
@@ -341,7 +365,7 @@ const Profile = () => {
                     <TableRow 
                       key={gameId}
                       sx={{
-                        backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : 'transparent',
+                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : 'transparent',
                         '&:hover': { backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : '#fafafa' }
                       }}
                     >
@@ -363,8 +387,8 @@ const Profile = () => {
                         <Button
                           variant="outlined"
                           size="small"
-                          sx={{ color: "#5500aa", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
-                          onClick={() => navigate(`/game/${gameId}`)}
+                          sx={{ color: "text.primary", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
+                          onClick={() => handleViewGameDetails(game)}
                         >
                           View
                         </Button>
@@ -497,8 +521,17 @@ const Profile = () => {
           </Button>
         </Box>
       </Modal>
+
+      {/* Game Details Modal */}
+      {selectedGameDetails && (
+        <GameDetails
+          open={isGameDetailsOpen}
+          onClose={handleCloseGameDetails}
+          gameDetails={selectedGameDetails}
+        />
+      )}
     </Box>
-    </>
+    </Box>
   );
 };
 
