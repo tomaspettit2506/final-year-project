@@ -1,13 +1,9 @@
 import React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { AppBar, Toolbar, IconButton, Typography, Tooltip } from '@mui/material';
 import { useTheme } from '../Context/ThemeContext';
 import { useAuth } from '../Context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Tooltip from '@mui/material/Tooltip';
+import SpaceTheme from '../assets/space_theme.jpg';
 
 interface AppBarComponentProps {
     title: string;
@@ -31,14 +27,14 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
     };
 
     return (
-        <AppBar position="static" sx={{ bgcolor: isDark ? '#bebeffb6' : '#bebeff', color: isDark ? '#FFFFFF' : '#000000' }}>
+        <AppBar position="static" sx={{ backgroundImage: `url(${SpaceTheme})`, backgroundSize: 'cover' }}>
             <Toolbar>
                 {isBackButton && (
                     <IconButton color="inherit" onClick={() => navigate(-1)} className="icon-button">
                         ⬅️
                     </IconButton>
                 )}
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: isDark ? 'black' : 'text.primary', fontFamily: 'Times New Roman' }}>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: isDark ? 'white' : 'white', fontFamily: 'Times New Roman', fontWeight: 'bold' }}>
                     {title}
                 </Typography>
                 <Tooltip title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}>
@@ -56,7 +52,7 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
                 {isExit && (
                     <Tooltip title="Logout">
                         <IconButton color="inherit" onClick={handleLogout} className="icon-button">
-                            <ExitToAppIcon sx={{ color: isDark ? 'black' : 'white' }}/> ⬅️
+                            🚪
                         </IconButton>
                     </Tooltip>
                 )}
