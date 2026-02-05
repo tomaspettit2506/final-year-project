@@ -6,7 +6,7 @@ const RulesComponent = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <Box sx={{ mb: 4, p: isMobile ? 2 : 0, bgcolor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' }}>
+    <Box sx={{ mb: 4, p: isMobile ? 2 : 0, bgcolor: isDark ? '#00000099' : '#ffffffcc' }}>
       <Card sx={{ p: isMobile ? 2 : 6, bgcolor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgb(240, 253, 244)', mb: 4, color: isDark ? '#E2E8F0' : 'inherit' }}>
           <Typography sx={{ fontSize: "2rem", mb: 4 }}> ♟️ Essential Rules</Typography>
             <Accordion defaultExpanded sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>

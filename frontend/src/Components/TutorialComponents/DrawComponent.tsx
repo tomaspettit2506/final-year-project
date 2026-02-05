@@ -7,7 +7,7 @@ const DrawComponent = () => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   return (
     <Box sx={{ mb: 4, p: isMobile ? 2 : 0 }}>
-      <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
+      <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? '#0f172ae6' : '#FFFFFFe6', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h2" gutterBottom> ♟️ How a Game Can End in a Draw</Typography>
         <Typography paragraph>
           Not every chess game ends with a winner. There are several ways a game can end in a draw (tie).
