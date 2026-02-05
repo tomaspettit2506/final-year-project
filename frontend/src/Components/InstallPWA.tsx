@@ -21,8 +21,8 @@ const InstallPWA: React.FC = () => {
         onClick={handleInstallClick} 
         sx={{ 
           width: "100%",
-          bgcolor: "#5500aa",
-          '&:hover': { bgcolor: "#7722cc" },
+          bgcolor: "#110b16",
+          '&:hover': { bgcolor: "#ffffffa1", color: "#3c3741" },
           borderRadius: '8px',
           fontWeight: 500,
         }}
@@ -39,7 +39,7 @@ const InstallPWA: React.FC = () => {
           }
         }}
       >
-        <DialogTitle sx={{ color: "#5500aa", fontWeight: "bold" }}>📲 How to Install GOTCG</DialogTitle>
+        <DialogTitle sx={{ color: "#3c3741", fontWeight: "bold" }}>📲 How to Install GOTCG</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: "#333" }}>
             🔹 <strong>Chrome (Android & Desktop):</strong><br />
@@ -58,7 +58,7 @@ const InstallPWA: React.FC = () => {
           <Button 
             onClick={handleClose} 
             sx={{ 
-              color: "#5500aa",
+              color: "#a861f0",
               fontWeight: 500
             }}
           >
