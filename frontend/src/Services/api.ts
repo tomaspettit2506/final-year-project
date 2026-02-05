@@ -66,3 +66,31 @@ export interface Friend {
   name: string;
   email: string;
 }
+
+// Define Game interface
+export interface GameData {
+  userId: string;
+  opponent: string;
+  opponentRating: number;
+  date: string;
+  result: 'win' | 'loss' | 'draw';
+  isRated: boolean;
+  timeControl: number;
+  termination: string;
+  moves: number;
+  duration: number;
+  myAccuracy: number;
+  opponentAccuracy: number;
+}
+
+// Save a completed game
+export async function saveGame(gameData: GameData): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/game`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(gameData),
+  });
+  return handleResponse<any>(response);
+}
