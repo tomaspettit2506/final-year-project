@@ -2,6 +2,7 @@ import type { Position, Piece } from "../../Types/chess";
 import { useState, useRef } from "react";
 import { Box, Grid, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { useBoardTheme } from "../../Context/BoardThemeContext";
+import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
 interface ChessBoardProps {
   board: (Piece | null)[][];
@@ -9,6 +10,7 @@ interface ChessBoardProps {
   legalMoves: Position[];
   onSquareClick: (row: number, col: number) => void;
   onPieceDrop?: (from: Position, to: Position) => void;
+  flipped?: boolean;
 }
 
 const PIECE_SYMBOLS: Record<string, string> = {
@@ -32,6 +34,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   legalMoves,
   onSquareClick,
   onPieceDrop,
+  flipped = false,
 }) => {
   const { boardTheme, pieceSet } = useBoardTheme();
   const [draggedFrom, setDraggedFrom] = useState<Position | null>(null);
@@ -46,6 +49,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
+  const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const isSquareSelected = (row: number, col: number) =>
@@ -74,11 +78,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
     const isLegal = isLegalMove(row, col);
 
-    if (isLegal && onPieceDrop) {
-      onPieceDrop(draggedFrom, { row, col });
-    } else {
-      onSquareClick(row, col);
-    }
+    if (isLegal && onPieceDrop) onPieceDrop(draggedFrom, { row, col });
+    else onSquareClick(row, col);
 
     setDraggedFrom(null);
   };
@@ -129,17 +130,15 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     if (row >= 0 && row < 8 && col >= 0 && col < 8) {
       const isLegal = isLegalMove(row, col);
 
-      if (isLegal && onPieceDrop) {
-        onPieceDrop(draggedPiece.from, { row, col });
-      } else {
-        // Treat as a tap/click to update selection
-        onSquareClick(row, col);
-      }
+      if (isLegal && onPieceDrop) onPieceDrop(draggedPiece.from, { row, col });
+      else onSquareClick(row, col);
     }
-
     setDraggedPiece(null);
     setTouchDragPosition(null);
   };
+
+  const boardSize = isMobile ? 350 : 500;
+  const boardOffset = boardSize / 2;
 
   return (
     <Box
@@ -164,6 +163,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
           width: isMobile ? "350px" : "512px",
           height: isMobile ? "350px" : "512px",
           border: "3px solid #3f3f46",
+          transform: flipped ? "rotate(180deg)" : "none",
+          transition: "transform 0.3s ease-in-out",
         }}
       >
         {board.map((row, r) =>
@@ -194,16 +195,20 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                     transition: "0.15s",
                     cursor: "pointer",
                     bgcolor: isLightSquare(r, c)
-                      ? boardTheme == "classic"
-                        ? "#f0d9b5"
-                        : boardTheme == "modern"
-                        ? "#e1e1e1"
-                        : "#deb887"
-                      : boardTheme == "classic"
-                      ? "#b58863"
-                      : boardTheme == "modern"
-                      ? "#757575"
-                      : "#8b4513",
+                      ? boardTheme === "dark"
+                        ? "#4b5563"
+                        : boardTheme === "wooden"
+                        ? "#f3e8ff"
+                        : boardTheme === "modern"
+                        ? "#e0e7ff"
+                        : "#f0d9b5"
+                      : boardTheme === "dark"
+                      ? "#1f2937"
+                      : boardTheme === "wooden"
+                      ? "#a78bfa"
+                      : boardTheme === "modern"
+                      ? "#6366f1"
+                      : "#b58863",
                     "&:hover": !dragOver ? { filter: "brightness(1.1)" } : undefined,
                     outline:
                       selected
@@ -231,6 +236,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                         cursor: "grab",
                         userSelect: "none",
                         color: piece.color === "white" ? "white" : "black",
+                        transform: flipped ? "rotate(180deg)" : "none",
                         textShadow:
                           piece.color === "white"
                             ? "0 2px 2px rgba(0,0,0,0.8)"
@@ -255,8 +261,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                     >
                       <Box
                         sx={{
-                          width: piece ? "56px" : "12px",
-                          height: piece ? "56px" : "12px",
+                          width: piece ? (isMobile ? "44px" : "64px") : "12px",
+                          height: piece ? (isMobile ? "44px" : "64px") : "12px",
                           borderRadius: "50%",
                           border: piece ? "4px solid #22c55e" : "none",
                           bgcolor: piece ? "transparent" : "#22c55e",
@@ -275,8 +281,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
       <Box
         sx={{
           position: "absolute",
-          top: "calc(50% - 256px)",
-          left: "calc(50% - 256px)",
+          top: `calc(50% - ${boardOffset}px)`,
+          left: `calc(50% - ${boardOffset}px)`,
           width: isMobile ? "350px" : "512px",
           height: isMobile ? "350px" : "512px",
           pointerEvents: "none",
@@ -288,10 +294,10 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
             key={i}
             sx={{
               position: "absolute",
-              bottom: -20,
-              left: `calc(${(i + 0.5) * (100 / 8)}% - 8px)`,
-              fontSize: isMobile ? "12px" : "14px",
-              color: "#a1a1aa",
+              bottom: isMobile ? -5 : 5,
+              left: `calc(${(i + 0.5) * (100 / 8)}% - -13px)`,
+              fontSize: isMobile ? "10px" : "14px",
+              color: isDark ? "#ffffff" : "#000000",
             }}
           >
             {String.fromCharCode(97 + i)}
@@ -304,10 +310,10 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
             key={i}
             sx={{
               position: "absolute",
-              top: `calc(${(7 - i + 0.5) * (100 / 8)}% - 8px)`,
-              left: -20,
-              fontSize: isMobile ? "12px" : "14px",
-              color: "#a1a1aa",
+              top: `calc(${(7 - i + 0.5) * (100 / 8)}% - ${isMobile ? "17px" : "34px"})`,
+              left: isMobile ? 5 : 0,
+              fontSize: isMobile ? "10px" : "14px",
+              color: isDark ? "#ffffff" : "#000000",
             }}
           >
             {i + 1}
