@@ -25,7 +25,7 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
 
   const handleAcceptInvite = (invite: GameInvite) => {
     // Navigate to Play page with the roomId
-    navigate(`/play?roomId=${invite.roomId}&autoJoin=true`);
+    navigate(`/play?roomId=${invite.roomId}&autoJoin=true&isRated=${invite.rated}`);
     onAccept(invite);
   };
 

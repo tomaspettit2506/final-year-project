@@ -75,6 +75,7 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
               onChange={handleTimeChange}
             >
               <MenuItem value="10">10 mins</MenuItem>
+              <MenuItem value="15">15 mins</MenuItem>
               <MenuItem value="30">30 mins</MenuItem>
               <MenuItem value="60">60 mins</MenuItem>
             </Select>
