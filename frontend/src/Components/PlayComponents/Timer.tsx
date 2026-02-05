@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PieceColor } from '../../Types/chess';
-import { Card } from '@mui/material';
+import { Card, CardContent, Stack, Typography, Box } from '@mui/material';
 
 interface TimerProps {
   whiteTime: number;
@@ -17,42 +17,76 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
   };
 
   const getTimeColor = (time: number, isCurrentPlayer: boolean) => {
-    if (!isActive) return 'text-muted-foreground';
-    if (time < 30) return 'text-red-500';
-    if (time < 60) return 'text-orange-500';
-    if (isCurrentPlayer) return 'text-primary';
-    return 'text-muted-foreground';
+    if (!isActive) return 'text.secondary';
+    if (time < 30) return 'error.main';
+    if (time < 60) return 'warning.main';
+    if (isCurrentPlayer) return 'text.primary';
+    return 'white';
   };
 
+  const getRowBg = (isCurrent: boolean) =>
+    isCurrent && isActive ? 'white' : 'black' === currentPlayer ? 'rgba(0, 0, 0, 0.04)' : 'rgba(28, 25, 25, 0.86)';
+
   return (
-    <Card className="p-4">
-      <div className="space-y-3">
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <span>⏲️ Game Timer</span>
-        </div>
-        
-        <div className="space-y-2">
-          {/* Black Timer */}
-          <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-            currentPlayer === 'black' && isActive ? 'bg-secondary' : 'bg-muted/50'
-          }`}>
-            <span className="text-sm">Black</span>
-            <span className={`text-xl tabular-nums ${getTimeColor(blackTime, currentPlayer === 'black')}`}>
-              {formatTime(blackTime)}
-            </span>
-          </div>
-          
-          {/* White Timer */}
-          <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-            currentPlayer === 'white' && isActive ? 'bg-secondary' : 'bg-muted/50'
-          }`}>
-            <span className="text-sm">White</span>
-            <span className={`text-xl tabular-nums ${getTimeColor(whiteTime, currentPlayer === 'white')}`}>
-              {formatTime(whiteTime)}
-            </span>
-          </div>
-        </div>
-      </div>
+    <Card variant="outlined">
+      <CardContent>
+        <Stack spacing={2}>
+          <Typography variant="overline" color="text.secondary" textAlign="center">
+            ⏲️ Game Timer
+          </Typography>
+
+          <Stack spacing={1.5}>
+            {/* Black Timer */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 2,
+                py: 1.5,
+                borderRadius: 1,
+                color: currentPlayer === 'black' ? 'white' : 'white',
+                border: '1px solid',
+                borderColor: currentPlayer === 'black' ? 'black' : 'divider',
+                bgcolor: getRowBg(currentPlayer === 'black'),
+                transition: 'background-color 150ms ease',
+              }}
+            >
+              <Typography variant="body2">Black</Typography>
+              <Typography
+                variant="h6"
+                sx={{ fontVariantNumeric: 'tabular-nums', color: getTimeColor(blackTime, currentPlayer === 'black') }}
+              >
+                {formatTime(blackTime)}
+              </Typography>
+            </Box>
+
+            {/* White Timer */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 2,
+                py: 1.5,
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: currentPlayer === 'white' ? 'black' : 'divider',
+                bgcolor: getRowBg(currentPlayer === 'white'),
+                transition: 'background-color 150ms ease',
+              }}
+            >
+              <Typography variant="body2">White</Typography>
+              <Typography
+                variant="h6"
+                sx={{ fontVariantNumeric: 'tabular-nums', color: getTimeColor(whiteTime, currentPlayer === 'white') }}
+              >
+                {formatTime(whiteTime)}
+              </Typography>
+            </Box>
+          </Stack>
+        </Stack>
+      </CardContent>
     </Card>
   );
 };
