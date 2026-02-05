@@ -36,7 +36,8 @@ const Profile = () => {
   const computeStatsFromGames = (games: any[]) => {
     return games.reduce(
       (acc, game) => {
-        const result = (game?.result || "").toLowerCase();
+        // Normalize: lowercase and trim whitespace for consistent comparison
+        const result = (game?.result || '').toLowerCase().trim();
         if (["win", "won"].includes(result)) acc.wins += 1;
         else if (["loss", "lose", "lost"].includes(result)) acc.losses += 1;
         else if (["draw", "tie"].includes(result)) acc.draws += 1;
@@ -62,14 +63,13 @@ const Profile = () => {
       setRecentGames(data);
       setFilteredGames(applyGameFilter(data, gameFilter));
 
-      // Update local stats based on recent games and persist to Firestore for display consistency
+      // Compute stats from games (MongoDB is source of truth, not Firestore)
       const stats = computeStatsFromGames(data);
       setUserData((prev: any) => ({ ...(prev || {}), ...stats }));
 
-      if (user) {
-        const userRef = doc(firestore, "users", user.uid);
-        await setDoc(userRef, stats, { merge: true });
-      }
+      // NOTE: DO NOT sync stats to Firestore anymore
+      // Games in MongoDB are the single source of truth for statistics
+      // Firestore should only contain: name, email, rating, preferences
     } catch (err) {
       console.error('Error fetching recent games:', err);
     } finally {
@@ -191,10 +191,7 @@ const Profile = () => {
             await setDoc(userRef, {
               name: user.displayName || "",
               email: user.email,
-              rating: 500,
-              wins: 0,
-              losses: 0,
-              draws: 0,
+              rating: 500
             });
             setIsModalOpen(true);
           }

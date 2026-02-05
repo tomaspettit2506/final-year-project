@@ -13,6 +13,7 @@ interface GameConfig {
   timerEnabled: boolean;
   timerDuration: number;
   difficultyName: string;
+  isRated?: boolean;
 }
 
 
@@ -38,8 +39,8 @@ const Play = () => {
     setCurrentScreen('setup');
   };
 
-  const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean, timerDuration?: number, timerEnabled?: boolean) => {
-    console.log('[Play] Room joined with timer settings:', { timerEnabled, timerDuration });
+  const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean, timerDuration?: number, timerEnabled?: boolean, isRated?: boolean) => {
+    console.log('[Play] Room joined with timer settings:', { timerEnabled, timerDuration, isRated });
     setRoomId(joinedRoomId);
     setMyName(name);
     setMyColor(color);
@@ -48,7 +49,8 @@ const Play = () => {
       ...cfg, 
       gameMode: 'pvp',
       timerDuration: timerDuration ?? cfg.timerDuration,
-      timerEnabled: timerEnabled ?? cfg.timerEnabled
+      timerEnabled: timerEnabled ?? cfg.timerEnabled,
+      isRated: isRated ?? cfg.isRated
     }));
     setCurrentScreen('game');
   };
@@ -74,6 +76,7 @@ const Play = () => {
         onBackToSetup={handleBackToSetup}
         myColor={myColor} myName={myName}
         roomId={roomId} isHost={isHost}
+        isRated={gameConfig.isRated}
         // multiplayer props can be passed here in future
       />
     </Box>
