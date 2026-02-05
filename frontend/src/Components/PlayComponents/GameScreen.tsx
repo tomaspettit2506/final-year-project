@@ -4,12 +4,15 @@ import CapturedPieces from './CapturedPieces';
 import MoveHistory from './MoveHistory';
 import Timer from './Timer';
 import AccuracyStats from './AccuracyStats';
+import GameController from './GameController';
 import { Button, Box, Card, Grid, Typography, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import PromotionDialog from './PromotionDialog';
 import type { GameState, Position, Move, Piece, GameMode, TimerState, Board, PieceColor } from '../../Types/chess';
 import {createInitialBoard, getLegalMoves, simulateMove, isCheckmate, isStalemate, isKingInCheck, getMoveNotation, isCastlingMove, executeCastling, canPromote, promotePawn } from '../../Utils/chessLogic';
 import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
 import { socket } from '../../Services/socket';
+import { useAuth } from '../../Context/AuthContext';
+import { saveGame } from '../../Services/api';
 
 interface GameScreenProps {
   gameMode: GameMode;
@@ -26,27 +29,22 @@ interface GameScreenProps {
 
 const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false }) => {
     // myColor, myName, roomId, isHost are now available for multiplayer logic and display
+  const { user, userData } = useAuth();
   const [gameState, setGameState] = useState<GameState>(() => ({
     board: createInitialBoard(),
     currentPlayer: 'white',
-    selectedPosition: null,
-    legalMoves: [],
-    moveHistory: [],
-    capturedPieces: { white: [], black: [] },
-    isCheck: false,
-    isCheckmate: false,
-    isStalemate: false,
-    winner: null
+    selectedPosition: null, legalMoves: [], moveHistory: [], capturedPieces: { white: [], black: [] },
+    isCheck: false, isCheckmate: false, isStalemate: false, winner: null
   }));
   
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [timer, setTimer] = useState<TimerState>({
-    white: timerDuration,
-    black: timerDuration,
-    isActive: false
+    white: timerDuration, black: timerDuration, isActive: false
   });
   const [isPaused, setIsPaused] = useState(false);
   const [pausedByName, setPausedByName] = useState<string>('');
+  const [isBoardFlipped, setIsBoardFlipped] = useState(false);
+  const [redoMoves, setRedoMoves] = useState<Move[]>([]);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);  const gameStateRef = useRef(gameState);
@@ -64,8 +62,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
   type RemoteMove = {
     move: { from: Position; to: Position; notation: string };
-    playerColor: 'white' | 'black';
-    playerName: string;
+    playerColor: 'white' | 'black'; playerName: string;
     timestamp?: number;
   };
 
@@ -79,12 +76,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      if (timerIntervalRef.current !== null) {
-        clearInterval(timerIntervalRef.current);
-      }
-      if (aiTimeoutRef.current !== null) {
-        clearTimeout(aiTimeoutRef.current);
-      }
+      if (timerIntervalRef.current !== null) clearInterval(timerIntervalRef.current);
+      if (aiTimeoutRef.current !== null) clearTimeout(aiTimeoutRef.current);
     };
   }, []);
 
@@ -100,14 +93,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   }, []);
 
   // Keep resolved color/name in sync with incoming props
-  useEffect(() => {
-    setResolvedColor(myColor);
-  }, [myColor]);
+  useEffect(() => { setResolvedColor(myColor); }, [myColor]);
 
-  useEffect(() => {
-    setResolvedName(myName);
-  }, [myName]);
-
+  useEffect(() => { setResolvedName(myName); }, [myName]);
+  
   // Timer countdown effect
   useEffect(() => {
     if (!timerEnabled || !timer.isActive || gameState.isCheckmate || gameState.isStalemate || isPaused) {
@@ -144,9 +133,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     }, 1000);
 
     return () => {
-      if (timerIntervalRef.current !== null) {
-        clearInterval(timerIntervalRef.current);
-      }
+      if (timerIntervalRef.current !== null) clearInterval(timerIntervalRef.current);
     };
   }, [timerEnabled, timer.isActive, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate, isPaused]);
 
@@ -166,26 +153,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       // Master: very deep thinking (900-1200ms)
       // Rocket: extreme thinking (1200-1800ms)
       let thinkingTime: number;
-      if (difficultyRef.current < 550) {
-        thinkingTime = 100 + Math.random() * 100; // 100-200ms
-      } else if (difficultyRef.current < 900) {
-        thinkingTime = 200 + Math.random() * 200; // 200-400ms
-      } else if (difficultyRef.current < 1300) {
-        thinkingTime = 400 + Math.random() * 200; // 400-600ms
-      } else if (difficultyRef.current < 1700) {
-        thinkingTime = 600 + Math.random() * 300; // 600-900ms
-      } else if (difficultyRef.current < 2200) {
-        thinkingTime = 900 + Math.random() * 300; // 900-1200ms
-      } else {
-        thinkingTime = 1200 + Math.random() * 600; // 1200-1800ms (Rocket level)
-      }
+      if (difficultyRef.current < 550) thinkingTime = 100 + Math.random() * 100; // 100-200ms
+      else if (difficultyRef.current < 900) thinkingTime = 200 + Math.random() * 200; // 200-400ms
+      else if (difficultyRef.current < 1300) thinkingTime = 400 + Math.random() * 200; // 400-600ms
+      else if (difficultyRef.current < 1700) thinkingTime = 600 + Math.random() * 300; // 600-900ms
+      else if (difficultyRef.current < 2200) thinkingTime = 900 + Math.random() * 300; // 900-1200ms
+      else thinkingTime = 1200 + Math.random() * 600; // 1200-1800ms (Rocket level)
       
       const timeoutId = setTimeout(() => {
         try {
           const aiMove = getAIMove(gameStateRef.current.board, difficultyRef.current, 'black');
-          if (aiMove) {
-            makeMove(aiMove.from, aiMove.to);
-          }
+          if (aiMove) makeMove(aiMove.from, aiMove.to);
         } catch (error) {
           console.error('AI move calculation error:', error);
         } finally {
@@ -200,7 +178,62 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       };
     }
   }, [gameMode, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate]);
-
+  // Save game when it ends (multiplayer only)
+  useEffect(() => {
+    const gameEnded = gameState.isCheckmate || gameState.isStalemate;
+    
+    if (gameEnded && gameMode === 'pvp' && user && gameState.moveHistory.length > 0) {
+      const saveGameData = async () => {
+        try {
+          const effectiveColor = resolvedColor || myColor;
+          
+          // Determine result from my perspective
+          let result: 'win' | 'loss' | 'draw';
+          if (gameState.isStalemate) result = 'draw';
+          else if (gameState.winner === effectiveColor) result = 'win';
+          else result = 'loss';
+          
+          // Determine termination reason
+          let termination: string;
+          if (gameState.isCheckmate) termination = 'checkmate';
+          else if (gameState.isStalemate) termination = 'stalemate';
+          else if (timer.white === 0 || timer.black === 0) termination = 'timeout';
+          else termination = 'resignation';
+          
+          // Calculate game duration (initial time - remaining time)
+          const myTimeLeft = effectiveColor === 'white' ? timer.white : timer.black;
+          const duration = timerEnabled ? timerDuration - myTimeLeft : gameState.moveHistory.length * 30; // Estimate 30s per move if no timer
+          
+          // Calculate accuracies (simplified - can be enhanced with calculateMoveAccuracy function)
+          // For now, using a placeholder value. In the future, you can analyze each move quality
+          const myAccuracy = Math.min(95, 70 + Math.random() * 25);
+          const opponentAccuracy = Math.min(95, 70 + Math.random() * 25);
+          
+          const gameData = {
+            userId: user.uid,
+            opponent: 'Multiplayer Opponent', // You can get this from room data if available
+            opponentRating: userData?.rating || 1200,
+            date: new Date().toISOString(),
+            result,
+            timeControl: timerEnabled ? timerDuration : 0,
+            termination,
+            moves: gameState.moveHistory.length,
+            duration: Math.round(duration),
+            myAccuracy: Math.round(myAccuracy),
+            opponentAccuracy: Math.round(opponentAccuracy)
+          };
+          
+          console.log('[GameScreen] Saving game data:', gameData);
+          await saveGame(gameData);
+          console.log('[GameScreen] Game saved successfully');
+        } catch (error) {
+          console.error('[GameScreen] Failed to save game:', error);
+        }
+      };
+      
+      saveGameData();
+    }
+  }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled]);
   const applyRemoteHistory = useCallback((remoteMoves: RemoteMove[]) => {
     if (!Array.isArray(remoteMoves) || remoteMoves.length === 0) return;
 
@@ -346,9 +379,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
             white: [...prev.capturedPieces.white],
             black: [...prev.capturedPieces.black]
           };
-          if (capturedPiece && capturedPiece.color !== movingPiece.color) {
-            newCapturedPieces[movingPiece.color].push(capturedPiece);
-          }
+
+          if (capturedPiece && capturedPiece.color !== movingPiece.color) newCapturedPieces[movingPiece.color].push(capturedPiece);
 
           const nextPlayer = prev.currentPlayer === 'white' ? 'black' : 'white';
           const isCheck = isKingInCheck(newBoard, nextPlayer);
@@ -356,9 +388,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           const isStalemateState = isStalemate(newBoard, nextPlayer);
 
           // Start timers on first received move when timers are enabled
-          if (timerEnabled && prev.moveHistory.length === 0) {
-            setTimer(t => ({ ...t, isActive: true }));
-          }
+          if (timerEnabled && prev.moveHistory.length === 0) setTimer(t => ({ ...t, isActive: true }));
 
           return {
             board: newBoard,
@@ -401,9 +431,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       console.log('Game paused by opponent:', data);
       setIsPaused(true);
       setPausedByName(data.pausedByName);
-      if (timerIntervalRef.current !== null) {
-        clearInterval(timerIntervalRef.current);
-      }
+      if (timerIntervalRef.current !== null) clearInterval(timerIntervalRef.current);
     };
 
     const handleGameResumed = (data: { isPaused: boolean }) => {
@@ -418,9 +446,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
     // Immediately request a sync in case we missed a move during navigation
     socket.emit('syncGameState', { roomId }, (response: { success: boolean; moveHistory?: RemoteMove[]; players?: Array<{ id: string; name: string; color: 'white' | 'black' }> }) => {
-      if (!response?.success || !Array.isArray(response.moveHistory)) {
-        return;
-      }
+      if (!response?.success || !Array.isArray(response.moveHistory)) return;
 
       const remoteCount = response.moveHistory.length;
       const localCount = gameStateRef.current.moveHistory.length;
@@ -529,9 +555,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     let accuracyData: { accuracy: number; accuracyClass: 'excellent' | 'good' | 'inaccuracy' | 'mistake' | 'blunder' } | undefined;
     const isHumanMove = gameMode === 'pvp' || (gameMode === 'ai' && piece.color === 'white');
     
-    if (isHumanMove) {
-      accuracyData = calculateMoveAccuracy(currentState.board, { from, to }, piece.color);
-    }
+    if (isHumanMove) accuracyData = calculateMoveAccuracy(currentState.board, { from, to }, piece.color);
     
     const castling = isCastlingMove(currentState.board, from, to);
     const capturedPiece = castling ? null : currentState.board[to.row][to.col];
@@ -557,9 +581,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       white: [...currentState.capturedPieces.white],
       black: [...currentState.capturedPieces.black]
     };
-    if (capturedPiece && capturedPiece.color !== piece.color) {
-      newCapturedPieces[piece.color].push(capturedPiece);
-    }
+    if (capturedPiece && capturedPiece.color !== piece.color) newCapturedPieces[piece.color].push(capturedPiece);
     
     const nextPlayer = currentState.currentPlayer === 'white' ? 'black' : 'white';
     const isCheck = isKingInCheck(newBoard, nextPlayer);
@@ -621,14 +643,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
     setGameState(newGameState);
 
-    if (timerEnabled && currentState.moveHistory.length === 0) {
-      setTimer(prev => ({ ...prev, isActive: true }));
-    }
+    if (timerEnabled && currentState.moveHistory.length === 0) setTimer(prev => ({ ...prev, isActive: true }));
   };
 
-  const handlePieceDrop = (from: Position, to: Position) => {
-    makeMove(from, to);
-  };
+  const handlePieceDrop = (from: Position, to: Position) => { makeMove(from, to); };
   
   const handlePromotionSelect = (promotionPiece: 'queen' | 'rook' | 'bishop' | 'knight') => {
     if (!promotion) return;
@@ -663,7 +681,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         });
       }
     }
-
     setPromotion(null);
   };
   
@@ -672,6 +689,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     if (gameState.moveHistory.length < movesToUndo) return;
     
     const newHistory = gameState.moveHistory.slice(0, -movesToUndo);
+    const undoMoves = gameState.moveHistory.slice(-movesToUndo);
     
     let newBoard = createInitialBoard();
     const newCapturedPieces = { white: [] as Piece[], black: [] as Piece[] };
@@ -695,7 +713,47 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     setGameState({ board: newBoard, currentPlayer: nextPlayer, selectedPosition: null,
       legalMoves: [], moveHistory: newHistory, capturedPieces: newCapturedPieces, isCheck,
       isCheckmate: false, isStalemate: false, winner: null });
+
+    // For AI mode, populate redo moves
+    if (gameMode === 'ai') setRedoMoves([...undoMoves.reverse()]);
   };
+
+  const handleRedo = () => {
+    if (redoMoves.length === 0) return;
+
+    const moveToRedo = redoMoves[0];
+    const newRedoMoves = redoMoves.slice(1);
+    
+    let newBoard = gameState.board;
+    const isCastling = moveToRedo.isCastling ?? isCastlingMove(newBoard, moveToRedo.from, moveToRedo.to);
+    
+    newBoard = isCastling
+      ? executeCastling(newBoard, moveToRedo.from, moveToRedo.to)
+      : simulateMove(newBoard, moveToRedo.from, moveToRedo.to);
+
+    if (!isCastling && moveToRedo.piece.type === 'pawn' && moveToRedo.promotionTo && ['queen','rook','bishop','knight'].includes(moveToRedo.promotionTo)) {
+      newBoard = promotePawn(newBoard, moveToRedo.to, moveToRedo.promotionTo as 'queen' | 'rook' | 'bishop' | 'knight');
+    }
+
+    const nextPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+    const isCheck = isKingInCheck(newBoard, nextPlayer);
+
+    // Ensure that the move is only added if it's the correct player's turn
+    if (nextPlayer === moveToRedo.piece.color) {
+      setGameState(prev => ({
+        ...prev, 
+        board: newBoard,
+        currentPlayer: nextPlayer, 
+        selectedPosition: null,
+        legalMoves: [], 
+        moveHistory: [...prev.moveHistory, moveToRedo], // Ensure the move is added to history
+        isCheck
+      }));
+    }
+    setRedoMoves(newRedoMoves);
+  };
+
+  const handleFlipBoard = () => { setIsBoardFlipped(!isBoardFlipped); };
   
   const handlePauseGame = () => {
     if (gameMode === 'pvp' && roomId) {
@@ -713,8 +771,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     }
   };
   
+  const handleResignConfirm = () => {
+    setGameState(prev => ({
+      ...prev,
+      isCheckmate: true,
+      winner: prev.currentPlayer === 'white' ? 'black' : 'white',
+    }));
+    setConfirmDialogOpen(false);
+    setTimeout(() => { onBackToSetup(); }, 5000);
+  };
+
   return (
-    <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center" p={4} sx={{
+    <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center" p={4} pb={12} sx={{
       background: 'linear-gradient(135deg, #0f172a 0%, #6d28d9 50%, #0f172a 100%)'
     }}>
       <Box maxWidth="1200px" width="100%">
@@ -731,50 +799,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
               </Typography>
             </Box>
           )}
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setConfirmDialogOpen(true)}
-            startIcon={"⬅️"}
-          >
-            Back to Setup
-          </Button>
-          <Stack direction="row" spacing={2}>
-            {gameMode === 'ai' && (
-              <Button
-                variant="contained"
-                color='secondary'
-                onClick={handleUndo}
-                disabled={gameState.moveHistory.length < 2}
-                startIcon={"↩️"}
-              >
-                Undo
-              </Button>
-            )}
-            {gameMode === 'pvp' && (
-              isPaused ? (
-                <Button
-                  variant="contained"
-                  color='success'
-                  onClick={handleResumeGame}
-                  disabled={pausedByName !== '' && pausedByName !== (myName || 'You')}
-                  startIcon={"▶️"}
-                >
-                  Resume Game
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color='warning'
-                  onClick={handlePauseGame}
-                  disabled={gameState.isCheckmate || gameState.isStalemate}
-                  startIcon={"⏸️"}
-                >
-                  Pause Game
-                </Button>
-              )
-            )}
-          </Stack>
+          {/* Removed the old button group controls */}
         </Box>
 
         <Grid container spacing={4} alignItems="flex-start">
@@ -812,12 +837,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
                 </Stack>
               </Card>
               {timerEnabled && (
-                <Timer
-                  whiteTime={timer.white}
-                  blackTime={timer.black}
-                  currentPlayer={gameState.currentPlayer}
-                  isActive={timer.isActive}
-                />
+                <Timer whiteTime={timer.white} blackTime={timer.black}
+                  currentPlayer={gameState.currentPlayer} isActive={timer.isActive} />
               )}
             </Stack>
           </Grid>
@@ -828,11 +849,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
               <Box position="relative">
                 <ChessBoard board={gameState.board} selectedPosition={gameState.selectedPosition}
                   legalMoves={gameState.legalMoves} onSquareClick={handleSquareClick} onPieceDrop={handlePieceDrop}
-                />
+                  flipped={isBoardFlipped} />
                 <PromotionDialog open={!!promotion} color={promotion?.color || 'white'} onSelect={handlePromotionSelect} onClose={() => setPromotion(null)} />
                 {isAIThinking && (
-                  <Box
-                    position="absolute" top={0} left={0} right={0}
+                  <Box position="absolute" top={0} left={0} right={0}
                     bottom={0} bgcolor="rgba(0,0,0,0.3)" borderRadius={2}
                     display="flex" alignItems="center" justifyContent="center"
                   >
@@ -856,10 +876,21 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         </Grid>
       </Box>
 
-      <Dialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-      >
+      {/* Game Controller - Bottom Navigation */}
+      <GameController
+        gameMode={gameMode}
+        onUndo={handleUndo}
+        onPlay={handleResumeGame}
+        onPause={handlePauseGame}
+        onRedo={handleRedo}
+        onResign={() => setConfirmDialogOpen(true)}
+        onFlip={handleFlipBoard}
+        isPaused={isPaused}
+        canUndo={gameState.moveHistory.length >= (gameMode === 'ai' ? 2 : 1)}
+        canRedo={redoMoves.length > 0}
+      />
+
+      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Resign Game</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -868,20 +899,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button onClick={() => {
-              setGameState(prev => ({
-                ...prev,
-                isCheckmate: true,
-                winner: prev.currentPlayer === 'white' ? 'black' : 'white',
-                
-              }));
-              setConfirmDialogOpen(false);
-              setTimeout(() => {
-                onBackToSetup();
-              }, 5000);
-            }}
-            color="error"
-          >
+          <Button onClick={handleResignConfirm} color="error">
             Resign
           </Button>
         </DialogActions>
