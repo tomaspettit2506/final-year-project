@@ -61,7 +61,8 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
   const computeStatsFromGames = (games: any[]) => {
     return games.reduce(
       (acc, game) => {
-        const result = (game?.result || '').toLowerCase();
+        // Normalize: lowercase and trim whitespace for consistent comparison
+        const result = (game?.result || '').toLowerCase().trim();
         if (['win', 'won'].includes(result)) acc.wins += 1;
         else if (['loss', 'lose', 'lost'].includes(result)) acc.losses += 1;
         else if (['draw', 'tie'].includes(result)) acc.draws += 1;
