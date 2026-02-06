@@ -2,11 +2,11 @@ import { Card, Box, Typography, Accordion, AccordionSummary, AccordionDetails } 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
-const WinningComponent = () => {
+const Winning = () => {
   const { isDark } = useAppTheme();
   return (
     <Box>
-      <Card sx={{ p: 6, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
+      <Card sx={{ p: 6, bgcolor: isDark ? '#0f172acb' : '#ffffffcb', color: isDark ? '#E2E8F0' : 'inherit' }}>
               <Typography variant="h2" sx={{ fontSize: "2rem", mb: 4 }}> ♟️ How to Win at Chess</Typography>
               <Box sx={{ spaceY: 4 }}>
                 <Box sx={{ p: 4, backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : "#F0FDF4", borderLeft: "4px solid", borderColor: "#22C55E", borderRadius: 1, mb: 4, color: isDark ? '#DCFCE7' : "black" }}>
@@ -112,4 +112,4 @@ const WinningComponent = () => {
     );
 };
 
-export default WinningComponent;
+export default Winning;

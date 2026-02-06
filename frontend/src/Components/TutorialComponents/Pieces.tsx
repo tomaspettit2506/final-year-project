@@ -1,7 +1,7 @@
 import { Paper, Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import PieceGuide from "./PieceGuide";
 
-const PiecesComponent = () => {
+const Pieces = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -76,4 +76,4 @@ const PiecesComponent = () => {
   )
 };
 
-export default PiecesComponent;
+export default Pieces;

@@ -1,7 +1,7 @@
 import { Badge, Box, Card, Typography, useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
 import { useTheme as useAppTheme } from '../../Context/ThemeContext';
 
-const DrawComponent = () => {
+const Draw = () => {
   const { isDark } = useAppTheme();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
@@ -107,4 +107,4 @@ const DrawComponent = () => {
   );
 };
 
-export default DrawComponent;
+export default Draw;

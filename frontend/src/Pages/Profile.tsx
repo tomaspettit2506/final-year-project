@@ -8,7 +8,7 @@ import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Pape
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
-import AppBarComponent from "../Components/AppBarComponent";
+import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
 import ProfileLight from "../assets/profile_light.jpg";
 import ProfileDark from "../assets/profile_dark.jpg";
@@ -244,7 +244,7 @@ const Profile = () => {
 
   return (
     <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', minHeight: '100vh', pb: 5 }}>
-    <AppBarComponent title="Settings" isBackButton={false} isSettings={true} isExit={true}/>
+    <AppBar title="Settings" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ padding: 3, textAlign: "center", maxWidth: 700, mx: "auto" }}>
       {/* User Info Section */}
       <Paper sx={{ 

@@ -1,7 +1,7 @@
 import { Box, Card, Typography, useTheme as useMuiTheme, useMediaQuery } from "@mui/material";
 import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
-const BasicComponent = () => {
+const Basic = () => {
     const { isDark } = useAppTheme();
     const muiTheme = useMuiTheme();
     const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
@@ -54,4 +54,4 @@ const BasicComponent = () => {
     )
 };
 
-export default BasicComponent;
+export default Basic;

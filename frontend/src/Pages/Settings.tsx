@@ -7,7 +7,7 @@ import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, D
   CircularProgress } from "@mui/material";
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
-import AppBarComponent from "../Components/AppBarComponent";
+import AppBar from "../Components/AppBar";
 import GalaxySettings from "../assets/galaxy-settings.png";
 
 const Settings: React.FC = () => {
@@ -70,7 +70,7 @@ const Settings: React.FC = () => {
 
   return (
     <>
-    <AppBarComponent title="Settings" isBackButton={true} isSettings={false} isExit={true}/>
+    <AppBar title="Settings" isBackButton={true} isSettings={false} isExit={true}/>
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", p: 2,
       backgroundImage: `url(${GalaxySettings})`,
       backgroundSize: 'cover',

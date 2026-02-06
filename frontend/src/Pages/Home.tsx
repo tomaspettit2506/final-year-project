@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
-import AppBarComponent from "../Components/AppBarComponent";
+import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
 import { getUserRating } from "../Utils/FirestoreService";
 import HomeTheme from "../assets/home_theme.jpg";
@@ -104,7 +104,7 @@ const Home = () => {
 
     return(
       <Box sx={{ backgroundImage: `url(${HomeTheme})`, backgroundSize: 'cover', minHeight: '100vh' }}>
-      <AppBarComponent title="Home" isBackButton={false} isSettings={true} isExit={true}/>
+      <AppBar title="Home" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ p: 3, pb: 10 }}>
       {/* Welcome Section */}
       <Box sx={{ mb: 4, textAlign: "center" }}>

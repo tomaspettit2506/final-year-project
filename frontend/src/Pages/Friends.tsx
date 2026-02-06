@@ -6,7 +6,7 @@ import FriendsList from "../Components/FriendsComponents/FriendsList";
 import AddFriend from "../Components/FriendsComponents/AddFriend";
 import PendingRequests from "../Components/FriendsComponents/PendingRequests";
 import GameInvites from "../Components/FriendsComponents/GameInvites";
-import AppBarComponent from "../Components/AppBarComponent";
+import AppBar from "../Components/AppBar";
 
 interface Friend {
   id: string; // Prefer Firebase UID when available, otherwise Mongo _id
@@ -298,7 +298,7 @@ const Friends = () => {
 
   return (
     <>
-    <AppBarComponent title={"Friends"} isBackButton={true} isSettings={true} isExit={true} />
+    <AppBar title={"Friends"} isBackButton={true} isSettings={true} isExit={true} />
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: 6 }}>
       <Container maxWidth="md">
         <Box mb={4}>

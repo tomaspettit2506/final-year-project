@@ -1,7 +1,7 @@
 import { Card, Box, Accordion, AccordionSummary, AccordionDetails, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "../../Context/ThemeContext";
 
-const RulesComponent = () => {
+const Rules = () => {
   const { isDark, theme } = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -121,4 +121,4 @@ const RulesComponent = () => {
   );
 };
 
-export default RulesComponent;
+export default Rules;

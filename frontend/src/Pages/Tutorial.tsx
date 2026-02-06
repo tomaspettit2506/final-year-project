@@ -7,12 +7,12 @@ import { useTheme } from "../Context/ThemeContext";
 import ChessGalaxyTheme from "../assets/chess_galaxy.jpg";
 
 // Tutorial Components
-import AppBarComponent from "../Components/AppBarComponent";
-import BasicComponent from "../Components/TutorialComponents/BasicComponent";
-import PiecesComponent from "../Components/TutorialComponents/PiecesComponent";
-import RulesComponent from "../Components/TutorialComponents/RulesComponent";
-import WinningComponent from "../Components/TutorialComponents/WinningComponent";
-import DrawComponent from "../Components/TutorialComponents/DrawComponent";
+import AppBar from "../Components/AppBar";
+import Basic from "../Components/TutorialComponents/Basic";
+import Pieces from "../Components/TutorialComponents/Pieces";
+import Rules from "../Components/TutorialComponents/Rules";
+import Winning from "../Components/TutorialComponents/Winning";
+import Draw from "../Components/TutorialComponents/Draw";
 
 function Tutorial() {
   const { isDark } = useTheme();
@@ -27,7 +27,7 @@ function Tutorial() {
 
   return (
     <>
-      <AppBarComponent title="Chess Tutorial" isBackButton={true} isSettings={true}  isExit={true}/>
+      <AppBar title="Chess Tutorial" isBackButton={true} isSettings={true}  isExit={true}/>
       <Box sx={{ width: isMobile ? '100%' : 'auto', typography: "body1", p: 3, backgroundImage: `url(${ChessGalaxyTheme})`, backgroundSize: 'cover', borderRadius: 2 }}>
         <TabContext value={value}>
           <Box sx={{ borderColor: "divider", display: "flex", justifyContent: "center" }}>
@@ -67,23 +67,23 @@ function Tutorial() {
           </Box>
 
           <TabPanel value="basic">
-            <BasicComponent />
+            <Basic />
           </TabPanel>
 
           <TabPanel value="pieces">
-            <PiecesComponent />
+            <Pieces />
           </TabPanel>
 
           <TabPanel value="rules">
-            <RulesComponent />
+            <Rules />
           </TabPanel>
           
           <TabPanel value="winning">
-            <WinningComponent />
+            <Winning />
           </TabPanel>
 
           <TabPanel value="draw">
-            <DrawComponent />
+            <Draw />
           </TabPanel>
         </TabContext>
       </Box>

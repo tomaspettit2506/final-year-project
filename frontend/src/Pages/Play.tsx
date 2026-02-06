@@ -3,7 +3,7 @@ import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
 import Box from '@mui/material/Box';
-import AppBarComponent from '../Components/AppBarComponent';
+import AppBar from '../Components/AppBar';
 
 type Screen = 'setup' | 'game';
 
@@ -58,7 +58,7 @@ const Play = () => {
   if (currentScreen === 'setup') {
     return (
       <Box>
-        <AppBarComponent title="Game Setup" isBackButton={true} isSettings={true} isExit={true}/>
+        <AppBar title="Game Setup" isBackButton={true} isSettings={true} isExit={true}/>
         <Box>
           <GameSetup onStartGame={handleStartGame} onRoomJoined={handleRoomJoined} />
         </Box>
@@ -68,7 +68,7 @@ const Play = () => {
 
   return (
     <Box>
-      <AppBarComponent title={`Player vs ${gameConfig.gameMode}`} isBackButton={false} isSettings={false} isExit={false}/>
+      <AppBar title={`Player vs ${gameConfig.gameMode}`} isBackButton={false} isSettings={false} isExit={false}/>
       <GameScreen
         gameMode={gameConfig.gameMode}
         difficulty={gameConfig.difficulty} difficultyName={gameConfig.difficultyName}
