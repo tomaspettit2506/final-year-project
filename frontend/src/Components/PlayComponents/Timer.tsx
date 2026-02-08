@@ -25,13 +25,13 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
   };
 
   const getRowBg = (isCurrent: boolean) =>
-    isCurrent && isActive ? 'white' : 'black' === currentPlayer ? 'rgba(0, 0, 0, 0.04)' : 'rgba(28, 25, 25, 0.86)';
+    isCurrent && isActive ? 'white' : 'black' === currentPlayer ? 'rgba(28, 25, 25, 0.86)' : 'rgba(0, 0, 0, 0.04)';
 
   return (
     <Card variant="outlined">
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="overline" color="text.secondary" textAlign="center">
+          <Typography sx={{fontSize: 15 }} variant="overline" color="text.secondary" textAlign="center">
             ⏲️ Game Timer
           </Typography>
 
@@ -45,7 +45,7 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
                 px: 2,
                 py: 1.5,
                 borderRadius: 1,
-                color: currentPlayer === 'black' ? 'white' : 'white',
+                color: currentPlayer === 'black' ? 'white' : 'black',
                 border: '1px solid',
                 borderColor: currentPlayer === 'black' ? 'black' : 'divider',
                 bgcolor: getRowBg(currentPlayer === 'black'),

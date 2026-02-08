@@ -12,7 +12,10 @@ import {createInitialBoard, getLegalMoves, simulateMove, isCheckmate, isStalemat
 import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
 import { socket } from '../../Services/socket';
 import { useAuth } from '../../Context/AuthContext';
-import { saveGame } from '../../Services/api';
+import { saveGame, getApiBaseUrl } from '../../Services/api';
+
+import AI_ModeTheme from '../../assets/AI_ModeTheme.jpeg';
+import PvP_ModeTheme from '../../assets/PvP_ModeTheme.jpeg';
 
 interface GameScreenProps {
   gameMode: GameMode;
@@ -31,11 +34,14 @@ interface GameScreenProps {
 const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false, isRated = false }) => {
     // myColor, myName, roomId, isHost are now available for multiplayer logic and display
   const { user, userData } = useAuth();
-  const [gameState, setGameState] = useState<GameState>(() => ({
+  const apiBaseUrl = getApiBaseUrl();
+  const [mongoUserId, setMongoUserId] = useState<string | null>(null);
+  const [gameState, setGameState] = useState<GameState & { terminationReason?: string }>(() => ({
     board: createInitialBoard(),
     currentPlayer: 'white',
     selectedPosition: null, legalMoves: [], moveHistory: [], capturedPieces: { white: [], black: [] },
-    isCheck: false, isCheckmate: false, isStalemate: false, winner: null
+    isCheck: false, isCheckmate: false, isStalemate: false, winner: null,
+    terminationReason: undefined
   }));
   
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -50,8 +56,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);  const gameStateRef = useRef(gameState);
   const difficultyRef = useRef(difficulty);  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const terminationReasonRef = useRef<string | undefined>(undefined);
   const [resolvedColor, setResolvedColor] = useState<'white' | 'black'>(myColor);
   const [resolvedName, setResolvedName] = useState<string>(myName);
+  const [resolvedRating, setResolvedRating] = useState<number>(userData?.rating || 1200);
+  const [opponentName, setOpponentName] = useState<string>('Opponent');
+  const [opponentRating, setOpponentRating] = useState<number>(1200);
   const pendingMovesRef = useRef<RemoteMove[]>([]);
   const [promotion, setPromotion] = useState<{
     position: Position;
@@ -72,6 +82,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     gameStateRef.current = gameState;
     difficultyRef.current = difficulty;
   }, [gameState, difficulty]);
+
+  useEffect(() => {
+    if (gameState.terminationReason) {
+      terminationReasonRef.current = gameState.terminationReason;
+    }
+  }, [gameState.terminationReason]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -97,6 +113,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   useEffect(() => { setResolvedColor(myColor); }, [myColor]);
 
   useEffect(() => { setResolvedName(myName); }, [myName]);
+  useEffect(() => { setResolvedRating(userData?.rating || 1200); }, [userData?.rating]);
   
   // Timer countdown effect
   useEffect(() => {
@@ -114,11 +131,35 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         const newTime = prev[currentPlayer] - 1;
 
         if (newTime <= 0) {
+          const winner = currentPlayer === 'white' ? 'black' : 'white';
+          const loser = currentPlayer;
+          
           setGameState(prevState => ({
             ...prevState,
             isCheckmate: true,
-            winner: currentPlayer === 'white' ? 'black' : 'white'
+            winner: winner,
+            terminationReason: 'timeout'
           }));
+          
+          // Emit timeout to server in multiplayer mode with callback
+          if (gameMode === 'pvp' && roomId) {
+            socket.emit('endGame', { 
+              roomId, 
+              result: 'timeout',
+              winner: winner,
+              loser: loser,
+              isDraw: false,
+              endedBy: loser,
+              reason: 'timeout'
+            }, (response: any) => {
+              if (response?.success) {
+                console.log('[GameScreen] Timeout acknowledged by server');
+              } else {
+                console.error('[GameScreen] Server failed to acknowledge timeout:', response);
+              }
+            });
+          }
+          
           return {
             ...prev,
             [currentPlayer]: 0,
@@ -136,7 +177,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     return () => {
       if (timerIntervalRef.current !== null) clearInterval(timerIntervalRef.current);
     };
-  }, [timerEnabled, timer.isActive, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate, isPaused]);
+  }, [timerEnabled, timer.isActive, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate, isPaused, gameMode, roomId, resolvedColor]);
 
   // Check for AI move
   useEffect(() => {
@@ -174,9 +215,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       
       aiTimeoutRef.current = timeoutId;
       
-      return () => {
-        clearTimeout(timeoutId);
-      };
+      return () => { clearTimeout(timeoutId); };
     }
   }, [gameMode, gameState.currentPlayer, gameState.isCheckmate, gameState.isStalemate]);
   // Save game when it ends (multiplayer only)
@@ -188,18 +227,45 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         try {
           const effectiveColor = resolvedColor || myColor;
           
+          // Get or create MongoDB user ID if not already available
+          let userId = mongoUserId;
+          if (!userId && user.email) {
+            const userRes = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(user.email)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ 
+                name: userData?.name || user.displayName || 'Player', 
+                rating: userData?.rating || 1200 
+              })
+            });
+            if (userRes.ok) {
+              const mongoUser = await userRes.json();
+              userId = mongoUser._id;
+              setMongoUserId(userId);
+            }
+          }
+
+          if (!userId) {
+            console.error('[GameScreen] Cannot save game: No user ID available');
+            return;
+          }
+          
           // Determine result from my perspective
           let result: 'win' | 'loss' | 'draw';
           if (gameState.isStalemate) result = 'draw';
           else if (gameState.winner === effectiveColor) result = 'win';
           else result = 'loss';
           
-          // Determine termination reason
+          // Determine termination reason using terminationReason field
+          const effectiveTerminationReason = gameState.terminationReason ?? terminationReasonRef.current;
+
           let termination: string;
-          if (gameState.isCheckmate) termination = 'checkmate';
+          if (effectiveTerminationReason === 'timeout') termination = 'timeout';
+          else if (effectiveTerminationReason === 'resignation') termination = 'resignation';
+          else if (gameState.isCheckmate) termination = 'checkmate';
           else if (gameState.isStalemate) termination = 'stalemate';
-          else if (timer.white === 0 || timer.black === 0) termination = 'timeout';
-          else termination = 'resignation';
+          else termination = 'unknown';
           
           // Calculate game duration (initial time - remaining time)
           const myTimeLeft = effectiveColor === 'white' ? timer.white : timer.black;
@@ -211,9 +277,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           const opponentAccuracy = Math.min(95, 70 + Math.random() * 25);
           
           const gameData = {
-            userId: user.uid,
-            opponent: 'Multiplayer Opponent', // You can get this from room data if available
-            opponentRating: userData?.rating || 1200,
+            userId: userId,
+            myRating: resolvedRating, // Use resolvedRating for my rating
+            opponent: opponentName, // Use opponent's actual name
+            opponentRating: opponentRating, // Use opponent's actual rating
             date: new Date().toISOString(),
             result,
             isRated: isRated || false,
@@ -235,7 +302,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       
       saveGameData();
     }
-  }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled, isRated]);
+  }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameState.terminationReason, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled, isRated, mongoUserId, resolvedRating, opponentName, opponentRating]);
   const applyRemoteHistory = useCallback((remoteMoves: RemoteMove[]) => {
     if (!Array.isArray(remoteMoves) || remoteMoves.length === 0) return;
 
@@ -281,7 +348,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       if (capturedPiece && capturedPiece.color !== movingPiece.color) {
         rebuiltCaptured[movingPiece.color].push(capturedPiece);
       }
-
       currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
     }
 
@@ -300,7 +366,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       isCheck,
       isCheckmate: isCheckmateState,
       isStalemate: isStalemateState,
-      winner: isCheckmateState ? (nextPlayer === 'white' ? 'black' : 'white') : null
+      winner: isCheckmateState ? (nextPlayer === 'white' ? 'black' : 'white') : null,
+      terminationReason: undefined
     });
 
     if (timerEnabled && remoteMoves.length > 0) {
@@ -408,10 +475,22 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       }
     };
 
-    const handleGameEnded = (data: { result: string; winner: string | null; players: Array<{ name: string; color: string }> }) => {
+    const handleGameEnded = (data: { result: string; winner?: string | null; loser?: string | null; isDraw?: boolean; reason?: string }) => {
       if (!isMountedRef.current) return;
-      console.log('Game ended by opponent:', data);
-      // Game state is already updated, just log for now
+      console.log('[GameScreen] Game ended by opponent:', data);
+
+      const normalizedReason = data.reason || data.result;
+      const isDraw = data.isDraw ?? data.result === 'stalemate';
+      const isDecisive = data.result === 'checkmate' || data.result === 'resignation' || data.result === 'timeout';
+      
+      // Update local game state based on server notification
+      setGameState(prev => ({
+        ...prev,
+        isCheckmate: isDecisive,
+        isStalemate: isDraw,
+        winner: (data.winner ?? null) as 'white' | 'black' | null,
+        terminationReason: normalizedReason
+      }));
     };
 
     const handleOpponentDisconnected = () => {
@@ -447,7 +526,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     socket.on('gameResumed', handleGameResumed);
 
     // Immediately request a sync in case we missed a move during navigation
-    socket.emit('syncGameState', { roomId }, (response: { success: boolean; moveHistory?: RemoteMove[]; players?: Array<{ id: string; name: string; color: 'white' | 'black' }> }) => {
+    socket.emit('syncGameState', { roomId }, (response: { success: boolean; moveHistory?: RemoteMove[]; players?: Array<{ id: string; name: string; color: 'white' | 'black'; rating?: number }> }) => {
       if (!response?.success || !Array.isArray(response.moveHistory)) return;
 
       const remoteCount = response.moveHistory.length;
@@ -455,9 +534,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
       if (response.players && response.players.length > 0) {
         const me = response.players.find(p => p.id === socket.id);
+        const opponent = response.players.find(p => p.id !== socket.id);
+        
         if (me) {
           setResolvedColor(me.color);
           setResolvedName(me.name);
+          if (me.rating) setResolvedRating(me.rating);
+        }
+        
+        if (opponent) {
+          setOpponentName(opponent.name);
+          if (opponent.rating) setOpponentRating(opponent.rating);
         }
       }
 
@@ -613,11 +700,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       return; // do not emit or update state until promotion is chosen
     }
 
-    const newGameState: GameState = {
+    const newGameState: GameState & { terminationReason?: string } = {
       board: newBoard, currentPlayer: nextPlayer,
       selectedPosition: null, legalMoves: [],
       moveHistory: [...currentState.moveHistory, move], capturedPieces: newCapturedPieces, isCheck,
-      isCheckmate: isCheckmateState, isStalemate: isStalemateState,  winner: isCheckmateState ? currentState.currentPlayer : null
+      isCheckmate: isCheckmateState, isStalemate: isStalemateState,  winner: isCheckmateState ? currentState.currentPlayer : null,
+      terminationReason: isCheckmateState ? 'checkmate' : undefined
     };
 
     // Emit move to opponent in multiplayer mode BEFORE updating state
@@ -634,12 +722,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         console.log('[GameScreen] makeMove callback received:', response);
       });
       
-      // If game ended, notify opponent
+      // If game ended, notify both players with proper results
       if (isCheckmateState || isStalemateState) {
+        const winner = isCheckmateState ? currentState.currentPlayer : null;
+        const loser = isCheckmateState ? nextPlayer : null;
+        
         socket.emit('endGame', { 
           roomId, 
           result: isCheckmateState ? 'checkmate' : 'stalemate',
-          winner: isCheckmateState ? currentState.currentPlayer : null
+          winner: winner,
+          loser: loser,
+          isDraw: isStalemateState,
+          endedBy: resolvedColor,
+          reason: isCheckmateState ? 'checkmate' : 'stalemate'
         });
       }
     }
@@ -672,15 +767,23 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
     setGameState(prev => ({ board: promotedBoard, currentPlayer: nextPlayer, selectedPosition: null, legalMoves: [],
       moveHistory: [...prev.moveHistory, finalizedMove], capturedPieces: prev.capturedPieces,
-      isCheck, isCheckmate: isCheckmateState, isStalemate: isStalemateState, winner: isCheckmateState ? (prev.currentPlayer) : null }));
+      isCheck, isCheckmate: isCheckmateState, isStalemate: isStalemateState, winner: isCheckmateState ? (prev.currentPlayer) : null,
+      terminationReason: isCheckmateState ? 'checkmate' : undefined }));
 
     if (gameMode === 'pvp' && roomId) {
       socket.emit('makeMove', { roomId, move: { from: promotion.move.from, to: promotion.position, notation: finalizedNotation } });
       if (isCheckmateState || isStalemateState) {
+        const winner = isCheckmateState ? promotion.color : null;
+        const loser = isCheckmateState ? nextPlayer : null;
+        
         socket.emit('endGame', { 
           roomId, 
           result: isCheckmateState ? 'checkmate' : 'stalemate',
-          winner: isCheckmateState ? (promotion.color) : null
+          winner: winner,
+          loser: loser,
+          isDraw: isStalemateState,
+          endedBy: resolvedColor,
+          reason: isCheckmateState ? 'checkmate' : 'stalemate'
         });
       }
     }
@@ -774,18 +877,48 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   };
   
   const handleResignConfirm = () => {
+    const resigningColor = resolvedColor || myColor;
+    const winner = resigningColor === 'white' ? 'black' : 'white';
+    const loser = resigningColor;
+    
     setGameState(prev => ({
       ...prev,
       isCheckmate: true,
-      winner: prev.currentPlayer === 'white' ? 'black' : 'white',
+      winner: winner,
+      terminationReason: 'resignation'
     }));
+    
+    // Emit resignation to server in multiplayer mode with callback
+    if (gameMode === 'pvp' && roomId) {
+      socket.emit('endGame', { 
+        roomId, 
+        result: 'resignation',
+        winner: winner,
+        loser: loser,
+        isDraw: false,
+          endedBy: loser,
+        reason: 'resignation'
+      }, (response: any) => {
+        if (response?.success) {
+          console.log('[GameScreen] Resignation acknowledged by server');
+          setTimeout(() => { onBackToSetup(); }, 2000);
+        } else {
+          console.error('[GameScreen] Server failed to acknowledge resignation:', response);
+          setTimeout(() => { onBackToSetup(); }, 5000);
+        }
+      });
+    } else {
+      // For AI mode, just go back
+      setTimeout(() => { onBackToSetup(); }, 5000);
+    }
+    
     setConfirmDialogOpen(false);
-    setTimeout(() => { onBackToSetup(); }, 5000);
   };
 
   return (
     <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center" p={4} pb={12} sx={{
-      background: 'linear-gradient(135deg, #0f172a 0%, #6d28d9 50%, #0f172a 100%)'
+      backgroundImage: `url(${gameMode === 'ai' ? AI_ModeTheme : PvP_ModeTheme})`,
+      backgroundSize: 'cover'
     }}>
       <Box maxWidth="1200px" width="100%">
         {/* Header */}
@@ -828,9 +961,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
                   {gameState.isCheck && !gameState.isCheckmate && (
                     <Typography color="warning.main" fontWeight={500}>Check!</Typography>
                   )}
-                  {gameState.isCheckmate && (
+                  {gameState.isCheckmate && gameState.terminationReason !== 'resignation' && gameState.terminationReason !== 'timeout' && (
                     <Typography color="success.main" fontWeight={500}>
                       Checkmate! {gameState.winner} wins!
+                    </Typography>
+                  )}
+                  {gameState.terminationReason === 'resignation' && (
+                    <Typography color="error.main" fontWeight={500}>
+                      {gameState.winner} wins by resignation!
+                    </Typography>
+                  )}
+                  {gameState.terminationReason === 'timeout' && (
+                    <Typography color="error.main" fontWeight={500}>
+                      {gameState.winner} wins by timeout!
                     </Typography>
                   )}
                   {gameState.isStalemate && (
@@ -854,10 +997,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
                   flipped={isBoardFlipped} />
                 <PromotionDialog open={!!promotion} color={promotion?.color || 'white'} onSelect={handlePromotionSelect} onClose={() => setPromotion(null)} />
                 {isAIThinking && (
-                  <Box position="absolute" top={0} left={0} right={0}
-                    bottom={0} bgcolor="rgba(0,0,0,0.3)" borderRadius={2}
-                    display="flex" alignItems="center" justifyContent="center"
-                  >
+                  <Box position="absolute" top={0} left={0} right={0} bottom={0} bgcolor="rgba(0,0,0,0.3)" borderRadius={2}
+                    display="flex" alignItems="center" justifyContent="center">
                     <Box bgcolor="background.paper" px={3} py={1.5} borderRadius={2} boxShadow={3}>
                       <Typography>AI is thinking...</Typography>
                     </Box>
@@ -879,14 +1020,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       </Box>
 
       {/* Game Controller - Bottom Navigation */}
-      <GameController
-        gameMode={gameMode}
-        onUndo={handleUndo} onPlay={handleResumeGame} 
-        onPause={handlePauseGame} onRedo={handleRedo}
-        onResign={() => setConfirmDialogOpen(true)} onFlip={handleFlipBoard}
+      <GameController gameMode={gameMode} onUndo={handleUndo} onPlay={handleResumeGame} 
+        onPause={handlePauseGame} onRedo={handleRedo} onResign={() => setConfirmDialogOpen(true)} onFlip={handleFlipBoard}
         isPaused={isPaused} canUndo={gameState.moveHistory.length >= (gameMode === 'ai' ? 2 : 1)}
-        canRedo={redoMoves.length > 0}
-      />
+        canRedo={redoMoves.length > 0} />
 
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Resign Game</DialogTitle>
@@ -897,9 +1034,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleResignConfirm} color="error">
-            Resign
-          </Button>
+          <Button onClick={handleResignConfirm} color="error">Resign</Button>
         </DialogActions>
       </Dialog>
     </Box>
