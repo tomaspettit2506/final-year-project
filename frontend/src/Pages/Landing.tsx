@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { motion } from "framer-motion";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/swiper-bundle.css";
@@ -9,7 +8,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, firestore } from "../firebase"; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
-import LandingTheme from "../assets/landing_theme.jpg";
+import WelcomeApp from "../assets/WelcomeApp.jpeg";
 
 // Features for the slideshow
 const slides = [
@@ -109,14 +108,14 @@ const Landing = () => {
         textAlign: "center",
         color: "white",
         padding: "1.5rem",
-        backgroundImage: `url(${LandingTheme})`,
+        backgroundImage: `url(${WelcomeApp})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
       {/* LANDING PAGE WITH SLIDESHOW */}
       {screen === "landing" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ width: "100%", maxWidth: "400px" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ width: "100%", maxWidth: "400px", backgroundColor: "rgba(0, 0, 0, 0.6)", padding: "2rem", borderRadius: "15px" }}>
           <Typography variant="h5" fontWeight="bold">Welcome to Guardians of the Chess Grandmaster</Typography>
           <Typography variant="h6" sx={{ mt: 2 }}>Your AI-powered study planner and portfolio builder.</Typography>
 
@@ -152,13 +151,14 @@ const Landing = () => {
         <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             
             {/* Back Arrow at the Top */}
-            <IconButton onClick={() => setScreen("landing")} sx={{ position: "absolute", top: 20, left: 20, color: "black" }}>
-            <ArrowBackIcon fontSize="large" />
+            <IconButton onClick={() => setScreen("landing")} sx={{ position: "absolute", top: 20, left: 20, color: "black"}}>
+            ⬅️
             </IconButton>
 
             <Box
               sx={{
-                background: "linear-gradient(grey, black)", 
+                color: "white",
+                background: "linear-gradient(transparent, grey, black, transparent)", 
                 backdropFilter: "blur(10px)",
                 padding: "40px",
                 borderRadius: "15px",
@@ -167,11 +167,11 @@ const Landing = () => {
                 boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               }}
             >
-            <Typography variant="h4" fontWeight="bold">Log In</Typography>
+            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Log In</Typography>
             <form onSubmit={handleSubmit}>
-            <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2, }} />
-            <TextField label="Password" name="password" type="password" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ py: 1.5 }}>Log In</Button>
+            <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2}} />
+            <TextField label="Password" name="password" type="password" fullWidth  onChange={handleChange} required sx={{ mb: 2}} />
+            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mb: 5, py: 1.5 }}>Log In</Button>
             </form>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
@@ -223,11 +223,11 @@ const Landing = () => {
 
             {/* Back Arrow at the Top */}
             <IconButton onClick={() => setScreen("login")} sx={{ position: "absolute", top: 20, left: 20, color: "black" }}>
-            <ArrowBackIcon fontSize="large" />
+            ⬅️
             </IconButton>
             <Box
               sx={{
-                background: "linear-gradient(grey, black)", 
+                background: "linear-gradient(transparent, grey, black, transparent)", 
                 backdropFilter: "blur(10px)",
                 padding: "40px",
                 borderRadius: "15px",
@@ -236,7 +236,7 @@ const Landing = () => {
                 boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               }}
             >
-            <Typography variant="h4" fontWeight="bold">Sign Up</Typography>
+            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Sign Up</Typography>
             <form onSubmit={handleSubmit}>
             <TextField label="Full Name" name="name" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
             <TextField label="Rating" placeholder="E.g. 500 or 1000" name="rating" type="number" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />

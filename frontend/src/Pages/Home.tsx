@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
+import { getApiBaseUrl } from "../Services/api";
+import { socket } from "../Services/socket";
+import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
 import { getUserRating } from "../Utils/FirestoreService";
@@ -10,6 +13,10 @@ import HomeTheme from "../assets/home_theme.jpg";
 const Home = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const theme = useTheme();
+    const { isDark } = useAppTheme();
+  const apiBaseUrl = getApiBaseUrl();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [loading, setLoading] = useState<boolean>(true);
     const [userData, setUserData] = useState<any>(null);
     const [mongoUserId, setMongoUserId] = useState<string | null>(null);
@@ -30,9 +37,10 @@ const Home = () => {
 
         // Get or create MongoDB user
         if (user.email) {
-          const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
+          const userRes = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(user.email)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ name: user.displayName || data.name || '', rating: data.rating || 500 })
           });
           if (userRes.ok) {
@@ -50,16 +58,35 @@ const Home = () => {
     fetchUserData();
   }, [user]);
 
+  // Connect socket for real-time messaging
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Join user's personal room for messaging
+    socket.emit('join_user_room', { userId: user.uid });
+
+    return () => {
+      // Keep socket connected when leaving the page for other features
+    };
+  }, [user?.uid]);
+
   // Fetch recent games from backend
-  const fetchRecentGames = async () => {
+  const fetchRecentGames = async (userId?: string) => {
     setLoadingRecentGames(true);
     try {
-      // If we have a MongoDB user ID, fetch their specific games
-      let endpoint = '/game';
-      if (mongoUserId) {
-        endpoint = `/game/user/${mongoUserId}`;
+      // Only fetch if we have a user ID - don't show global games
+      const userIdToUse = userId || mongoUserId;
+      if (!userIdToUse) {
+        console.log('No user ID available, skipping game fetch');
+        setRecentGames([]);
+        return;
       }
 
+      const endpoint = `${apiBaseUrl}/game/user/${userIdToUse}`;
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch recent games');
       const data = await res.json();
@@ -71,9 +98,11 @@ const Home = () => {
     }
   };
 
-  // Call fetchRecentGames on mount and when mongoUserId changes
+  // Call fetchRecentGames when mongoUserId becomes available
   useEffect(() => {
-    fetchRecentGames();
+    if (mongoUserId) {
+      fetchRecentGames();
+    }
   }, [mongoUserId]);
 
   const handleViewGameDetails = (game: any) => {
@@ -112,7 +141,7 @@ const Home = () => {
           Welcome, {userData?.name || "Chess Player"}
         </Typography>
         {userData?.rating && (
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.primary" sx={{ mt: 1, fontSize: "36px", fontWeight: "bold", fontFamily: "Times New Roman", color: "#e7dbf4" }}>
             Your Rating: {userData.rating}
           </Typography>
         )}
@@ -132,9 +161,15 @@ const Home = () => {
             {loadingRecentGames ? (
               <CircularProgress sx={{ color: "white" }} />
             ) : recentGames.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No recent games found.
-              </Typography>
+              <Box sx={{ ml: isMobile ? 7.5 : 40, p: 5, textAlign: "center", width: isMobile ? "75%" : "50%", height: "100%", borderRadius: "12px", color: isDark ? "white" : "black", bgcolor: isDark ? "rgba(6, 6, 6, 0.55)" : "rgba(255, 255, 255, 0.85)" }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: isMobile ? "18px" : "16px" }}>
+                  No recent games found
+                </Typography>
+                <Button sx={{ alignSelf: "flex-start", bgcolor: "#d6c3ea", color: "white", 
+                  boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)", fontWeight: "bold", fontSize: isMobile ? "13px" : "16px", borderRadius: "8px" }} onClick={() => navigate("/play")}>
+                  Play with AI or friends 🎮
+                </Button>
+              </Box>
               ) : (
               recentGames.slice(0, 5).map((game, idx) => (
                 <Card
@@ -144,11 +179,11 @@ const Home = () => {
                     mr: 2,
                     borderRadius: "12px",
                     boxShadow: "0 4px 12px rgba(85, 0, 170, 0.1)",
-                    bgcolor: "#f3e8ff",
+                    bgcolor: isDark ? "#565359" : "#f3e8ff",
                     flexShrink: 0,
                   }}
                 >
-                  <CardContent sx={{ color: "#333" }}>
+                  <CardContent sx={{ color: isDark ? "white" : "#333" }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
                       {game.opponent || "Opponent"}
                     </Typography>
@@ -159,13 +194,15 @@ const Home = () => {
                       <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                      <strong>Accuracy Move:</strong> <LinearProgress variant="determinate" value={game.myAccuracy} />
+                      <strong>Accuracy Move:</strong> <LinearProgress variant="determinate" value={game.myAccuracy} /> {game.myAccuracy}%
                     </Typography>
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={() => handleViewGameDetails(game)}
-                      sx={{ fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
+                      sx={{ fontWeight: "bold", borderRadius: "8px", boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)",
+                        color: isDark ? "white" : "#333",
+                       }}
                     >
                       View Game
                     </Button>
@@ -203,7 +240,7 @@ const Home = () => {
                     variant="contained"
                     color="secondary"
                     onClick={() => navigate("/tutorial")}
-                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
+                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                   >
                     Open Tutorial 🎓
                   </Button>
@@ -225,14 +262,14 @@ const Home = () => {
                   <Typography variant="h5" fontWeight="bold" gutterBottom>
                     📩 Invite Friends
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px" }}>
+                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1, fontSize: "16px", color: isDark ? "white" : "black" }}>
                     You can invite your friends to play with you
                   </Typography>
                   <Button
                     variant="contained"
                     color="success"
                     onClick={() => navigate("/friends")}
-                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
+                    sx={{ alignSelf: "flex-start", fontWeight: "bold", borderRadius: "8px", boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)" }}
                   >
                     Join Them 📩
                   </Button>
@@ -248,7 +285,7 @@ const Home = () => {
         sx={{
           borderRadius: "12px",
           boxShadow: "0 4px 12px rgba(85, 0, 170, 0.1)",
-          bgcolor: "#a046f9",
+          bgcolor: isDark ? "#6a1b9a" : "#a046f9",
           mb: 5,
         }}
       >
@@ -256,7 +293,7 @@ const Home = () => {
           <Typography variant="h5" fontWeight="bold" gutterBottom>
             💡 Daily Learning Tip
           </Typography>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ color: isDark ? "white" : "black" }}>
             Consistent practice is key to improving your chess skills. Dedicate time each day to study tactics, openings, and endgames to see steady progress! 
           </Typography>
         </CardContent>

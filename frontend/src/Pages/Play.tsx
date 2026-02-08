@@ -4,6 +4,7 @@ import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
 import Box from '@mui/material/Box';
 import AppBar from '../Components/AppBar';
+import GameSetupTheme from '../assets/GameSetupTheme.jpeg';
 
 type Screen = 'setup' | 'game';
 
@@ -59,7 +60,7 @@ const Play = () => {
     return (
       <Box>
         <AppBar title="Game Setup" isBackButton={true} isSettings={true} isExit={true}/>
-        <Box>
+        <Box sx={{ backgroundImage: `url(${GameSetupTheme})`, backgroundSize: 'cover', minHeight: '100vh' }}>
           <GameSetup onStartGame={handleStartGame} onRoomJoined={handleRoomJoined} />
         </Box>
       </Box>

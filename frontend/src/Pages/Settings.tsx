@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../Context/ThemeContext";
 import { useBoardTheme } from "../Context/BoardThemeContext";
 import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, Dialog, DialogActions, 
   DialogContent, DialogContentText,DialogTitle, Select, MenuItem, FormControl, FormLabel, 
@@ -8,10 +9,12 @@ import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, D
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
 import AppBar from "../Components/AppBar";
-import GalaxySettings from "../assets/galaxy-settings.png";
+import SettingsLight from "../assets/SettingsLight.jpeg";
+import SettingsDark from "../assets/SettingsDark.jpeg";
 
 const Settings: React.FC = () => {
   const { logout } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -72,7 +75,7 @@ const Settings: React.FC = () => {
     <>
     <AppBar title="Settings" isBackButton={true} isSettings={false} isExit={true}/>
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", p: 2,
-      backgroundImage: `url(${GalaxySettings})`,
+      backgroundImage: `url(${isDark ? SettingsDark : SettingsLight})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
@@ -85,7 +88,7 @@ const Settings: React.FC = () => {
         boxShadow: 3,
         borderRadius: 3,
         backdropFilter: 'blur(10px)',
-        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        bgcolor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
       }}>
         <CardContent>
           <Divider sx={{ mb: 3 }} />
@@ -99,7 +102,7 @@ const Settings: React.FC = () => {
             mt: 3, 
             p: 2, 
             borderRadius: 2,
-            bgcolor: 'action.hover',
+            bgcolor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.05)',
             border: 1,
             borderColor: 'divider',
             mb: 3
@@ -127,7 +130,7 @@ const Settings: React.FC = () => {
             mt: 3, 
             p: 2, 
             borderRadius: 2,
-            bgcolor: 'action.hover',
+            bgcolor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.05)',
             border: 1,
             borderColor: 'divider',
             mb: 3
@@ -146,7 +149,7 @@ const Settings: React.FC = () => {
             mt: 3, 
             p: 2, 
             borderRadius: 2,
-            bgcolor: 'action.hover',
+            bgcolor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.05)',
             border: 1,
             borderColor: 'divider',
             mb: 3,

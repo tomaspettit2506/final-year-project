@@ -2,20 +2,22 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useTheme } from "../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { getApiBaseUrl } from "../Services/api";
+import { socket } from "../Services/socket";
 import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
   TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, FormControl,
   InputLabel, MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
-import ProfileLight from "../assets/profile_light.jpg";
-import ProfileDark from "../assets/profile_dark.jpg";
+import ProfileLight from "../assets/ProfileLight.jpeg";
+import ProfileDark from "../assets/ProfileDark.jpeg";
 
 const Profile = () => {
   const { user } = useAuth();
   const { isDark } = useTheme();
+  const apiBaseUrl = getApiBaseUrl();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const navigate = useNavigate();
@@ -48,18 +50,38 @@ const Profile = () => {
   };
 
   // Fetch recent games from backend
-  const fetchRecentGames = async () => {
+  const fetchRecentGames = async (userId?: string) => {
     setLoadingRecentGames(true);
     try {
-      // If we have a MongoDB user ID, fetch their specific games
-      let endpoint = '/game';
-      if (mongoUserId) {
-        endpoint = `/game/user/${mongoUserId}`;
+      // Only fetch if we have a user ID - don't show global games
+      const userIdToUse = userId || mongoUserId;
+      if (!userIdToUse) {
+        console.log('No user ID available, skipping game fetch');
+        setRecentGames([]);
+        setFilteredGames([]);
+        return;
       }
 
+      const endpoint = `/game/user/${userIdToUse}`;
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch recent games');
-      const data = await res.json();
+      let data = await res.json();
+      
+      // Deduplicate games: keep only unique games based on opponent, date, result, and moves
+      const seenGames = new Map<string, any>();
+      const deduplicatedData = data.filter((game: any) => {
+        // Create a unique key for each game
+        const gameKey = `${game.opponent}-${new Date(game.date).toDateString()}-${game.result}-${game.moves}`;
+        
+        if (!seenGames.has(gameKey)) {
+          seenGames.set(gameKey, game);
+          return true;
+        }
+        console.log(`Filtered out duplicate game: ${gameKey}`);
+        return false;
+      });
+      
+      data = deduplicatedData;
       setRecentGames(data);
       setFilteredGames(applyGameFilter(data, gameFilter));
 
@@ -74,49 +96,6 @@ const Profile = () => {
       console.error('Error fetching recent games:', err);
     } finally {
       setLoadingRecentGames(false);
-    }
-  };
-
-  // Add a demo recent game (for testing)
-  const addDemoRecentGame = async () => {
-    try {
-      // Ensure we have a MongoDB user ID
-      let userId = mongoUserId;
-      if (!userId && user?.email) {
-        // Get or create MongoDB user
-        const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: user.displayName || name, rating: parseInt(rating) || 500 })
-        });
-        if (!userRes.ok) throw new Error('Failed to get or create user');
-        const mongoUser = await userRes.json();
-        userId = mongoUser._id;
-        setMongoUserId(userId);
-      }
-
-      const res = await fetch('/game', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          myRating: parseInt(rating) || 500,
-          opponent: "Demo Opponent",
-          opponentRating: 480,
-          date: new Date().toISOString(),
-          result: "win",
-          timeControl: 10,
-          termination: "checkmate",
-          moves: 35,
-          duration: 300,
-          myAccuracy: 92.5,
-          opponentAccuracy: 85.0,
-          userId: userId
-        })
-      });
-      if (!res.ok) throw new Error('Failed to add demo game');
-      await fetchRecentGames();
-    } catch (err) {
-      console.error('Error adding demo game:', err);
     }
   };
 
@@ -159,19 +138,6 @@ const Profile = () => {
     if (user) {
       const fetchUserData = async () => {
         try {
-          // Get or create MongoDB user
-          if (user.email) {
-            const userRes = await fetch(`/user/email/${encodeURIComponent(user.email)}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: user.displayName || '', rating: 500 })
-            });
-            if (userRes.ok) {
-              const mongoUser = await userRes.json();
-              setMongoUserId(mongoUser._id);
-            }
-          }
-
           // Fetch from Firestore
           const userRef = doc(firestore, "users", user.uid);
           const userSnap = await getDoc(userRef);
@@ -182,12 +148,12 @@ const Profile = () => {
             setName(data.name || "");
             setRating(data.rating || "");
 
-            // 🔹 Always show modal if name or rating is missing
+            // Show modal if name or rating is missing
             if (!data.name || !data.rating) {
               setIsModalOpen(true);
             }
           } else {
-            // 🔹 If user is new (no Firestore entry), create a profile and ask for details
+            // If user is new (no Firestore entry), create a profile
             await setDoc(userRef, {
               name: user.displayName || "",
               email: user.email,
@@ -195,21 +161,54 @@ const Profile = () => {
             });
             setIsModalOpen(true);
           }
+
+          // Get or create MongoDB user
+          if (user.email) {
+            const userRes = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(user.email)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ name: user.displayName || '', rating: 500 })
+            });
+            if (userRes.ok) {
+              const mongoUser = await userRes.json();
+              setMongoUserId(mongoUser._id);
+            }
+          }
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
           setLoading(false);
         }
       };
-      const loadProfile = async () => {
-        await fetchUserData();
-        await fetchRecentGames();
-      };
-      loadProfile();
+      fetchUserData();
     } else {
       setLoading(false);
     }
   }, [user]);
+
+  // Fetch games when mongoUserId changes - this is now the ONLY place games are fetched
+  useEffect(() => {
+    if (mongoUserId) {
+      fetchRecentGames();
+    }
+  }, [mongoUserId]);
+
+  // Connect socket for real-time messaging
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Join user's personal room for messaging
+    socket.emit('join_user_room', { userId: user.uid });
+
+    return () => {
+      // Keep socket connected when leaving the page for other features
+    };
+  }, [user?.uid]);
 
   const handleSave = async () => {
     if (user) {
@@ -242,8 +241,16 @@ const Profile = () => {
     return <Typography variant="h6" sx={{ textAlign: "center", mt: 4, color: "#5500aa" }}>You need to log in.</Typography>;
   }
 
+  const totalGames = (userData?.wins || 0) + (userData?.losses || 0) + (userData?.draws || 0);
+  const winRate = totalGames > 0 ? Math.round(((userData?.wins || 0) / totalGames) * 100) : 0;
+  const username =
+    (user?.email?.split("@")[0] || userData?.name || "user").replace(/\s+/g, "_").toLowerCase();
+  const memberSince = user?.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).getFullYear()
+    : undefined;
+
   return (
-    <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', minHeight: '100vh', pb: 5 }}>
+    <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', pb: 5 }}>
     <AppBar title="Settings" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ padding: 3, textAlign: "center", maxWidth: 700, mx: "auto" }}>
       {/* User Info Section */}
@@ -254,26 +261,46 @@ const Profile = () => {
         boxShadow: '0 4px 20px rgba(85, 0, 170, 0.1)', 
         backgroundColor: "#ffffff" 
       }}>
-        <Avatar sx={{ 
-          width: 80, 
-          height: 80, 
-          bgcolor: "#5500aa", 
-          mx: "auto", 
-          mb: 2,
-          boxShadow: '0 4px 8px rgba(85, 0, 170, 0.2)'
-        }}>
-          <AccountCircleIcon sx={{ fontSize: 50 }} />
-        </Avatar>
-        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#5500aa" }}>
-          {userData?.name || "No Name Set"}
-        </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary" }}>
-          Email: {user?.email}
-        </Typography>
-        <Typography variant="body1" sx={{ mt: 1, color: "#ddaaff" }}>
-          🎓
-          Rating: {userData?.rating || "No rating set"}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Avatar sx={{ 
+            width: 72, 
+            height: 72, 
+            bgcolor: "#f1f1f5", 
+            color: "#5500aa",
+            boxShadow: '0 4px 8px rgba(85, 0, 170, 0.2)'
+          }}>
+            {(userData?.name || user?.displayName || "U").charAt(0).toUpperCase()}
+          </Avatar>
+          <Box sx={{ textAlign: "left" }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "#5500aa" }}>
+              {userData?.name || user?.displayName || "No Name Set"}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              @{username}{memberSince ? ` • Member since ${memberSince}` : ""}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2, mt: 3 }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary">Rating</Typography>
+              <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.rating || 0}</Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary">Wins</Typography>
+              <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.wins || 0}</Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary">Win Rate</Typography>
+              <Typography variant="h5" fontWeight="bold" color="#5500aa">{winRate}%</Typography>
+            </CardContent>
+          </Card>
+        </Box>
       </Paper>
 
       <Divider sx={{ mb: 3, bgcolor: "#ddaaff" }} />
@@ -285,7 +312,7 @@ const Profile = () => {
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#ffffff" }}>
             <CardContent>
               <Typography variant="h6" color="#5500aa">Total Games</Typography>
-              <Typography variant="h4" fontWeight="bold" color="#5500aa">{(userData?.wins || 0) + (userData?.losses || 0) + (userData?.draws || 0)}</Typography>
+              <Typography variant="h4" fontWeight="bold" color="#5500aa">{totalGames}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -367,7 +394,7 @@ const Profile = () => {
                       }}
                     >
                       <TableCell>{new Date(game.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{game.opponent}</TableCell>
+                      <TableCell>{game.opponent} ({game.opponentRating})</TableCell>
                       <TableCell>
                         <Typography 
                           sx={{ 
@@ -430,15 +457,6 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
-
-      <Button
-        variant="outlined"
-        sx={{ mb: 3, color: "#5500aa", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
-        startIcon={"➕"}
-        onClick={addDemoRecentGame}
-      >
-        Add Demo Recent Game
-      </Button>
 
       {/* Modal for Name & Rating Entry */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
