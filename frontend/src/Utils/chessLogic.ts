@@ -366,9 +366,12 @@ export function canCastle(board: Board, kingPos: Position, color: PieceColor): b
 }
 
 function canCastleKingside(board: Board, kingPos: Position, color: PieceColor): boolean {
+  const king = board[kingPos.row][kingPos.col];
   const rookCol = 7;
   const rook = board[kingPos.row][rookCol];
   
+  // King must not have moved, rook must not have moved
+  if (!king || king.type !== 'king' || king.hasMoved) return false;
   if (!rook || rook.type !== 'rook' || rook.color !== color || rook.hasMoved) {
     return false;
   }
@@ -388,9 +391,12 @@ function canCastleKingside(board: Board, kingPos: Position, color: PieceColor): 
 }
 
 function canCastleQueenside(board: Board, kingPos: Position, color: PieceColor): boolean {
+  const king = board[kingPos.row][kingPos.col];
   const rookCol = 0;
   const rook = board[kingPos.row][rookCol];
   
+  // King must not have moved, rook must not have moved
+  if (!king || king.type !== 'king' || king.hasMoved) return false;
   if (!rook || rook.type !== 'rook' || rook.color !== color || rook.hasMoved) {
     return false;
   }

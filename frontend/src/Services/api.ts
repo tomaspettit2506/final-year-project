@@ -1,4 +1,9 @@
 function resolveApiBaseUrl(): string {
+  // In dev, prefer same-origin requests so Vite proxy handles API calls.
+  if (import.meta.env.DEV) {
+    return '';
+  }
+
   // 1. Try to derive from current window location (most robust for Codespaces)
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
@@ -18,9 +23,9 @@ function resolveApiBaseUrl(): string {
     }
   }
 
-  // 2. Fallback to environment variable if it's set and NOT localhost
-  const configured = import.meta.env.VITE_API_URL;
-  if (configured && !configured.includes("localhost")) {
+  // 2. Use configured API/base URL if provided
+  const configured = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+  if (configured) {
     return configured;
   }
 
@@ -69,7 +74,8 @@ export interface Friend {
 
 // Define Game interface
 export interface GameData {
-  userId: string;
+  userId?: string;
+  firebaseUid?: string;
   opponent: string;
   opponentRating: number;
   date: string;
