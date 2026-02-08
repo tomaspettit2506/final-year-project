@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { User, Request } from '../schemas';
 import { ensureFriendsList, addFriendIfMissing } from '../utils/friend';
 
@@ -64,12 +65,52 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET Sent Requests (outgoing friend requests for current user)
+router.get('/sent', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId query parameter required' });
+
+    const user = await User.findOne({ firebaseUid: userId });
+    if (!user) return res.json([]);
+
+    const requests = await Request.find({ fromUser: user._id, status: 'pending' })
+      .populate('toUser', 'name email rating firebaseUid')
+      .sort({ createdAt: -1 });
+    return res.json(requests);
+  } catch (error) {
+    console.error('Error fetching sent requests:', error);
+    return res.status(500).json({ error: 'Failed to fetch sent request data' });
+  }
+});
+
 // POST Request (send friend request)
 router.post('/', async (req, res) => {
   const { fromUserId, toUserId } = req.body;
   try {
-    const fromUser = await User.findOne({ firebaseUid: fromUserId });
-    const toUser = await User.findOne({ firebaseUid: toUserId });
+    if (!fromUserId || !toUserId) {
+      return res.status(400).json({ error: 'fromUserId and toUserId are required' });
+    }
+
+    const fromUserFilters: any[] = [{ firebaseUid: fromUserId }];
+    const toUserFilters: any[] = [{ firebaseUid: toUserId }];
+
+    if (mongoose.Types.ObjectId.isValid(fromUserId)) {
+      fromUserFilters.push({ _id: fromUserId });
+    }
+    if (mongoose.Types.ObjectId.isValid(toUserId)) {
+      toUserFilters.push({ _id: toUserId });
+    }
+
+    if (typeof fromUserId === 'string' && fromUserId.includes('@')) {
+      fromUserFilters.push({ email: fromUserId });
+    }
+    if (typeof toUserId === 'string' && toUserId.includes('@')) {
+      toUserFilters.push({ email: toUserId });
+    }
+
+    const fromUser = await User.findOne({ $or: fromUserFilters });
+    const toUser = await User.findOne({ $or: toUserFilters });
 
     if (!fromUser) return res.status(404).json({ error: 'Sender user not found in database' });
     if (!toUser) return res.status(404).json({ error: 'Recipient user not found in database' });
@@ -89,7 +130,13 @@ router.post('/', async (req, res) => {
     return res.status(201).json(newRequest);
   } catch (error) {
     console.error('Failed to save request:', error);
-    return res.status(500).json({ error: 'Failed to save request data' });
+    const err = error as any;
+    return res.status(500).json({
+      error: 'Failed to save request data',
+      message: err?.message,
+      code: err?.code,
+      name: err?.name
+    });
   }
 });
 

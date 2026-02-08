@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { User, Game } from '../schemas';
+import { calculateStats, getStatsForDisplay } from '../utils/statsCalculator';
 
 const router = Router();
 
@@ -26,8 +27,10 @@ router.get('/user/:id', async (req, res) => {
 });
 
 // POST Game (add game and link to user's gameRecents)
+// Accepts userId (MongoDB _id) OR firebaseUid
+// Will look up user by either identifier
 router.post('/', async (req, res) => {
-  const { myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, userId } = req.body;
+  const { myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, userId, firebaseUid } = req.body;
   try {
     const newGame = new Game({
       myRating,
@@ -44,18 +47,61 @@ router.post('/', async (req, res) => {
     });
     await newGame.save();
 
-    if (userId) {
-      await User.findByIdAndUpdate(
-        userId,
-        {
-          $push: {
-            gameRecents: {
-              myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, _id: newGame._id
+    // Find user by userId (MongoDB _id) or firebaseUid
+    if (userId || firebaseUid) {
+      const filter: any = [];
+      
+      if (firebaseUid) {
+        filter.push({ firebaseUid });
+      }
+      
+      if (userId && require('mongoose').Types.ObjectId.isValid(userId)) {
+        filter.push({ _id: userId });
+      }
+
+      if (filter.length === 0) {
+        console.warn('Warning: Invalid userId or firebaseUid provided - game will not be linked to any user');
+        return res.status(201).json(newGame);
+      }
+
+      const user = await User.findOne({ $or: filter });
+      
+      if (user) {
+        // Check for duplicate game before adding
+        const gameDate = new Date(date).toDateString();
+        const isDuplicate = user.gameRecents.some((game: any) => {
+          const existingGameDate = new Date(game.date).toDateString();
+          return game.opponent === opponent &&
+                 existingGameDate === gameDate &&
+                 game.result === result &&
+                 game.moves === moves;
+        });
+
+        if (isDuplicate) {
+          console.log(`Duplicate game detected: ${opponent} on ${gameDate} with result ${result} and ${moves} moves`);
+          return res.status(409).json({ 
+            message: 'Duplicate game detected. This game already exists for this user.',
+            game: newGame,
+            isDuplicate: true
+          });
+        }
+
+        await User.findByIdAndUpdate(
+          user._id,
+          {
+            $push: {
+              gameRecents: {
+                myRating, opponent, opponentRating, date, result, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, _id: newGame._id
+              }
             }
-          }
-        },
-        { new: true }
-      );
+          },
+          { new: true }
+        );
+      } else {
+        console.warn(`Warning: User not found for userId: ${userId}, firebaseUid: ${firebaseUid} - game will not be linked to any user`);
+      }
+    } else {
+      console.warn('Warning: Game posted without userId or firebaseUid - game will not be linked to any user');
     }
 
     res.status(201).json(newGame);

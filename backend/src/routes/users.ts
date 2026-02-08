@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { User } from '../schemas';
-import { normalizeFriends } from '../utils/friend';
+import { calculateStats } from '../utils/statsCalculator';
 
 const router = Router();
 
@@ -32,19 +32,37 @@ router.post('/email/:email', async (req, res) => {
   const email = req.params.email;
   const { name, rating, firebaseUid } = req.body;
   try {
-    let user = firebaseUid
-      ? await User.findOne({ $or: [{ firebaseUid }, { email }] })
-      : await User.findOne({ email });
+    let user: any;
+    
+    // If firebaseUid provided, use ONLY firebaseUid for lookup (strict)
+    if (firebaseUid) {
+      user = await User.findOne({ firebaseUid });
+      // Fallback: if no user by firebaseUid, try email to avoid duplicate email creation
+      if (!user) {
+        user = await User.findOne({ email });
+      }
+    } else {
+      // If only email provided, use ONLY email
+      user = await User.findOne({ email });
+    }
 
     if (!user) {
-      user = new User({
+      // Ensure firebaseUid is always provided for new users
+      const newUserData: any = {
         name: name || email.split('@')[0],
         email,
-        firebaseUid,
         rating: rating || 500
-      });
+      };
+      
+      // Only add firebaseUid if provided to avoid undefined in unique field
+      if (firebaseUid) {
+        newUserData.firebaseUid = firebaseUid;
+      }
+      
+      user = new User(newUserData);
       await user.save();
     } else if (firebaseUid && !user.firebaseUid) {
+      // Update user with firebaseUid if they didn't have one
       user.firebaseUid = firebaseUid;
       await user.save();
     }
@@ -84,6 +102,29 @@ router.get('/:id/games', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user games:', error);
     return res.status(500).json({ error: 'Failed to fetch user games' });
+  }
+});
+
+// GET User's statistics computed from MongoDB games
+// Always computed from source of truth (gameRecents), never from Firestore
+router.get('/:id/stats', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const filter: any = [{ firebaseUid: id }];
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      filter.push({ _id: id });
+    }
+
+    const user = await User.findOne({ $or: filter });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Always compute stats from source of truth: MongoDB gameRecents
+    const stats = calculateStats(user.gameRecents || []);
+    
+    return res.json(stats);
+  } catch (error) {
+    console.error('Error computing user stats:', error);
+    return res.status(500).json({ error: 'Failed to compute user stats' });
   }
 });
 

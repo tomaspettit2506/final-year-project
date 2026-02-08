@@ -2,6 +2,7 @@ export interface RoomUser {
   id: string;
   name: string;
   color: 'white' | 'black';
+  rating?: number;
 }
 
 export interface Position {

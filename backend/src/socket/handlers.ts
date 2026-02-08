@@ -1,5 +1,6 @@
 import { Socket, Server } from 'socket.io';
 import { Room } from '../types';
+import { Message } from '../schemas';
 import { generateRoomId, createRoom, assignColor, cleanupRoomTimeout, setRoomTimeout } from '../utils/room';
 
 const ROOM_WAIT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -8,10 +9,120 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
   io.on('connection', (socket: Socket) => {
     console.log(`User connected: ${socket.id}`);
 
-    socket.on('createRoom', ({ name, timerEnabled, timerDuration }, callback) => {
+    // Join user-specific room for direct messaging
+    socket.on('join_user_room', ({ userId }) => {
+      socket.join(`user_${userId}`);
+      console.log(`User ${userId} joined their personal room`);
+    });
+
+    // Send message handler
+    socket.on('send_message', async ({ messageId, senderId, recipientId, text, timestamp, replyTo }) => {
+      try {
+        const message = new Message({
+          senderId,
+          recipientId,
+          text,
+          replyTo,
+          timestamp: new Date(timestamp),
+          read: false,
+          edited: false,
+          deleted: false
+        });
+
+        await message.save();
+
+        const messageData = {
+          id: message._id.toString(),
+          senderId,
+          recipientId,
+          text,
+          replyTo: message.replyTo,
+          timestamp: message.timestamp.toISOString(),
+          read: false
+        };
+
+        // Send to recipient's room
+        io.to(`user_${recipientId}`).emit('receive_message', messageData);
+        
+        // Confirm to sender with full message data
+        socket.emit('message_sent', { messageId, serverMessageId: message._id.toString(), messageData, success: true });
+      } catch (error) {
+        console.error('Error sending message:', error);
+        socket.emit('message_error', { messageId, error: 'Failed to send message' });
+      }
+    });
+
+    // Edit message handler
+    socket.on('edit_message', async ({ messageId, senderId, recipientId, newText, timestamp }) => {
+      try {
+        const message = await Message.findOneAndUpdate(
+          { _id: messageId, senderId },
+          { $set: { text: newText, edited: true } },
+          { new: true }
+        );
+
+        if (!message) {
+          socket.emit('message_error', { messageId, error: 'Message not found or unauthorized' });
+          return;
+        }
+
+        const messageData = {
+          id: message._id.toString(),
+          senderId,
+          recipientId,
+          text: newText,
+          replyTo: message.replyTo,
+          timestamp: message.timestamp.toISOString(),
+          read: message.read,
+          edited: true
+        };
+
+        // Send to both sender and recipient
+        io.to(`user_${recipientId}`).emit('message_edited', messageData);
+        socket.emit('message_edited', messageData);
+        
+        console.log(`Message ${messageId} edited by ${senderId}`);
+      } catch (error) {
+        console.error('Error editing message:', error);
+        socket.emit('message_error', { messageId, error: 'Failed to edit message' });
+      }
+    });
+
+    // Delete message handler
+    socket.on('delete_message', async ({ messageId, senderId, recipientId, timestamp }) => {
+      try {
+        const message = await Message.findOneAndUpdate(
+          { _id: messageId, senderId },
+          { $set: { deleted: true } },
+          { new: true }
+        );
+
+        if (!message) {
+          socket.emit('message_error', { messageId, error: 'Message not found or unauthorized' });
+          return;
+        }
+
+        const deleteData = {
+          id: message._id.toString(),
+          senderId,
+          recipientId
+        };
+
+        // Send to both sender and recipient
+        io.to(`user_${recipientId}`).emit('message_deleted', deleteData);
+        socket.emit('message_deleted', deleteData);
+        
+        console.log(`Message ${messageId} deleted by ${senderId}`);
+      } catch (error) {
+        console.error('Error deleting message:', error);
+        socket.emit('message_error', { messageId, error: 'Failed to delete message' });
+      }
+    });
+
+    socket.on('createRoom', ({ name, timerEnabled, timerDuration, rating }, callback) => {
       const roomId = generateRoomId();
       const newRoom = createRoom();
-      newRoom.users = [{ id: socket.id, name, color: 'white' }];
+      newRoom.users = [{ id: socket.id, name, color: 'white', rating }];
       // Timer enabled by default for multiplayer
       newRoom.timerEnabled = timerEnabled !== undefined ? timerEnabled : true;
       newRoom.timerDuration = timerDuration || 600;
@@ -33,11 +144,11 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       console.log(`Room created: ${roomId} by ${name}. Timer: ${newRoom.timerEnabled ? newRoom.timerDuration + 's' : 'disabled'}. Waiting for Player 2...`);
     });
 
-    socket.on('joinRoom', ({ name, roomId }, callback) => {
+    socket.on('joinRoom', ({ name, roomId, rating }, callback) => {
       // ...existing handler code...
       if (!rooms[roomId]) {
         const newRoom = createRoom();
-        newRoom.users = [{ id: socket.id, name, color: 'white' }];
+        newRoom.users = [{ id: socket.id, name, color: 'white', rating }];
         rooms[roomId] = newRoom;
         socket.join(roomId);
         socket.data.roomId = roomId;
@@ -68,7 +179,7 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       }
 
       const color = assignColor(room);
-      room.users.push({ id: socket.id, name, color });
+      room.users.push({ id: socket.id, name, color, rating });
       socket.join(roomId);
       socket.data.roomId = roomId;
       socket.data.playerColor = color;
@@ -165,7 +276,7 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       if (callback) callback({ success: true });
     });
 
-    socket.on('endGame', ({ roomId, result, winner }, callback) => {
+    socket.on('endGame', ({ roomId, result, winner, loser, isDraw, reason }, callback) => {
       const room = rooms[roomId];
       if (!room) {
         if (callback) callback({ success: false, message: 'Room not found' });
@@ -173,7 +284,14 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       }
 
       room.status = 'finished';
-      io.to(roomId).emit('gameEnded', { result, winner, players: room.users });
+      io.to(roomId).emit('gameEnded', { 
+        result, 
+        winner, 
+        loser, 
+        isDraw: Boolean(isDraw),
+        reason: reason ?? result,
+        players: room.users 
+      });
       if (callback) callback({ success: true });
     });
 

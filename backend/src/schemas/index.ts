@@ -6,6 +6,7 @@ const gameSchema = new mongoose.Schema({
   opponentRating: Number,
   date: { type: Date, default: Date.now },
   result: String,
+  isRated: { type: Boolean, default: false },
   timeControl: Number,
   termination: { type: String, enum: ['checkmate', 'resignation', 'timeout', 'draw', 'abandonment'] },
   moves: Number,
@@ -41,6 +42,21 @@ const gameInviteSchema = new mongoose.Schema({
   expiresAt: { type: Date, default: () => new Date(Date.now() + 5 * 60 * 1000) }
 });
 
+const messageSchema = new mongoose.Schema({
+  senderId: { type: String, required: true },
+  recipientId: { type: String, required: true },
+  text: { type: String, required: true },
+  replyTo: { type: String },
+  timestamp: { type: Date, default: Date.now },
+  read: { type: Boolean, default: false },
+  edited: { type: Boolean, default: false },
+  deleted: { type: Boolean, default: false }
+});
+
+// Add compound index for efficient queries
+messageSchema.index({ senderId: 1, recipientId: 1, timestamp: -1 });
+messageSchema.index({ recipientId: 1, read: 1 });
+
 const userSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -50,8 +66,13 @@ const userSchema = new mongoose.Schema({
   friends: [friendSchema]
 });
 
+// Add unique indexes to prevent duplicate user creation
+userSchema.index({ email: 1 }, { unique: true, sparse: true });
+userSchema.index({ firebaseUid: 1 }, { unique: true, sparse: true });
+
 export const User = mongoose.model('User', userSchema);
 export const Game = mongoose.model('Game', gameSchema);
 export const Request = mongoose.model('Request', requestSchema);
 export const GameInvite = mongoose.model('GameInvite', gameInviteSchema);
 export const Friend = mongoose.model('Friend', friendSchema);
+export const Message = mongoose.model('Message', messageSchema);
