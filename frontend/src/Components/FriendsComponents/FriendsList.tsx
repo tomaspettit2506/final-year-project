@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Avatar, 
   Badge, Chip, Button, IconButton, Menu, MenuItem, Typography, Snackbar, Alert } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useAuth } from "../../Context/AuthContext";
+import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import ProfileDialog from "./ProfileDialog";
 import GameDialog from "./GameDialog";
 import ChatDialog from "./ChatDialog";
 import ChallengeDialog from "./ChallengeDialog";
+import { socket } from "../../Services/socket";
+import { getApiBaseUrl } from "../../Services/api";
 
 interface Friend {
   id: string;
@@ -31,7 +34,10 @@ interface FriendsListProps {
 
 const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onChallengeStarted }) => {
   const { user } = useAuth();
+  const { isDark } = useAppTheme();
   const navigate = useNavigate();
+  const apiBaseUrl = getApiBaseUrl();
+  const pendingMessageIds = useRef<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
@@ -52,6 +58,52 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
   const [gamesError, setGamesError] = useState<string | null>(null);
+
+  // Set up socket listeners for real-time messaging
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    // Join user's personal room for messages
+    socket.emit('join_user_room', { userId: user.uid });
+
+    // Listen for incoming messages
+    const handleReceiveMessage = (message: any) => {
+      setChatMessages((prev) => [...prev, {
+        id: message.id,
+        senderId: message.senderId,
+        text: message.text,
+        replyTo: message.replyTo,
+        timestamp: new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestampRaw: message.timestamp,
+        read: message.read
+      }]);
+    };
+
+    // Listen for message edits
+    const handleMessageEdited = (message: any) => {
+      setChatMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === message.id ? { ...msg, text: message.text, replyTo: message.replyTo ?? msg.replyTo } : msg
+        )
+      );
+    };
+
+    // Listen for message deletions
+    const handleMessageDeleted = (data: any) => {
+      setChatMessages((prev) => prev.filter((msg) => msg.id !== data.id));
+    };
+
+    socket.on('receive_message', handleReceiveMessage);
+    socket.on('message_edited', handleMessageEdited);
+    socket.on('message_deleted', handleMessageDeleted);
+
+    return () => {
+      socket.off('receive_message', handleReceiveMessage);
+      socket.off('message_edited', handleMessageEdited);
+      socket.off('message_deleted', handleMessageDeleted);
+    };
+  }, [user?.uid]);
+
   const filteredFriends = friends.filter(
     (friend) =>
       friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,15 +124,26 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     );
   };
 
+  const mapMessageForUi = (msg: any) => ({
+    id: msg._id || msg.id,
+    senderId: msg.senderId,
+    text: msg.text,
+    replyTo: msg.replyTo,
+    timestamp: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    timestampRaw: msg.timestamp,
+    read: msg.read
+  });
+
   const fetchFriendGames = async (friend: Friend) => {
     let targetId = friend.mongoId;
 
     // If we don't have a MongoDB id yet but we do have an email, ensure the user exists and capture the _id
     if (!targetId && friend.email) {
       try {
-        const res = await fetch(`/user/email/${encodeURIComponent(friend.email)}`, {
+        const res = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(friend.email)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ name: friend.name, rating: friend.rating })
         });
         if (res.ok) {
@@ -152,9 +215,10 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       if (!selectedFriend.email) return null;
 
       try {
-        const res = await fetch(`/user/email/${encodeURIComponent(selectedFriend.email)}`, {
+        const res = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(selectedFriend.email)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             name: selectedFriend.name,
             rating: selectedFriend.rating,
@@ -222,21 +286,167 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
-  const handleOpenChat = (friend: Friend) => {
+  const handleOpenChat = async (friend: Friend) => {
     setSelectedFriend(friend);
     setChatDialogOpen(true);
-    setChatMessages([]); // Reset messages when opening chat
+    
+    // Fetch message history
+    if (user?.uid) {
+      try {
+        const response = await fetch(`${apiBaseUrl}/message/${user.uid}/${friend.id}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const messages = await response.json();
+          const fetched = (messages || []).map(mapMessageForUi);
+          const fetchedIds = new Set(fetched.map((m: any) => m.id));
+          setChatMessages((prev) => {
+            const pending = prev.filter((m) => pendingMessageIds.current.has(m.id) && !fetchedIds.has(m.id));
+            return [...fetched, ...pending];
+          });
+          
+          // Mark messages as read
+          await fetch(`${apiBaseUrl}/message/${user.uid}/read/${friend.id}`, {
+            method: 'PUT',
+            credentials: 'include'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        // Keep pending messages even if fetch fails
+      }
+    }
   };
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = (text: string, friendId: string, replyToId?: string) => {
+    const tempId = Math.random().toString(36).substring(2, 11);
+    const nowIso = new Date().toISOString();
     const newMessage = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: tempId,
       senderId: user?.uid || "",
       text,
+      replyTo: replyToId,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestampRaw: nowIso,
       read: false
     };
-    setChatMessages([...chatMessages, newMessage]);
+    
+    // Optimistically add message to UI
+    pendingMessageIds.current.add(tempId);
+    setChatMessages((prev) => [...prev, newMessage]);
+    
+    // Emit socket event to send message
+    socket.emit('send_message', {
+      messageId: tempId,
+      senderId: user?.uid,
+      recipientId: friendId,
+      text,
+      replyTo: replyToId,
+      timestamp: nowIso
+    });
+    
+    // Listen for confirmation and update with server ID
+    socket.once('message_sent', (data: any) => {
+      if (data.messageId === tempId && data.success) {
+        pendingMessageIds.current.delete(tempId);
+        setChatMessages((prev) => 
+          prev.map((msg) => {
+            if (msg.id === tempId) {
+              return {
+                id: data.serverMessageId,
+                senderId: msg.senderId,
+                text: msg.text,
+                replyTo: msg.replyTo,
+                timestamp: msg.timestamp,
+                timestampRaw: data.messageData.timestamp,
+                read: msg.read
+              };
+            }
+            if (msg.replyTo === tempId) {
+              return { ...msg, replyTo: data.serverMessageId };
+            }
+            return msg;
+          })
+        );
+      }
+    });
+  };
+
+  const handleEditMessage = (messageId: string, newText: string, friendId: string) => {
+    setChatMessages(prevMessages => 
+      prevMessages.map(msg => 
+        msg.id === messageId ? { ...msg, text: newText } : msg
+      )
+    );
+    
+    // Emit socket event to edit message
+    socket.emit('edit_message', {
+      messageId,
+      senderId: user?.uid,
+      recipientId: friendId,
+      newText,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const handleDeleteMessage = (messageId: string, friendId: string) => {
+    setChatMessages(prevMessages => 
+      prevMessages.filter(msg => msg.id !== messageId)
+    );
+    
+    // Emit socket event to delete message
+    socket.emit('delete_message', {
+      messageId,
+      senderId: user?.uid,
+      recipientId: friendId,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const handleReloadChat = async (
+    friendId: string,
+    options?: { before?: string; append?: boolean }
+  ) => {
+    if (!user?.uid) return;
+    
+    try {
+      const params = new URLSearchParams();
+      if (options?.before) params.set('before', options.before);
+      const query = params.toString();
+      const response = await fetch(`${apiBaseUrl}/message/${user.uid}/${friendId}${query ? `?${query}` : ''}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch messages: ${response.status}`);
+      }
+      
+      const messages = await response.json();
+      const fetched = (messages || []).map(mapMessageForUi);
+      const fetchedIds = new Set(fetched.map((m: any) => m.id));
+      
+      setChatMessages((prev) => {
+        // Keep pending messages that haven't been confirmed yet
+        const pending = prev.filter((m) => pendingMessageIds.current.has(m.id) && !fetchedIds.has(m.id));
+        
+        if (options?.append) {
+          // When loading older messages, prepend them
+          const merged = [...fetched, ...prev].filter((msg, index, arr) =>
+            arr.findIndex((m) => m.id === msg.id) === index
+          );
+          return merged.sort((a: any, b: any) =>
+            new Date(a.timestampRaw).getTime() - new Date(b.timestampRaw).getTime()
+          );
+        }
+        
+        // Normal reload: replace server messages but keep pending ones
+        return [...fetched, ...pending];
+      });
+      return fetched;
+    } catch (error) {
+      console.error('Error reloading messages:', error);
+      return [];
+    }
   };
 
   const handleMenuOpen = (friend: Friend, event: React.MouseEvent<HTMLElement>) => {
@@ -289,15 +499,15 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         </Box>
 
         {filteredFriends.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: "center" }}>
-            <Typography color="text.secondary">
+          <Card sx={{ p: 4, textAlign: "center", bgcolor: isDark ? "background.default" : "background.paper" }}>
+            <Typography color={isDark ? 'text.primary' : 'text.secondary'}>
               {searchQuery ? "No friends found" : "No friends yet. Add some friends to get started!"}
             </Typography>
           </Card>
         ) : (
           <Stack spacing={1}>
             {filteredFriends.map((friend) => (
-              <Card key={friend.id} sx={{ p: 2 }}>
+              <Card key={friend.id} sx={{ p: 2, bgcolor: isDark ? "background.default" : "background.paper" }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box display="flex" alignItems="center" gap={2}>
                     <Badge
@@ -330,6 +540,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       startIcon={"📩"}
                       onClick={() => handleChallenge(friend)}
                       disabled={false}
+                      sx={isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }}
                     >
                       Challenge
                     </Button>
@@ -339,6 +550,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       size="small"
                       startIcon={"💬"}
                       onClick={() => handleOpenChat(friend)}
+                      sx={isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }}
                     >
                       Chat
                     </Button>
@@ -403,6 +615,9 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
             messages={chatMessages}
             currentUserId={user?.uid || ""}
             onSendMessage={handleSendMessage}
+            onEditMessage={handleEditMessage}
+            onDeleteMessage={handleDeleteMessage}
+            onReloadChat={handleReloadChat}
           />
         )}
       </Stack>

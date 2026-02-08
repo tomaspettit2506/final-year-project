@@ -5,13 +5,13 @@ import { useAuth } from '../../Context/AuthContext';
 import type { GameMode } from '../../Types/chess';
 import { Box, Button, Card, CardContent, Grid, TextField, Typography, Alert, CircularProgress, 
   Switch, Select, MenuItem, FormControl, InputLabel, useTheme, useMediaQuery } from '@mui/material';
-import GameSetupTheme from '../../assets/game_setup.jpg';
 import { useTheme as useAppTheme } from '../../Context/ThemeContext';
 
 interface RoomUser {
   id: string;
   name: string;
   color: 'white' | 'black';
+  rating?: number;
 }
 
 interface GameSetupProps {
@@ -31,7 +31,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [difficulty, setDifficulty] = useState<number>(750);
   const [difficultyName, setDifficultyName] = useState<string>('Medium');
@@ -211,8 +211,9 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       socket.connect();
     }
     
-    console.log('[handleCreateRoom] Emitting createRoom with:', { name, timerEnabled, timerDuration, isRated });
-    socket.emit('createRoom', { name, timerEnabled, timerDuration, isRated }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
+    const rating = userData?.rating || 1200;
+    console.log('[handleCreateRoom] Emitting createRoom with:', { name, timerEnabled, timerDuration, isRated, rating });
+    socket.emit('createRoom', { name, timerEnabled, timerDuration, isRated, rating }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
       console.log('[handleCreateRoom] Received callback:', res);
       if (res.success && res.roomId && res.color) {
         setCreatedRoomId(res.roomId);
@@ -249,7 +250,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       roomId: roomId
     });
     
-    console.log('[handleJoinRoom] Emitting joinRoom with roomId:', roomId, 'name:', name);
+    const rating = userData?.rating || 1200;
+    console.log('[handleJoinRoom] Emitting joinRoom with roomId:', roomId, 'name:', name, 'rating:', rating);
     
     // Add a timeout to catch if the callback never fires
     const timeoutId = setTimeout(() => {
@@ -258,7 +260,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       setError('Server did not respond. Check your Room ID and try again.');
     }, 10000);
     
-    socket.emit('joinRoom', { name, roomId }, (res: { success: boolean; color?: 'white' | 'black'; users?: RoomUser[]; message?: string }) => {
+    socket.emit('joinRoom', { name, roomId, rating }, (res: { success: boolean; color?: 'white' | 'black'; users?: RoomUser[]; message?: string }) => {
       clearTimeout(timeoutId);
       console.log('[handleJoinRoom] Received callback:', res);
       setJoining(false);
@@ -326,8 +328,6 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   return (
     <Box
       sx={{
-        backgroundImage: `url(${GameSetupTheme})`,
-        backgroundSize: 'cover',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -352,7 +352,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
               👑 Are you ready to play? 👑
             </Typography>
           </Box>
-          <Typography color="text.secondary" sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>
+          <Typography color="white" sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>
             Configure your game settings and start playing
           </Typography>
         </Box>
@@ -641,6 +641,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                                   label="Time per player"
                                   onChange={(e) => setTimerDuration(e.target.value as number)}
                                 >
+                                  <MenuItem value={60}>1 minute</MenuItem>
                                   <MenuItem value={600}>10 minutes</MenuItem>
                                   <MenuItem value={900}>15 minutes</MenuItem>
                                   <MenuItem value={1800}>30 minutes</MenuItem>

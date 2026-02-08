@@ -11,6 +11,7 @@ interface User {
   online: boolean;
   isFriend: boolean;
   isPending: boolean;
+  firebaseUid?: string;
 }
 
 interface AddFriendProps {
@@ -46,6 +47,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           online: false,
           isFriend: false,
           isPending: false,
+          firebaseUid: u.firebaseUid,
         };
       });
       setUsers(mapped);
@@ -63,6 +65,13 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
       console.error('User not authenticated');
       return;
     }
+
+    const targetUser = users.find((u) => u.id === userId);
+    const requestTargetId = targetUser?.firebaseUid || targetUser?.id;
+    if (!requestTargetId) {
+      console.error('Target user missing identifier');
+      return;
+    }
     
     setUsers(users.map(u => u.id === userId ? { ...u, isPending: true } : u ));
     onSendRequest(userId);
@@ -71,9 +80,18 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
       const res = await fetch('/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromUserId: user.uid, toUserId: userId }),
+        body: JSON.stringify({ fromUserId: user.uid, toUserId: requestTargetId }),
       });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const payload = await res.json();
+          detail = payload?.message || payload?.error || '';
+        } catch {
+          detail = '';
+        }
+        throw new Error(`Status ${res.status}${detail ? ` - ${detail}` : ''}`);
+      }
     } catch (err: any) {
       console.error('Failed to send friend request', err);
       setUsers(users.map(u => u.id === userId ? { ...u, isPending: false } : u ));

@@ -30,17 +30,18 @@ interface DetailsProps {
   open: boolean;
   onClose: () => void;
   gameDetails: {
-    gameId?: string;
-    playerColor: 'white' | 'black';
-    playerRating?: number;
-    opponent: string;
-    opponentRating: number;
-    date: string;
-    result: 'win' | 'loss' | 'draw';
-    timeControl: number;
-    termination: string;
-    moves: number;
-    duration: number;
+    _id?: string;
+    id?: string;
+    playerColor?: 'white' | 'black';
+    myRating?: number;
+    opponent?: string;
+    opponentRating?: number;
+    date?: string;
+    result?: 'win' | 'loss' | 'draw';
+    timeControl?: number;
+    termination?: string;
+    moves?: number;
+    duration?: number;
     myAccuracy?: number;
     opponentAccuracy?: number;
     pgn?: string;
@@ -50,9 +51,26 @@ interface DetailsProps {
 const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => {
   const { isDark } = useTheme();
 
+  // Add this to debug
+  React.useEffect(() => {
+    if (gameDetails) {
+      console.log('Game details:', gameDetails);
+      console.log('Player rating:', gameDetails.myRating);
+    }
+  }, [gameDetails]);
+
   if (!gameDetails) return null;
 
-  const getResultIcon = (result: string) => {
+  const safeResult = gameDetails.result ?? 'draw';
+  const safeOpponent = gameDetails.opponent ?? 'Unknown';
+  const safeOpponentRating = gameDetails.opponentRating ?? 0;
+  const safeDate = gameDetails.date ? new Date(gameDetails.date) : null;
+  const safeTermination = gameDetails.termination ?? 'Unknown';
+  const safeMoves = gameDetails.moves ?? 0;
+  const safeDuration = gameDetails.duration ?? 0;
+  const safeTimeControl = gameDetails.timeControl ?? 0;
+
+  const getResultIcon = (result: string | undefined) => {
     switch (result) {
       case 'win': return <CheckCircleIcon sx={{ color: 'success.main' }} />;
       case 'loss': return <CancelIcon sx={{ color: 'error.main' }} />;
@@ -73,10 +91,11 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
   };
 
   const getResultLabel = () => {
-    switch (gameDetails.result) {
+    switch (safeResult) {
       case 'win': return 'Victory';
       case 'loss': return 'Defeat';
       case 'draw': return 'Draw';
+      default: return 'Unknown';
     }
   };
 
@@ -98,12 +117,13 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
   };
 
   const handleViewAnalysis = () => {
-    if (!gameDetails.gameId) {
+    const gameId = gameDetails._id || gameDetails.id;
+    if (!gameId) {
       console.warn('No game ID available for analysis');
       return;
     }
     // Navigate to analysis page or open analysis modal
-    window.location.href = `/analysis/${gameDetails.gameId}`;
+    window.location.href = `/analysis/${gameId}`;
   };
 
   // Ensure accuracy values are valid numbers between 0-100
@@ -114,27 +134,26 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
-          {getResultIcon(gameDetails.result)}
+          {getResultIcon(safeResult)}
           <Typography variant="h6" component="span">
             {getResultLabel()}
           </Typography>
-          {gameDetails.result === 'win' && (
+          {safeResult === 'win' && (
             <EmojiEventsIcon sx={{ color: 'warning.main', ml: 'auto' }} />
           )}
           <IconButton
             onClick={onClose}
-            sx={{ ml: gameDetails.result !== 'win' ? 'auto' : 0 }}
+            sx={{ ml: safeResult !== 'win' ? 'auto' : 0 }}
           >
             <CloseIcon />
           </IconButton>
         </Box>
-        {/* Today's data. E.g. "Game played on Sep 15, 2023" */}
         <Typography variant="body2" color="text.secondary">
-          Game played on {new Date(gameDetails.date).toLocaleDateString(undefined, {
+          Game played on {safeDate ? safeDate.toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
-          })}
+          }) : 'Unknown date'}
         </Typography>
       </DialogTitle>
 
@@ -156,26 +175,26 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: gameDetails.playerColor === 'white' ? 'white' : 'grey.800',
-                      border: gameDetails.playerColor === 'white' ? '2px solid' : 'none',
+                      bgcolor: (gameDetails.playerColor || 'white') === 'white' ? 'white' : 'grey.800',
+                      border: (gameDetails.playerColor || 'white') === 'white' ? '2px solid' : 'none',
                       borderColor: 'grey.300',
                     }}
                   >
-                    <Typography sx={{ color: gameDetails.playerColor === 'white' ? 'grey.800' : 'white' }}>
+                    <Typography sx={{ color: (gameDetails.playerColor || 'white') === 'white' ? 'grey.800' : 'white' }}>
                       ♔
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="body1">You</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Rating: {gameDetails.playerRating || 'N/A'}
+                      Rating: {gameDetails.myRating || 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
-                {gameDetails.result === 'win' && (
+                {safeResult === 'win' && (
                   <Chip label="Winner" color="success" size="small" />
                 )}
-                {gameDetails.result === 'loss' && (
+                {safeResult === 'loss' && (
                   <Chip label="Loser" color="error" size="small" />
                 )}
               </Box>
@@ -192,26 +211,26 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: gameDetails.playerColor === 'black' ? 'white' : 'grey.800',
-                      border: gameDetails.playerColor === 'black' ? '2px solid' : 'none',
+                      bgcolor: (gameDetails.playerColor || 'white') === 'black' ? 'white' : 'grey.800',
+                      border: (gameDetails.playerColor || 'white') === 'black' ? '2px solid' : 'none',
                       borderColor: 'grey.300',
                     }}
                   >
-                    <Typography sx={{ color: gameDetails.playerColor === 'black' ? 'grey.800' : 'white' }}>
+                    <Typography sx={{ color: (gameDetails.playerColor || 'white') === 'black' ? 'grey.800' : 'white' }}>
                       ♔
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body1">{gameDetails.opponent}</Typography>
+                    <Typography variant="body1">{safeOpponent}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Rating: {gameDetails.opponentRating}
+                      Rating: {safeOpponentRating || 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
-                {gameDetails.result === 'loss' && (
+                {safeResult === 'loss' && (
                   <Chip label="Winner" color="success" size="small" />
                 )}
-                {gameDetails.result === 'win' && (
+                {safeResult === 'win' && (
                   <Chip label="Loser" color="error" size="small" />
                 )}
               </Box>
@@ -225,9 +244,9 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
                 Termination
               </Typography>
               <Box display="flex" alignItems="center" gap={1}>
-                {getTerminationText(gameDetails.termination).icon}
+                {getTerminationText(safeTermination).icon}
                 <Typography variant="body1">
-                  {getTerminationText(gameDetails.termination).text}
+                  {getTerminationText(safeTermination).text}
                 </Typography>
               </Box>
             </Grid>
@@ -235,19 +254,19 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
               <Typography variant="body2" color="text.secondary">
                 Total Moves
               </Typography>
-              <Typography variant="body1">{gameDetails.moves}</Typography>
+              <Typography variant="body1">{safeMoves || 'N/A'}</Typography>
             </Grid>
             <Grid size={{xs: 6}}>
               <Typography variant="body2" color="text.secondary">
                 Duration
               </Typography>
-              <Typography variant="body1">{gameDetails.duration}</Typography>
+              <Typography variant="body1">{safeDuration || 'N/A'}</Typography>
             </Grid>
             <Grid size={{xs: 6}}>
               <Typography variant="body2" color="text.secondary">
                 Time Control
               </Typography>
-              <Typography variant="body1">{gameDetails.timeControl}</Typography>
+              <Typography variant="body1">{safeTimeControl || 'N/A'}</Typography>
             </Grid>
             <Grid size={{xs: 6}}>
               <Typography variant="body2" color="text.secondary">
@@ -310,7 +329,7 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
           fullWidth
           startIcon={<AnalyticsIcon />}
           onClick={handleViewAnalysis}
-          disabled={!gameDetails.gameId}
+          disabled={!gameDetails._id && !gameDetails.id}
         >
           View Full Analysis
         </Button>
