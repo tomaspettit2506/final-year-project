@@ -93,5 +93,43 @@
   - Finalize evaluation plan and documentation structure.
   - Assign tasks for final report and demo preparation.
 - **Action items:**
-  - Complete final report draft. (Owner: Team lead, due: Week 10)
-  - Prepare final demo and slides. (Owner: All, due: Week 10)
+  - Complete final report draft. (Owner: Team lead, due: Week 9)
+  - Prepare final demo and slides. (Owner: All, due: Week 9)
+
+## Week 9
+- **Date:** 2026-01-21
+- **Objective:** Multiplayer feature completion and dissertation progress check.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Finalize game invite system with Room ID functionality for multiplayer games.
+  - Begin dissertation documentation and project report writing.
+- **Action items:**
+  - Complete and test game invite feature with Room ID joining mechanism. (Owner: Team lead, due: Week 10)
+  - Start drafting project dissertation document with system design and implementation details. (Owner: Member A, due: Week 10)
+  - Compile evaluation results and performance metrics. (Owner: Member B, due: Week 10)
+
+## Week 10
+- **Date:** 2026-01-28
+- **Objective:** Multiplayer feature completion and dissertation progress check.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Finalize game invite system with Room ID functionality for multiplayer games.
+  - Begin dissertation documentation and project report writing.
+- **Action items:**
+  - Complete and test game invite feature with Room ID joining mechanism. (Owner: Team lead, due: Week 11)
+  - Start drafting project dissertation document with system design and implementation details. (Owner: Member A, due: Week 11)
+  - Compile evaluation results and performance metrics. (Owner: Member B, due: Week 11)
+
+## Week 11
+- **Date:** 2026-02-04
+- **Objective:** Multiplayer game testing, Friends tab enhancement, and dissertation progress.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Test multiplayer game recents with proper session termination handling.
+  - Add "Sent Request" tab to Friends feature for checking out the problem for the backend connection.
+  - Continue dissertation documentation and system design writeup.
+- **Action items:**
+  - Test and refine multiplayer game recents with termination handling. (Owner: Team lead, due: Week 12)
+  - Implement and test new "Sent Request" tab in Friends interface. (Owner: Member C, due: Week 12)
+  - Send feedback and conduct code review testing. (Owner: All, due: Week 12)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 12)
