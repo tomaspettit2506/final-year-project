@@ -1,6 +1,7 @@
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import ChessPiece from './ChessPiece';
 import { useBoardTheme } from "../../Context/BoardThemeContext";
+import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 
 interface MiniBoardProps {
   highlights?: string[];
@@ -10,6 +11,7 @@ interface MiniBoardProps {
 const MiniBoard: React.FC<MiniBoardProps> = ({ highlights = [], pieces = [] }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { isDark } = useAppTheme();
 
   const { boardTheme } = useBoardTheme();
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -52,17 +54,17 @@ const MiniBoard: React.FC<MiniBoardProps> = ({ highlights = [], pieces = [] }) =
                         : boardTheme === "wooden"
                         ? "#b4dc2e"
                         : boardTheme === "modern"
-                        ? "#e0e7ff"
+                        ? "#6366f1"
                         : "#f0d9b5"
                       : boardTheme === "dark"
                       ? "#1f2937"
                       : boardTheme === "wooden"
                       ? "#5f5810"
                       : boardTheme === "modern"
-                      ? "#6366f1"
+                      ? "#e0e7ff"
                       : "#b58863",
                   ...(highlighted && {
-                    boxShadow: 'inset 0 0 0 4px black',
+                    boxShadow: isDark ? 'inset 0 0 0 4px #0000009a' : 'inset 0 0 0 4px #ffffffc8',
                   }),
                 }}
               >
