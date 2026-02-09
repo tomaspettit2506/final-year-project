@@ -29,11 +29,24 @@ const SentRequests: React.FC<SentRequestsProps> = ({ requests }) => {
           <Typography color="text.secondary">No sent friend requests</Typography>
         </Card>
       ) : (
-        <Stack spacing={1}>
+        <Stack
+          spacing={1}
+          sx={{
+            maxHeight: { xs: "60vh", sm: "70vh", md: "none" },
+            overflowY: { xs: "auto", md: "visible" },
+            pr: { xs: 1, md: 0 }
+          }}
+        >
           {requests.map((request) => (
-            <Card key={request.id} sx={{ p: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box display="flex" alignItems="center" gap={2}>
+            <Card key={request.id} sx={{ p: { xs: 1.5, sm: 2 } }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap={{ xs: "wrap", sm: "nowrap" }}
+                gap={2}
+              >
+                <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0 }}>
                   <Badge
                     overlap="circular"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -45,7 +58,7 @@ const SentRequests: React.FC<SentRequestsProps> = ({ requests }) => {
                       {request.name.charAt(0)}
                     </Avatar>
                   </Badge>
-                  <Box>
+                  <Box sx={{ minWidth: 0 }}>
                     <Typography>{request.name}</Typography>
                     <Typography color="text.secondary" variant="body2">
                       @{request.username} • {request.sentAt}
@@ -53,7 +66,13 @@ const SentRequests: React.FC<SentRequestsProps> = ({ requests }) => {
                   </Box>
                 </Box>
 
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  flexWrap="wrap"
+                  sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+                >
                   <Chip label={request.rating} color="secondary" size="small" />
                   <Chip label={request.status || "Pending"} variant="outlined" size="small" />
                 </Box>

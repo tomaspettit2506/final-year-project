@@ -22,7 +22,6 @@ interface GameInvitesProps {
 
 const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline }) => {
   const navigate = useNavigate();
-
   const handleAcceptInvite = (invite: GameInvite) => {
     // Navigate to Play page with the roomId
     navigate(`/play?roomId=${invite.roomId}&autoJoin=true&isRated=${invite.rated}`);
@@ -36,11 +35,24 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
           <Typography color="text.secondary">No game invites</Typography>
         </Card>
       ) : (
-        <Stack spacing={1}>
+        <Stack
+          spacing={1}
+          sx={{
+            maxHeight: { xs: "60vh", sm: "70vh", md: "none" },
+            overflowY: { xs: "auto", md: "visible" },
+            pr: { xs: 1, md: 0 }
+          }}
+        >
           {invites.map((invite) => (
-            <Card key={invite.id} sx={{ p: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box display="flex" alignItems="center" gap={2}>
+            <Card key={invite.id} sx={{ p: { xs: 1.5, sm: 2 } }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap={{ xs: "wrap", sm: "nowrap" }}
+                gap={2}
+              >
+                <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0 }}>
                   <Badge
                     overlap="circular"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -52,7 +64,7 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                       {invite.fromUserName.charAt(0)}
                     </Avatar>
                   </Badge>
-                  <Box>
+                  <Box sx={{ minWidth: 0 }}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <Typography fontWeight="500">{invite.fromUserName}</Typography>
                       {invite.fromUserRating && (
@@ -74,13 +86,19 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                   </Box>
                 </Box>
 
-                <Box display="flex" gap={1}>
+                <Box
+                  display="flex"
+                  gap={1}
+                  flexWrap="wrap"
+                  sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+                >
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={"🤜🤛"}
                     onClick={() => handleAcceptInvite(invite)}
                     color="success"
+                    sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                   >
                      Accept & Join
                   </Button>
@@ -89,6 +107,7 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                     size="small"
                     startIcon={"❌"}
                     onClick={() => onDecline(invite.id)}
+                    sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                   >
                     Decline
                   </Button>

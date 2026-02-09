@@ -25,7 +25,6 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const handleSearch = async () => {
     setHasSearched(true);
     setLoading(true);
@@ -110,7 +109,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   return (
     <Stack spacing={2}>
       <Card sx={{ p: 2 }}>
-        <Box display="flex" gap={1} alignItems="center">
+        <Box display="flex" gap={1} alignItems="center" flexWrap={{ xs: "wrap", sm: "nowrap" }}>
           <TextField
             fullWidth
             placeholder="Search by username or name..."
@@ -126,7 +125,12 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
             }}
             size="small"
           />
-          <Button variant="contained" onClick={handleSearch} startIcon={"🔍"}>
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={"🔍"}
+            sx={{ width: { xs: "100%", sm: "auto" }, bgcolor: 'grey', '&:hover': { bgcolor: 'grey.dark' } }}
+          >
             Search
           </Button>
         </Box>
@@ -149,11 +153,24 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
               </Typography>
             </Card>
           ) : (
-            <Stack spacing={1}>
+            <Stack
+              spacing={1}
+              sx={{
+                maxHeight: { xs: "60vh", sm: "70vh", md: "none" },
+                overflowY: { xs: "auto", md: "visible" },
+                pr: { xs: 1, md: 0 }
+              }}
+            >
               {filteredUsers.map((user) => (
-                <Card key={user.id} sx={{ p: 2 }}>
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Box display="flex" alignItems="center" gap={2}>
+                <Card key={user.id} sx={{ p: { xs: 1.5, sm: 2 } }}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    flexWrap={{ xs: "wrap", sm: "nowrap" }}
+                    gap={2}
+                  >
+                    <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0 }}>
                       <Badge
                         overlap="circular"
                         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -165,7 +182,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                           {user.name.charAt(0)}
                         </Avatar>
                       </Badge>
-                      <Box>
+                      <Box sx={{ minWidth: 0 }}>
                         <Typography>{user.name}</Typography>
                         <Typography color="textSecondary" variant="body2">
                           @{user.username}
@@ -173,7 +190,13 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                       </Box>
                     </Box>
 
-                    <Box display="flex" alignItems="center" gap={1}>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      gap={1}
+                      flexWrap="wrap"
+                      sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+                    >
                       <Chip label={user.rating} color="secondary" size="small" />
                       {user.isPending ? (
                         <Chip label="Request Sent" variant="outlined" size="small" />
@@ -183,6 +206,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                           size="small"
                           startIcon={"👤"}
                           onClick={() => handleSendRequest(user.id)}
+                          sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                         >
                           Add Friend
                         </Button>

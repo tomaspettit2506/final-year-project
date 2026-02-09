@@ -33,11 +33,24 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
           <Typography color="text.secondary">No pending friend requests</Typography>
         </Card>
       ) : (
-        <Stack spacing={1}>
+        <Stack
+          spacing={1}
+          sx={{
+            maxHeight: { xs: "60vh", sm: "70vh", md: "none" },
+            overflowY: { xs: "auto", md: "visible" },
+            pr: { xs: 1, md: 0 }
+          }}
+        >
           {requests.map((request) => (
-            <Card key={request.id} sx={{ p: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box display="flex" alignItems="center" gap={2}>
+            <Card key={request.id} sx={{ p: { xs: 1.5, sm: 2 } }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap={{ xs: "wrap", sm: "nowrap" }}
+                gap={2}
+              >
+                <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0 }}>
                   <Badge
                     overlap="circular"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -49,7 +62,7 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                       {request.name.charAt(0)}
                     </Avatar>
                   </Badge>
-                  <Box>
+                  <Box sx={{ minWidth: 0 }}>
                     <Typography>{request.name}</Typography>
                     <Typography color="text.secondary" variant="body2">
                       @{request.username} • {request.receivedAt}
@@ -57,14 +70,21 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                   </Box>
                 </Box>
 
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  flexWrap="wrap"
+                  sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+                >
                   <Chip label={request.rating} color="secondary" size="small" />
-                  <Box display="flex" gap={1}>
+                  <Box display="flex" gap={1} flexWrap="wrap" sx={{ width: { xs: "100%", sm: "auto" } }}>
                     <Button
                       variant="contained"
                       size="small"
                       startIcon={<CheckIcon />}
                       onClick={() => onAccept(request.id)}
+                      sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                     >
                       Accept
                     </Button>
@@ -73,6 +93,7 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                       size="small"
                       startIcon={<CloseIcon />}
                       onClick={() => onDecline(request.id)}
+                      sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                     >
                       Decline
                     </Button>

@@ -505,11 +505,30 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
             </Typography>
           </Card>
         ) : (
-          <Stack spacing={1}>
+          <Stack
+            spacing={1}
+            sx={{
+              maxHeight: { xs: "60vh", sm: "70vh", md: "none" },
+              overflowY: { xs: "auto", md: "visible" },
+              pr: { xs: 1, md: 0 }
+            }}
+          >
             {filteredFriends.map((friend) => (
-              <Card key={friend.id} sx={{ p: 2, bgcolor: isDark ? "background.default" : "background.paper" }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Box display="flex" alignItems="center" gap={2}>
+              <Card
+                key={friend.id}
+                sx={{
+                  p: { xs: 1.5, sm: 2 },
+                  bgcolor: isDark ? "background.default" : "background.paper"
+                }}
+              >
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  flexWrap={{ xs: "wrap", sm: "nowrap" }}
+                  gap={2}
+                >
+                  <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0 }}>
                     <Badge
                       overlap="circular"
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -522,7 +541,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       </Avatar>
                     </Badge>
 
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Box display="flex" alignItems="center" gap={1}>
                         <Typography>{friend.name}</Typography>
                         <Chip label={friend.rating} color="secondary" size="small" />
@@ -533,14 +552,23 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                     </Box>
                   </Box>
 
-                  <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={1}
+                    flexWrap="wrap"
+                    sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "flex-start", sm: "flex-end" } }}
+                  >
                     <Button
                       variant="outlined"
                       size="small"
                       startIcon={"📩"}
                       onClick={() => handleChallenge(friend)}
                       disabled={false}
-                      sx={isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }}
+                      sx={{
+                        ...(isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }),
+                        flex: { xs: '1 1 auto', sm: '0 0 auto' }
+                      }}
                     >
                       Challenge
                     </Button>
@@ -550,7 +578,10 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       size="small"
                       startIcon={"💬"}
                       onClick={() => handleOpenChat(friend)}
-                      sx={isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }}
+                      sx={{
+                        ...(isDark ? { color: 'white', borderColor: 'white' } : { color: 'primary.main', borderColor: 'primary.main' }),
+                        flex: { xs: '1 1 auto', sm: '0 0 auto' }
+                      }}
                     >
                       Chat
                     </Button>
