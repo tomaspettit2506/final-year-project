@@ -9,8 +9,8 @@ import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, D
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
 import AppBar from "../Components/AppBar";
-import SettingsLight from "../assets/SettingsLight.jpeg";
-import SettingsDark from "../assets/SettingsDark.jpeg";
+import SettingsLight from "../assets/img-theme/SettingsLight.jpeg";
+import SettingsDark from "../assets/img-theme/SettingsDark.jpeg";
 
 const Settings: React.FC = () => {
   const { logout } = useAuth();

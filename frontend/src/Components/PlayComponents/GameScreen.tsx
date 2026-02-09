@@ -14,8 +14,8 @@ import { socket } from '../../Services/socket';
 import { useAuth } from '../../Context/AuthContext';
 import { saveGame, getApiBaseUrl } from '../../Services/api';
 
-import AI_ModeTheme from '../../assets/AI_ModeTheme.jpeg';
-import PvP_ModeTheme from '../../assets/PvP_ModeTheme.jpeg';
+import AI_ModeTheme from '../../assets/img-theme/AI_ModeTheme.jpeg';
+import PvP_ModeTheme from '../../assets/img-theme/PvP_ModeTheme.jpeg';
 
 interface GameScreenProps {
   gameMode: GameMode;
@@ -680,6 +680,59 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     
     // If this is a pawn reaching the last rank, defer finalizing until user selects promotion piece
     if (!castling && piece.type === 'pawn' && canPromote(newBoard, to)) {
+      // In AI mode, if it's the AI's turn (black), automatically promote to Queen
+      const isAIPromoting = gameMode === 'ai' && piece.color === 'black';
+      
+      if (isAIPromoting) {
+        // Automatically select Queen for AI
+        const promotionPiece = 'queen';
+        const promotedBoard = promotePawn(newBoard, to, promotionPiece);
+        const promotedSymbol = 'Q';
+        const finalizedNotation = `${notation}=${promotedSymbol}`;
+        
+        const move: Move = {
+          from,
+          to,
+          piece,
+          captured: capturedPiece || undefined,
+          notation: finalizedNotation,
+          isCastling: false,
+          promotionTo: promotionPiece,
+          ...(accuracyData && { 
+            accuracy: accuracyData.accuracy,
+            accuracyClass: accuracyData.accuracyClass
+          })
+        };
+        
+        const nextPlayerAfterPromotion = nextPlayer;
+        const isCheckAfterPromotion = isKingInCheck(promotedBoard, nextPlayerAfterPromotion);
+        const isCheckmateAfterPromotion = isCheckmate(promotedBoard, nextPlayerAfterPromotion);
+        const isStalemateAfterPromotion = isStalemate(promotedBoard, nextPlayerAfterPromotion);
+        
+        const newGameState: GameState & { terminationReason?: string } = {
+          board: promotedBoard,
+          currentPlayer: nextPlayerAfterPromotion,
+          selectedPosition: null,
+          legalMoves: [],
+          moveHistory: [...currentState.moveHistory, move],
+          capturedPieces: newCapturedPieces,
+          isCheck: isCheckAfterPromotion,
+          isCheckmate: isCheckmateAfterPromotion,
+          isStalemate: isStalemateAfterPromotion,
+          winner: isCheckmateAfterPromotion ? currentState.currentPlayer : null,
+          terminationReason: isCheckmateAfterPromotion ? 'checkmate' : undefined
+        };
+        
+        setGameState(newGameState);
+        setRedoMoves([]);
+        
+        if (timerEnabled && currentState.moveHistory.length === 0) {
+          setTimer(prev => ({ ...prev, isActive: true }));
+        }
+        return;
+      }
+      
+      // For human players, show the dialog
       setPromotion({
         position: to,
         color: piece.color,
@@ -741,6 +794,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
     setGameState(newGameState);
 
+    // Clear redo moves when a new move is made (allows piece revision without forcing alt move sequence)
+    setRedoMoves([]);
+
     if (timerEnabled && currentState.moveHistory.length === 0) setTimer(prev => ({ ...prev, isActive: true }));
   };
 
@@ -787,10 +843,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         });
       }
     }
+    
+    // Clear redo moves when promotion move is made (allows piece revision)
+    setRedoMoves([]);
     setPromotion(null);
   };
   
   const handleUndo = () => {
+    // In AI mode, undo both player's move and AI's response to allow piece selection revision
+    // Player can freely choose a different piece without being locked into old AI response sequence
     const movesToUndo = gameMode === 'ai' ? 2 : 1;
     if (gameState.moveHistory.length < movesToUndo) return;
     
@@ -812,6 +873,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       }
     }
     
+    // Determine next player based on move history length
+    // In AI mode after undoing 2 moves, it's always white's turn
     const nextPlayer = gameMode === 'ai' ? 'white' : (newHistory.length % 2 === 0 ? 'white' : 'black');
     const isCheck = isKingInCheck(newBoard, nextPlayer);
     
@@ -819,42 +882,58 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       legalMoves: [], moveHistory: newHistory, capturedPieces: newCapturedPieces, isCheck,
       isCheckmate: false, isStalemate: false, winner: null });
 
-    // For AI mode, populate redo moves
-    if (gameMode === 'ai') setRedoMoves([...undoMoves.reverse()]);
+    // Store redo moves for potential replaying
+    // These will be cleared when a new move is made (allowing revision without forced sequence)
+    setRedoMoves([...undoMoves.reverse()]);
   };
 
   const handleRedo = () => {
     if (redoMoves.length === 0) return;
 
-    const moveToRedo = redoMoves[0];
-    const newRedoMoves = redoMoves.slice(1);
+    // In AI mode, redo both the player's move and AI's original response together
+    const isAIMode = gameMode === 'ai';
+    const movesToRedo = isAIMode ? Math.min(2, redoMoves.length) : 1;
     
     let newBoard = gameState.board;
-    const isCastling = moveToRedo.isCastling ?? isCastlingMove(newBoard, moveToRedo.from, moveToRedo.to);
-    
-    newBoard = isCastling
-      ? executeCastling(newBoard, moveToRedo.from, moveToRedo.to)
-      : simulateMove(newBoard, moveToRedo.from, moveToRedo.to);
+    let newMoveHistory = [...gameState.moveHistory];
+    let newCapturedPieces = { white: [...gameState.capturedPieces.white], black: [...gameState.capturedPieces.black] };
 
-    if (!isCastling && moveToRedo.piece.type === 'pawn' && moveToRedo.promotionTo && ['queen','rook','bishop','knight'].includes(moveToRedo.promotionTo)) {
-      newBoard = promotePawn(newBoard, moveToRedo.to, moveToRedo.promotionTo as 'queen' | 'rook' | 'bishop' | 'knight');
+    for (let i = 0; i < movesToRedo; i++) {
+      if (i >= redoMoves.length) break;
+      
+      const moveToRedo = redoMoves[i];
+      const isCastling = moveToRedo.isCastling ?? isCastlingMove(newBoard, moveToRedo.from, moveToRedo.to);
+      
+      newBoard = isCastling
+        ? executeCastling(newBoard, moveToRedo.from, moveToRedo.to)
+        : simulateMove(newBoard, moveToRedo.from, moveToRedo.to);
+
+      if (!isCastling && moveToRedo.piece.type === 'pawn' && moveToRedo.promotionTo && ['queen','rook','bishop','knight'].includes(moveToRedo.promotionTo)) {
+        newBoard = promotePawn(newBoard, moveToRedo.to, moveToRedo.promotionTo as 'queen' | 'rook' | 'bishop' | 'knight');
+      }
+
+      if (moveToRedo.captured && moveToRedo.captured.color !== moveToRedo.piece.color) {
+        newCapturedPieces[moveToRedo.piece.color].push(moveToRedo.captured);
+      }
+
+      newMoveHistory.push(moveToRedo);
     }
 
-    const nextPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+    const nextPlayer = newMoveHistory.length % 2 === 0 ? 'white' : 'black';
     const isCheck = isKingInCheck(newBoard, nextPlayer);
 
-    // Ensure that the move is only added if it's the correct player's turn
-    if (nextPlayer === moveToRedo.piece.color) {
-      setGameState(prev => ({
-        ...prev, 
-        board: newBoard,
-        currentPlayer: nextPlayer, 
-        selectedPosition: null,
-        legalMoves: [], 
-        moveHistory: [...prev.moveHistory, moveToRedo], // Ensure the move is added to history
-        isCheck
-      }));
-    }
+    setGameState(prev => ({
+      ...prev,
+      board: newBoard,
+      currentPlayer: nextPlayer,
+      selectedPosition: null,
+      legalMoves: [],
+      moveHistory: newMoveHistory,
+      capturedPieces: newCapturedPieces,
+      isCheck
+    }));
+    
+    const newRedoMoves = redoMoves.slice(movesToRedo);
     setRedoMoves(newRedoMoves);
   };
 

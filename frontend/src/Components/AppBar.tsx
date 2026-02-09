@@ -3,7 +3,7 @@ import { AppBar, Toolbar, IconButton, Typography, Tooltip } from '@mui/material'
 import { useTheme } from '../Context/ThemeContext';
 import { useAuth } from '../Context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import SpaceTheme from '../assets/space_theme.jpg';
+import SpaceTheme from '../assets/img-theme/space_theme.jpg';
 
 interface AppBarComponentProps {
     title: string;

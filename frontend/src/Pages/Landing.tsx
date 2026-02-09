@@ -8,7 +8,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, firestore } from "../firebase"; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
-import WelcomeApp from "../assets/WelcomeApp.jpeg";
+import WelcomeApp from "../assets/img-theme/WelcomeApp.jpeg";
 
 // Features for the slideshow
 const slides = [

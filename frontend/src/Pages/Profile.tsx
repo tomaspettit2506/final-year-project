@@ -11,8 +11,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
-import ProfileLight from "../assets/ProfileLight.jpeg";
-import ProfileDark from "../assets/ProfileDark.jpeg";
+import ProfileLight from "../assets/img-theme/ProfileLight.jpeg";
+import ProfileDark from "../assets/img-theme/ProfileDark.jpeg";
 
 const Profile = () => {
   const { user } = useAuth();

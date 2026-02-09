@@ -4,7 +4,7 @@ import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
 import Box from '@mui/material/Box';
 import AppBar from '../Components/AppBar';
-import GameSetupTheme from '../assets/GameSetupTheme.jpeg';
+import GameSetupTheme from '../assets/img-theme/GameSetupTheme.jpeg';
 
 type Screen = 'setup' | 'game';
 

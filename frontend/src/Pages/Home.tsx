@@ -8,7 +8,7 @@ import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
 import { getUserRating } from "../Utils/FirestoreService";
-import HomeTheme from "../assets/home_theme.jpg";
+import HomeTheme from "../assets/img-theme/home_theme.jpg";
 
 const Home = () => {
     const navigate = useNavigate();

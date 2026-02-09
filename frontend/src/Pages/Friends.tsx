@@ -1,6 +1,6 @@
 // Page: frontend/src/Pages/Friends.tsx
-import { useState, useEffect } from "react";
-import { Box, Container, Typography, Tabs, Tab, Badge } from "@mui/material";
+import { useState, useEffect, useRef } from "react";
+import { Box, Container, Typography, Tabs, Tab, Badge, useTheme, useMediaQuery } from "@mui/material";
 import { useAuth } from "../Context/AuthContext";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
@@ -11,6 +11,8 @@ import PendingRequests from "../Components/FriendsComponents/PendingRequests";
 import SentRequests from "../Components/FriendsComponents/SentRequests";
 import GameInvites from "../Components/FriendsComponents/GameInvites";
 import AppBar from "../Components/AppBar";
+
+import FriendsTheme from "../assets/img-theme/FriendsTheme.jpeg";
 
 interface Friend {
   id: string; // Prefer Firebase UID when available, otherwise Mongo _id
@@ -63,13 +65,18 @@ const Friends = () => {
   const { user, userData } = useAuth();
   const apiBaseUrl = getApiBaseUrl();
   const { isDark } = useAppTheme();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
   const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
   const [tab, setTab] = useState<string>("friends");
   const [_mongoUserId, setMongoUserId] = useState<string | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
 
+  // Define mapFriendFromApi function before it's used
   const mapFriendFromApi = (friend: any): Friend => {
     const populatedUser = typeof friend.friendUser === 'object' ? friend.friendUser : undefined;
     const mongoId = typeof friend.friendUser === 'string' ? friend.friendUser : populatedUser?._id;
@@ -106,6 +113,22 @@ const Friends = () => {
     } catch (err) {
       console.error('Failed to fetch friends', err);
     }
+  };
+
+  // Handle horizontal scroll on mobile via swipe/drag
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!tabsRef.current) return;
+    
+    const touchCurrentX = e.touches[0].clientX;
+    const diff = touchStartX.current - touchCurrentX;
+    
+    // Scroll the tabs horizontally
+    tabsRef.current.scrollLeft += diff;
+    touchStartX.current = touchCurrentX;
   };
 
   // Sync user to MongoDB when component mounts
@@ -261,9 +284,7 @@ const Friends = () => {
   };
 
   // Load friends on initial render or when auth user changes
-  useEffect(() => {
-    fetchFriends();
-  }, [user]);
+  useEffect(() => { fetchFriends(); }, [user]);
 
   const handleRemoveFriend = async (friend: Friend) => {
     if (!user?.uid) return;
@@ -379,87 +400,118 @@ const Friends = () => {
     }
   };
 
-  const pageBg = isDark ? "background.default" : "background.paper";
-  const surfaceBg = isDark ? "background.paper" : "background.default";
-  const panelBg = isDark ? "background.default" : "background.paper";
+  const pageBg = isDark ? "#000000" : "#ffffff";
+  const panelBg = isDark ? "#000000d0" : "#ffffffd0";
 
   return (
     <>
     <AppBar title={"Friends"} isBackButton={true} isSettings={true} isExit={true} />
-    <Box sx={{ minHeight: "100vh", bgcolor: pageBg, py: 6 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: pageBg, py: 6, backgroundImage: `url(${FriendsTheme})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <Container maxWidth="md">
-        <Box mb={4}>
-          <Typography variant="h4">Friends</Typography>
-          <Typography color="text.secondary">
+        <Box mb={2}>
+          <Typography variant="h4" sx={{ color: "white" }}>Friends</Typography>
+          <Typography color="white" sx={{ mt: 1 }}>
             Connect with friends and challenge them to matches
           </Typography>
         </Box>
 
-        <Tabs
-          value={tab}
-          onChange={(_, newValue: string) => setTab(newValue)}
-          variant="fullWidth"
-          sx={{
-            borderBottom: 1,
-            borderColor: "divider",
-            bgcolor: surfaceBg,
-            borderRadius: 1,
-            "& .MuiTab-root": {
-              color: "text.secondary",
-              "&.Mui-selected": { color: "text.primary" },
-            },
-          }}
-        >
-          <Tab
-            value="friends"
-            icon={
-              <Badge badgeContent={friends.length} color="secondary">
-                👥
-              </Badge>
-            }
-            iconPosition="start"
-            label="Friends"
-          />
-          <Tab
-            value="invites"
-            icon={
-              <Badge badgeContent={gameInvites.length} color={gameInvites.length ? "error" : "default"}>
-                🎮
-              </Badge>
-            }
-            iconPosition="start"
-            label="Game Invites"
-          />
-          <Tab
-            value="add"
-            icon={"➕"}
-            iconPosition="start"
-            label="Add Friends"
-          />
-          <Tab
-            value="sent"
-            icon={
-              <Badge badgeContent={sentRequests.length} color={sentRequests.length ? "info" : "default"}>
-                📤
-              </Badge>
-            }
-            iconPosition="start"
-            label="Sent"
-          />
-          <Tab
-            value="requests"
-            icon={
-              <Badge badgeContent={pendingRequests.length} color={pendingRequests.length ? "error" : "default"}>
-                🕔
-              </Badge>
-            }
-            iconPosition="start"
-            label="Requests"
-          />
-        </Tabs>
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Tabs
+            ref={tabsRef}
+            value={tab}
+            onChange={(_, newValue: string) => setTab(newValue)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              width: isMobile ? '100%' : 'auto',
+              minWidth: isMobile ? 'auto' : '550px',
+              bgcolor: isDark ? '#1E293B' : '#E0F2FE',
+              borderRadius: 15,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              scrollBehavior: 'smooth',
+              minHeight: 'unset',
+              '&::-webkit-scrollbar': {
+                height: '4px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: isDark ? '#0F172A' : '#F0F9FF',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: isDark ? '#475569' : '#CBD5E1',
+                borderRadius: '4px',
+              },
+              "& .MuiTab-root": {
+                color: isDark ? '#7DD3FC' : '#1D4ED8',
+                fontSize: isMobile ? '0.75rem' : '1.05rem',
+                textTransform: 'none',
+                padding: isMobile ? '8px 4px' : '12px 16px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              },
+              "& .MuiTab-root.Mui-selected": {
+                color: isDark ? '#E0F2FE' : '#0B5FFF',
+                fontWeight: 700,
+              },
+              "& .MuiTab-root .MuiTab-iconWrapper": {
+                fontSize: isMobile ? '0.9rem' : '1.1rem',
+                marginRight: isMobile ? '4px' : '8px',
+              },
+            }}
+          >
+            <Tab
+              value="friends"
+              icon={
+                <Badge badgeContent={friends.length} color="secondary" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: '16px', height: '16px', padding: '0 4px' } }}>
+                  👥
+                </Badge>
+              }
+              iconPosition="start"
+              label="Friends"
+            />
+            <Tab
+              value="invites"
+              icon={
+                <Badge badgeContent={gameInvites.length} color={gameInvites.length ? "error" : "default"} sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: '16px', height: '16px', padding: '0 4px' } }}>
+                  🎮
+                </Badge>
+              }
+              iconPosition="start"
+              label="Game Invites"
+            />
+            <Tab
+              value="add"
+              icon={"➕"}
+              iconPosition="start"
+              label="Add Friends"
+            />
+            <Tab
+              value="sent"
+              icon={
+                <Badge badgeContent={sentRequests.length} color={sentRequests.length ? "info" : "default"} sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: '16px', height: '16px', padding: '0 4px' } }}>
+                  📤
+                </Badge>
+              }
+              iconPosition="start"
+              label="Sent"
+            />
+            <Tab
+              value="requests"
+              icon={
+                <Badge badgeContent={pendingRequests.length} color={pendingRequests.length ? "error" : "default"} sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: '16px', height: '16px', padding: '0 4px' } }}>
+                  🕔
+                </Badge>
+              }
+              iconPosition="start"
+              label="Requests"
+            />
+          </Tabs>
+        </Box>
 
         <Box
-          mt={3}
+          mt={2}
           sx={{
             bgcolor: panelBg,
             borderRadius: 1,
