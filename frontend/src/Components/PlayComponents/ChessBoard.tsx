@@ -210,16 +210,16 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
                       ? boardTheme === "dark"
                         ? "#4b5563"
                         : boardTheme === "wooden"
-                        ? "#f3e8ff"
+                        ? "#b4dc2e"
                         : boardTheme === "modern"
-                        ? "#e0e7ff"
+                        ? "#6366f1"
                         : "#f0d9b5"
                       : boardTheme === "dark"
                       ? "#1f2937"
                       : boardTheme === "wooden"
-                      ? "#a78bfa"
+                      ? "#5f5810"
                       : boardTheme === "modern"
-                      ? "#6366f1"
+                      ? "#e0e7ff"
                       : "#b58863",
                     "&:hover": !dragOver ? { filter: "brightness(1.1)" } : undefined,
                     outline:
