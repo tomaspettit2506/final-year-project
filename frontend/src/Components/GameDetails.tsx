@@ -154,6 +154,7 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
             month: 'short',
             day: 'numeric',
           }) : 'Unknown date'}
+          {safeDate && safeDate.toLocaleTimeString ? ` at ${safeDate.toLocaleTimeString()}` : ''}
         </Typography>
       </DialogTitle>
 

@@ -178,8 +178,9 @@ const Home = () => {
                     minWidth: 200,
                     mr: 2,
                     borderRadius: "12px",
-                    boxShadow: "0 4px 12px rgba(85, 0, 170, 0.1)",
-                    bgcolor: isDark ? "#565359" : "#f3e8ff",
+                    boxShadow: game.result === "win" ? "0 4px 12px rgba(100, 216, 143, 0.75)" : game.result === "loss" ? "0 4px 12px rgba(207, 89, 89, 0.75)" : "0 4px 12px rgba(160, 164, 172, 0.75)",
+                    borderColor: game.result === "win" ? "#64d88f" : game.result === "loss" ? "#cf5959" : "#a0a4ac",
+                    bgcolor: game.result === "win" ? "#64d88f" : game.result === "loss" ? "#cf5959" : "#a0a4ac",
                     flexShrink: 0,
                   }}
                 >

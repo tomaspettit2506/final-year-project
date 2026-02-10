@@ -45,6 +45,7 @@ export default defineConfig({
       '/requests': 'http://localhost:8000',
       '/request': 'http://localhost:8000',
       '/friend': 'http://localhost:8000',
+      '/friends': 'http://localhost:8000',
       '/message': 'http://localhost:8000',
       // Health endpoint for quick checks
       '/health': 'http://localhost:8000',
