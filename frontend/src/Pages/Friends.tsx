@@ -18,7 +18,6 @@ interface Friend {
   id: string; // Prefer Firebase UID when available, otherwise Mongo _id
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   lastSeen?: string;
@@ -32,7 +31,6 @@ interface PendingRequest {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   receivedAt: string;
@@ -42,7 +40,6 @@ interface SentRequest {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   sentAt: string;
@@ -53,7 +50,6 @@ interface GameInvite {
   id: string;
   fromUserId: string;
   fromUserName: string;
-  fromUserAvatar?: string;
   fromUserRating?: number;
   roomId: string;
   timeControl: string;
@@ -92,7 +88,6 @@ const Friends = () => {
       email,
       name,
       username,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
       rating: friend.friendRating ?? populatedUser?.rating ?? 1200,
       online: false,
       lastSeen: friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : undefined,
@@ -196,7 +191,6 @@ const Friends = () => {
           id: req._id || req.id,
           name,
           username: (req.fromUser?.email && req.fromUser.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
           rating: req.fromUser?.rating ?? 1200,
           online: false,
           receivedAt: req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recently',
@@ -239,7 +233,6 @@ const Friends = () => {
           id: invite._id || invite.id,
           fromUserId: invite.fromUserId,
           fromUserName,
-          fromUserAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fromUserName)}`,
           fromUserRating: invite.fromUser?.rating ?? 1200,
           roomId: invite.roomId,
           timeControl: invite.timeControl,
@@ -270,7 +263,6 @@ const Friends = () => {
           id: req._id || req.id,
           name,
           username: (req.toUser?.email && req.toUser.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
           rating: req.toUser?.rating ?? 1200,
           online: false,
           sentAt: req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recently',

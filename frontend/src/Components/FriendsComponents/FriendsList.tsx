@@ -16,7 +16,6 @@ interface Friend {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   lastSeen?: string;
@@ -464,9 +463,26 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       setFriendGames(friend.games);
       setProfileStats(computeStatsFromGames(friend.games));
     }
+    
+    // Fetch latest friend data to ensure rating is current
+    try {
+      const response = await fetch(`${apiBaseUrl}/user/${friend.firebaseUid || friend.id}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const updatedFriend = await response.json();
+        setSelectedFriend({
+          ...friend,
+          rating: updatedFriend.rating || friend.rating
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching updated friend data:', error);
+    }
+    
     await fetchFriendGames(friend);
     setLoadingProfile(false);
-  };
+};
 
   const openGameDialog = async (friend: Friend) => {
     setSelectedFriend(friend);
@@ -536,8 +552,8 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       variant={friend.online ? "dot" : undefined}
                       invisible={!friend.online}
                     >
-                      <Avatar src={friend.avatar} alt={friend.name}>
-                        {friend.name.charAt(0)}
+                      <Avatar sx={{ width: 40, height: 40 }}>
+                        {friend.name.charAt(0).toUpperCase()}{friend.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                       </Avatar>
                     </Badge>
 

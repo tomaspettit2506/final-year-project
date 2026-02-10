@@ -6,7 +6,6 @@ interface User {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   isFriend: boolean;
@@ -41,7 +40,6 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           id: u.firebaseUid || u._id || u.id || (u.email ?? name),
           name,
           username: (u.email && u.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
           rating: u.rating ?? 1200,
           online: false,
           isFriend: false,
@@ -178,8 +176,8 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                         variant={user.online ? "dot" : undefined}
                         invisible={!user.online}
                       >
-                        <Avatar src={user.avatar} alt={user.name}>
-                          {user.name.charAt(0)}
+                        <Avatar sx={{ width: 40, height: 40 }}>
+                          {user.name.charAt(0).toUpperCase()}{user.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                         </Avatar>
                       </Badge>
                       <Box sx={{ minWidth: 0 }}>

@@ -47,15 +47,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-// Example function to list friends
-export async function listFriends(): Promise<Friend[]> {
-  const response = await fetch(`${API_BASE_URL}/friends`);
+// Get a specific user's friends by Firebase UID
+export async function listFriends(firebaseUid: string): Promise<Friend[]> {
+  const response = await fetch(`${API_BASE_URL}/friend/${firebaseUid}`);
   return handleResponse<Friend[]>(response);
 }
 
-// Example function to create a new friend
-export async function createFriend(friend: { name: string; email: string; password: string; }): Promise<Friend> {
-  const response = await fetch(`${API_BASE_URL}/friends`, {
+// Create a new friend entry
+export async function createFriend(friend: { friendName: string; friendEmail: string; friendRating: number; }): Promise<Friend> {
+  const response = await fetch(`${API_BASE_URL}/friend`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -65,19 +65,28 @@ export async function createFriend(friend: { name: string; email: string; passwo
   return handleResponse<Friend>(response);
 }
 
-// Define Friend interface
+// Define Friend interface (matches backend response)
 export interface Friend {
-  id: string;
-  name: string;
-  email: string;
+  friendUser?: string;
+  friendFirebaseUid: string;
+  friendName: string;
+  friendEmail: string;
+  friendRating: number;
+  gameRecents?: any;
+  addedAt?: Date;
 }
 
 // Define Game interface
 export interface GameData {
   userId?: string;
   firebaseUid?: string;
+  myRating: number;
+  myNewRating?: number;
+  ratingChange?: number;
   opponent: string;
   opponentRating: number;
+  opponentNewRating?: number;
+  opponentRatingChange?: number;
   date: string;
   result: 'win' | 'loss' | 'draw';
   isRated: boolean;
@@ -87,6 +96,7 @@ export interface GameData {
   duration: number;
   myAccuracy: number;
   opponentAccuracy: number;
+  playerColor?: 'white' | 'black';
 }
 
 // Save a completed game

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { User, Friend } from '../schemas';
-import { normalizeFriends } from '../utils/friend';
 
 const router = Router();
 

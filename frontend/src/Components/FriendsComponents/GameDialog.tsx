@@ -14,6 +14,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import GameDetails from "../GameDetails";
+import { calculateEloChange } from "../../Utils/eloCalculator";
+import { useTheme } from "../../Context/ThemeContext";
 
 interface GameDialogProps {
     open: boolean;
@@ -26,6 +28,7 @@ interface GameDialogProps {
         date?: string;
         opponent?: string;
         opponentRating?: number;
+        myRating?: number;
         timeControl?: number;
         moves?: number;
         duration?: number;
@@ -33,7 +36,6 @@ interface GameDialogProps {
         myAccuracy?: number;
         opponentAccuracy?: number;
         playerColor?: 'white' | 'black';
-        opening?: string;
         ratingChange?: number;
     }[];
     loading?: boolean;
@@ -43,6 +45,15 @@ interface GameDialogProps {
 const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, games, loading, error }) => {
     const recentGames = games || [];
     const [selectedGame, setSelectedGame] = React.useState<typeof recentGames[number] | null>(null);
+    const { isDark } = useTheme();
+
+    // Debug: Log games to see what data we're receiving
+    React.useEffect(() => {
+        if (recentGames.length > 0) {
+            console.log('Game data:', recentGames[0]);
+            console.log('playerColor field:', recentGames[0].playerColor);
+        }
+    }, [recentGames]);
 
     const getResultColor = (result?: string) => {
         switch (result?.toLowerCase()) {
@@ -74,6 +85,19 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
         return change > 0 ? `+${change}` : `${change}`;
     };
 
+    const getDisplayRatingChange = (game: typeof recentGames[number]) => {
+        if (game.ratingChange !== undefined && game.ratingChange !== null && game.ratingChange !== 0) {
+            return game.ratingChange;
+        }
+
+        if (game.myRating === undefined || game.opponentRating === undefined || !game.result) {
+            return game.ratingChange ?? null;
+        }
+
+        const score = game.result === 'win' ? 1 : game.result === 'loss' ? 0 : 0.5;
+        return calculateEloChange(game.myRating, game.opponentRating, score);
+    };
+
     return (
         <>
             <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -85,7 +109,7 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
                         </IconButton>
                     </Box>
                 </DialogTitle>
-                <DialogContent dividers sx={{ p: 0 }}>
+                <DialogContent dividers sx={{ p: 0, bgcolor: isDark ? 'grey.900' : 'grey.50' }}>
                     {loading ? (
                         <Box p={3}>
                             <Typography>Loading games...</Typography>
@@ -109,7 +133,7 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
                                         justifyContent: 'space-between',
                                         p: 2,
                                         borderBottom: index < recentGames.length - 1 ? '1px solid #e5e7eb' : 'none',
-                                        '&:hover': { bgcolor: '#f9fafb' },
+                                        '&:hover': { bgcolor: isDark ? 'grey.800' : '#f9fafb' },
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
@@ -147,21 +171,33 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
 
                                     {/* Game Info */}
                                     <Box sx={{ flex: 2, px: 2 }}>
-                                        <Typography variant="body2" fontWeight={500}>
-                                            {game.opening || 'Unknown Opening'}
-                                        </Typography>
                                         <Typography variant="caption" color="text.secondary">
                                             {game.date ? new Date(game.date).toLocaleDateString('en-US', { 
                                                 month: 'short', 
                                                 day: 'numeric' 
-                                            }) : 'Unknown date'} • {game.moves || 0} moves {formatRatingChange(game.ratingChange) && (
-                                                <span style={{ 
-                                                    color: (game.ratingChange || 0) > 0 ? '#22c55e' : '#ef4444',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {' '}{formatRatingChange(game.ratingChange)}
-                                                </span>
-                                            )}
+                                            }) : 'Unknown date'} • {game.moves || 0} moves {(() => {
+                                                const ratingChange = getDisplayRatingChange(game);
+                                                const formattedRatingChange = formatRatingChange(ratingChange ?? undefined);
+
+                                                if (!formattedRatingChange) {
+                                                    return null;
+                                                }
+
+                                                const ratingColor = ratingChange === 0
+                                                    ? '#6b7280'
+                                                    : (ratingChange || 0) > 0
+                                                        ? '#22c55e'
+                                                        : '#ef4444';
+
+                                                return (
+                                                    <span style={{
+                                                        color: ratingColor,
+                                                        fontWeight: 600
+                                                    }}>
+                                                        {' '}{formattedRatingChange}
+                                                    </span>
+                                                );
+                                            })()}
                                         </Typography>
                                     </Box>
 

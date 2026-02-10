@@ -6,7 +6,7 @@ import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
 import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
   TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, FormControl,
-  InputLabel, MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
+  MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
@@ -185,7 +185,7 @@ const Profile = () => {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, apiBaseUrl]);
 
   // Fetch games when mongoUserId changes - this is now the ONLY place games are fetched
   useEffect(() => {
@@ -193,6 +193,26 @@ const Profile = () => {
       fetchRecentGames();
     }
   }, [mongoUserId]);
+
+  // Refresh rating data on component mount to ensure fresh data after game completion
+  useEffect(() => {
+    if (user) {
+      const refreshRatingData = async () => {
+        try {
+          const userRef = doc(firestore, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            setRating(data.rating || "");
+            setUserData((prev: any) => ({ ...prev, rating: data.rating }));
+          }
+        } catch (error) {
+          console.error('Error refreshing rating data:', error);
+        }
+      };
+      refreshRatingData();
+    }
+  }, [user?.uid]);
 
   // Connect socket for real-time messaging
   useEffect(() => {
@@ -246,7 +266,7 @@ const Profile = () => {
   const username =
     (user?.email?.split("@")[0] || userData?.name || "user").replace(/\s+/g, "_").toLowerCase();
   const memberSince = user?.metadata?.creationTime
-    ? new Date(user.metadata.creationTime).getFullYear()
+    ? new Date(user.metadata.creationTime).getDate() + " " + new Date(user.metadata.creationTime).toLocaleString("default", { month: "short" }) + " " + new Date(user.metadata.creationTime).getFullYear()
     : undefined;
 
   return (
@@ -259,44 +279,44 @@ const Profile = () => {
         borderRadius: 2, 
         mb: 3, 
         boxShadow: '0 4px 20px rgba(85, 0, 170, 0.1)', 
-        backgroundColor: "#ffffff" 
+        backgroundColor: isDark ? "#1e1b23d9" : "#ffffffcc", 
       }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Avatar sx={{ 
             width: 72, 
-            height: 72, 
-            bgcolor: "#f1f1f5", 
-            color: "#5500aa",
+            height: 72,
+            color: isDark ? "#ddaaff" : "#5500aa",
             boxShadow: '0 4px 8px rgba(85, 0, 170, 0.2)'
           }}>
             {(userData?.name || user?.displayName || "U").charAt(0).toUpperCase()}
+            {(userData?.name || user?.displayName || "U").split(' ')[1]?.charAt(0).toUpperCase() || ''}
           </Avatar>
           <Box sx={{ textAlign: "left" }}>
             <Typography variant="h5" sx={{ fontWeight: "bold", color: "#5500aa" }}>
               {userData?.name || user?.displayName || "No Name Set"}
             </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Typography variant="body2" sx={{ color: "#666" }}>
               @{username}{memberSince ? ` • Member since ${memberSince}` : ""}
             </Typography>
           </Box>
         </Box>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2, mt: 3 }}>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Rating</Typography>
+              <Typography variant="body2" sx={{ color: "#666" }}>Rating</Typography>
               <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.rating || 0}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Wins</Typography>
+              <Typography variant="body2" sx={{ color: "#666" }}>Wins</Typography>
               <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.wins || 0}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: "#ffffff" }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Win Rate</Typography>
+              <Typography variant="body2" sx={{ color: "#666" }}>Win Rate</Typography>
               <Typography variant="h5" fontWeight="bold" color="#5500aa">{winRate}%</Typography>
             </CardContent>
           </Card>
@@ -347,14 +367,13 @@ const Profile = () => {
         <CardContent>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="h6" sx={{ color: "#5500aa", fontWeight: "bold" }}>Recent Games</Typography>
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel sx={{ color: "#5500aa" }}>Filter</InputLabel>
+            <FormControl sx={{ minWidth: 150, backgroundColor: isDark ? "#1e1b23d9" : "#ffffffcc", borderRadius: 1 }}>
               <MuiSelect
                 value={gameFilter}
-                label="Filter"
                 onChange={handleFilterChange}
                 sx={{
-                  color: "#5500aa",
+                  backgroundColor: isDark ? "#ffffffcc" : "#1e1b23d9",
+                  color: isDark ? "#1e1b23" : "#ffffff",
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: "#ddaaff" },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: "#5500aa" },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: "#5500aa" },
@@ -389,7 +408,7 @@ const Profile = () => {
                     <TableRow 
                       key={gameId}
                       sx={{
-                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : 'transparent',
+                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#b3ebc4' : game.result === 'loss' ? isDark ? '#7f1d1d' : '#fef2f2' : '#fef2f2',
                         '&:hover': { backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : '#fafafa' }
                       }}
                     >

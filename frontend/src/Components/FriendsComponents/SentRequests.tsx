@@ -10,7 +10,6 @@ interface SentRequest {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   sentAt: string;
@@ -54,8 +53,8 @@ const SentRequests: React.FC<SentRequestsProps> = ({ requests }) => {
                     variant={request.online ? "dot" : undefined}
                     invisible={!request.online}
                   >
-                    <Avatar src={request.avatar} alt={request.name}>
-                      {request.name.charAt(0)}
+                    <Avatar>
+                      {request.name.charAt(0).toUpperCase()}{request.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                     </Avatar>
                   </Badge>
                   <Box sx={{ minWidth: 0 }}>

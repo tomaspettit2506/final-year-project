@@ -89,6 +89,7 @@ async function initialize(): Promise<void> {
 app.use('/user', userRoutes);
 app.use('/game', gameRoutes);
 app.use('/friend', friendRoutes);
+app.use('/friends', friendRoutes); // Alias for /friend routes
 app.use('/request', requestRoutes);
 app.use('/game-invite', gameInviteRoutes);
 app.use('/message', messageRoutes);

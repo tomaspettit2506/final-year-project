@@ -27,7 +27,6 @@ interface Friend {
   id: string;
   name: string;
   username: string;
-  avatar: string;
   rating: number;
   online: boolean;
   lastSeen?: string;
@@ -196,11 +195,9 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box sx={{ position: "relative" }}>
             <Avatar
-              src={friend.avatar}
-              alt={friend.name}
               sx={{ width: 40, height: 40 }}
             >
-              {friend.name.charAt(0)}
+              {friend.name.charAt(0).toUpperCase()}{friend.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
             </Avatar>
             {friend.online && (
               <Box

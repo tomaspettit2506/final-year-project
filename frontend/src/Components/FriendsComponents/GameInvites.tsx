@@ -6,7 +6,6 @@ interface GameInvite {
   id: string;
   fromUserId: string;
   fromUserName: string;
-  fromUserAvatar?: string;
   fromUserRating?: number;
   roomId: string;
   timeControl: string;
@@ -57,11 +56,8 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                     overlap="circular"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   >
-                    <Avatar 
-                      src={invite.fromUserAvatar} 
-                      alt={invite.fromUserName}
-                    >
-                      {invite.fromUserName.charAt(0)}
+                    <Avatar sx={{ width: 40, height: 40 }}>
+                      {invite.fromUserName.charAt(0).toUpperCase()}{invite.fromUserName.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                     </Avatar>
                   </Badge>
                   <Box sx={{ minWidth: 0 }}>

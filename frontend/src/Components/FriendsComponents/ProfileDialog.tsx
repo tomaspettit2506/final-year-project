@@ -23,6 +23,22 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   const totalGames = wins + losses + draws;
   const winRate = totalGames ? Math.round((wins / totalGames) * 100) : 0;
 
+  // Get rating title based on rating thresholds
+  const getRatingTitle = (rating: number): string => {
+    if (rating >= 2400) return 'Grandmaster';
+    if (rating >= 2200) return 'International Master';
+    if (rating >= 2000) return 'FIDE Master';
+    if (rating >= 1800) return 'Candidate Master';
+    if (rating >= 1600) return 'Expert';
+    if (rating >= 1400) return 'Class A';
+    if (rating >= 1200) return 'Class B';
+    if (rating >= 1000) return 'Class C';
+    if (rating >= 800) return 'Class D';
+    return 'Beginner';
+  };
+
+  const ratingTitle = getRatingTitle(friendRating);
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Player Profile</DialogTitle>
@@ -33,11 +49,9 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
           <Box display="flex" flexDirection="column" gap={2}>
             <Box display="flex" alignItems="center" gap={2}>
               <Avatar
-                src={`https://www.gravatar.com/avatar/${friendEmail}`}
-                alt={friendName}
                 sx={{ width: 72, height: 72 }}
               >
-                {friendName.charAt(0)}
+                {friendName.charAt(0).toUpperCase()}{friendName.split(' ')[1]?.charAt(0).toUpperCase() || ''}
               </Avatar>
               <Box>
                 <Typography variant="h6">{friendName}</Typography>
@@ -46,6 +60,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
                 </Typography>
                 <Box display="flex" gap={1} mt={1}>
                   <Chip label={`Rating ${friendRating}`} color="primary" size="small" />
+                  <Chip label={ratingTitle} color="secondary" size="small" />
                   <Chip label="Online" color="success" size="small" />
                 </Box>
               </Box>

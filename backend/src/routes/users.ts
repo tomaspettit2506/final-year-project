@@ -74,6 +74,25 @@ router.post('/email/:email', async (req, res) => {
   }
 });
 
+// GET single User by Mongo _id or Firebase UID
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const filter: any = [{ firebaseUid: id }];
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      filter.push({ _id: id });
+    }
+
+    const user = await User.findOne({ $or: filter });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    return res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
 // UPDATE User
 router.put('/:id', async (req, res) => {
   const userId = req.params.id;
