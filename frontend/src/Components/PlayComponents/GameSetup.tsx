@@ -145,6 +145,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       if (data.timerDuration !== undefined) setTimerDuration(data.timerDuration);
       if (data.rated !== undefined) setIsRated(data.rated);
 
+      const resolvedRated = data.rated ?? isRated;
+
       // Resolve the current player details from the payload (helps Player 2 who may receive
       // gameReady before the join callback finishes setting state)
       const myPlayer = data.players.find(p => p.id === socket.id);
@@ -160,8 +162,16 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       // Schedule the callback after state updates
       setTimeout(() => {
         if (onRoomJoined && actualRoomId) {
-          console.log('Calling onRoomJoined with:', { actualRoomId, resolvedName, resolvedColor, isHost });
-          onRoomJoined(actualRoomId, resolvedName, resolvedColor, isHost, data.timerDuration || timerDuration, data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled, isRated);
+          console.log('Calling onRoomJoined with:', { actualRoomId, resolvedName, resolvedColor, isHost, resolvedRated });
+          onRoomJoined(
+            actualRoomId,
+            resolvedName,
+            resolvedColor,
+            isHost,
+            data.timerDuration || timerDuration,
+            data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled,
+            resolvedRated
+          );
         }
       }, 0);
     };
@@ -692,14 +702,14 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Box display="flex" justifyContent="center" mb={3}>
                         <CircularProgress />
                       </Box>
-                      <Card variant="outlined" sx={{ mb: 2, bgcolor: '#f5f5f5' }}>
-                        <CardContent>
-                          <Typography variant="body2" color="textSecondary" mb={1}>Room ID: <strong>{createdRoomId || roomId}</strong></Typography>
-                          <Typography variant="body2" color="textSecondary" mb={1}>Your Color: <strong>{playerColor?.toUpperCase()}</strong></Typography>
-                          <Typography variant="body2" color="textSecondary" sx={{ fontWeight: roomUsers.length === 2 ? 'bold' : 'normal' }}>
+                      <Card variant="outlined" sx={{ mb: 2, color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)', bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+                        <CardContent sx={{ p: 2, fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                          <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Room ID: <strong>{createdRoomId || roomId}</strong></Typography>
+                          <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Your Color: <strong>{playerColor?.toUpperCase()}</strong></Typography>
+                          <Typography variant="body2" color="textSecondary" sx={{ fontWeight: roomUsers.length === 2 ? 'bold' : 'normal', fontSize: isMobile ? '1rem' : '1.3rem' }}>
                             Players in room: {roomUsers.length}/2
                           </Typography>
-                          <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                          <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="caption" color="textSecondary" display="block" mt={1}>
                             Waiting time: <strong>{formatWaitingTime(waitingTime)}</strong> / 5m 0s
                           </Typography>
                         </CardContent>

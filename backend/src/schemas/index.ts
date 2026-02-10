@@ -2,17 +2,22 @@ import mongoose from 'mongoose';
 
 const gameSchema = new mongoose.Schema({
   myRating: Number,
+  myNewRating: Number,
+  ratingChange: Number,
   opponent: String,
   opponentRating: Number,
+  opponentNewRating: Number,
+  opponentRatingChange: Number,
   date: { type: Date, default: Date.now },
   result: String,
   isRated: { type: Boolean, default: false },
   timeControl: Number,
-  termination: { type: String, enum: ['checkmate', 'resignation', 'timeout', 'draw', 'abandonment'] },
+  termination: { type: String, enum: ['checkmate', 'resignation', 'timeout', 'draw', 'abandonment', 'stalemate', 'unknown'] },
   moves: Number,
   duration: Number,
   myAccuracy: Number,
-  opponentAccuracy: Number
+  opponentAccuracy: Number,
+  playerColor: { type: String, enum: ['white', 'black'] }
 });
 
 const friendSchema = new mongoose.Schema({

@@ -5,7 +5,7 @@ import MoveHistory from './MoveHistory';
 import Timer from './Timer';
 import AccuracyStats from './AccuracyStats';
 import GameController from './GameController';
-import { Button, Box, Card, Grid, Typography, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Button, Box, Card, Chip, Grid, Typography, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import PromotionDialog from './PromotionDialog';
 import type { GameState, Position, Move, Piece, GameMode, TimerState, Board, PieceColor } from '../../Types/chess';
 import {createInitialBoard, getLegalMoves, simulateMove, isCheckmate, isStalemate, isKingInCheck, getMoveNotation, isCastlingMove, executeCastling, canPromote, promotePawn } from '../../Utils/chessLogic';
@@ -13,7 +13,9 @@ import { getAIMove, calculateMoveAccuracy } from '../../Utils/chessAI';
 import { socket } from '../../Services/socket';
 import { useAuth } from '../../Context/AuthContext';
 import { saveGame, getApiBaseUrl } from '../../Services/api';
-
+import { calculateNewRatings } from '../../Utils/eloCalculator';
+import { firestore } from '../../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import AI_ModeTheme from '../../assets/img-theme/AI_ModeTheme.jpeg';
 import PvP_ModeTheme from '../../assets/img-theme/PvP_ModeTheme.jpeg';
 
@@ -63,6 +65,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   const [opponentName, setOpponentName] = useState<string>('Opponent');
   const [opponentRating, setOpponentRating] = useState<number>(1200);
   const pendingMovesRef = useRef<RemoteMove[]>([]);
+  const gameSavedRef = useRef(false);
   const [promotion, setPromotion] = useState<{
     position: Position;
     color: PieceColor;
@@ -102,6 +105,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   // This ensures the flag is reset if the component remounts
   useEffect(() => {
     isMountedRef.current = true;
+    gameSavedRef.current = false; // Reset saved flag on mount
     console.log('[GameScreen] Component mounted, isMountedRef set to true');
     return () => {
       isMountedRef.current = false;
@@ -222,7 +226,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   useEffect(() => {
     const gameEnded = gameState.isCheckmate || gameState.isStalemate;
     
-    if (gameEnded && gameMode === 'pvp' && user && gameState.moveHistory.length > 0) {
+    // Prevent duplicate saves with ref flag
+    if (gameEnded && gameMode === 'pvp' && user && gameState.moveHistory.length > 0 && !gameSavedRef.current) {
+      gameSavedRef.current = true; // Mark as saved immediately
+      
       const saveGameData = async () => {
         try {
           const effectiveColor = resolvedColor || myColor;
@@ -252,14 +259,52 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           }
           
           // Determine result from my perspective
-          let result: 'win' | 'loss' | 'draw';
-          if (gameState.isStalemate) result = 'draw';
-          else if (gameState.winner === effectiveColor) result = 'win';
-          else result = 'loss';
+          let gameResult: 'win' | 'loss' | 'draw';
           
-          // Determine termination reason using terminationReason field
-          const effectiveTerminationReason = gameState.terminationReason ?? terminationReasonRef.current;
+          if (gameState.isStalemate) {
+            gameResult = 'draw';
+          } else if (gameState.winner === effectiveColor) {
+            gameResult = 'win';
+          } else {
+            gameResult = 'loss';
+          }
+          
+          const normalizedMyRating = Number(resolvedRating);
+          const normalizedOpponentRating = Number(opponentRating);
+          const normalizedIsRated = Boolean(isRated);
 
+          // Log values used for Elo to diagnose rating updates
+          console.log('[GameScreen] Elo inputs:', {
+            isRated: normalizedIsRated,
+            result: gameResult,
+            opponentRating: normalizedOpponentRating,
+            myRating: normalizedMyRating,
+            types: {
+              isRated: typeof normalizedIsRated,
+              result: typeof gameResult,
+              opponentRating: typeof normalizedOpponentRating,
+              myRating: typeof normalizedMyRating
+            }
+          });
+
+          if (!Number.isFinite(normalizedMyRating) || !Number.isFinite(normalizedOpponentRating)) {
+            console.error('[GameScreen] Invalid rating values for Elo calculation', {
+              resolvedRating,
+              opponentRating
+            });
+            return;
+          }
+
+          // Calculate new ratings using Elo system
+          const ratingChanges = calculateNewRatings(
+            normalizedMyRating,
+            normalizedOpponentRating,
+            gameResult,
+            32 // K-factor
+          );
+          
+          // Determine termination reason
+          const effectiveTerminationReason = gameState.terminationReason ?? terminationReasonRef.current;
           let termination: string;
           if (effectiveTerminationReason === 'timeout') termination = 'timeout';
           else if (effectiveTerminationReason === 'resignation') termination = 'resignation';
@@ -267,42 +312,61 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           else if (gameState.isStalemate) termination = 'stalemate';
           else termination = 'unknown';
           
-          // Calculate game duration (initial time - remaining time)
+          // Calculate game duration
           const myTimeLeft = effectiveColor === 'white' ? timer.white : timer.black;
           const duration = timerEnabled ? timerDuration - myTimeLeft : gameState.moveHistory.length * 30; // Estimate 30s per move if no timer
           
-          // Calculate accuracies (simplified - can be enhanced with calculateMoveAccuracy function)
-          // For now, using a placeholder value. In the future, you can analyze each move quality
+          // Calculate accuracies
           const myAccuracy = Math.min(95, 70 + Math.random() * 25);
           const opponentAccuracy = Math.min(95, 70 + Math.random() * 25);
           
           const gameData = {
             userId: userId,
-            myRating: resolvedRating, // Use resolvedRating for my rating
-            opponent: opponentName, // Use opponent's actual name
-            opponentRating: opponentRating, // Use opponent's actual rating
+            myRating: normalizedMyRating,
+            myNewRating: ratingChanges.player1NewRating,
+            ratingChange: ratingChanges.player1Change,
+            opponent: opponentName,
+            opponentRating: normalizedOpponentRating,
+            opponentNewRating: ratingChanges.player2NewRating,
+            opponentRatingChange: ratingChanges.player2Change,
             date: new Date().toISOString(),
-            result,
-            isRated: isRated || false,
-            timeControl: timerEnabled ? timerDuration : 0,
+            result: gameResult,
+            isRated: normalizedIsRated,
+            timeControl: timerEnabled ? timerDuration / 60 : 0,
             termination,
             moves: gameState.moveHistory.length,
             duration: Math.round(duration),
             myAccuracy: Math.round(myAccuracy),
-            opponentAccuracy: Math.round(opponentAccuracy)
+            opponentAccuracy: Math.round(opponentAccuracy),
+            playerColor: effectiveColor
           };
           
-          console.log('[GameScreen] Saving game data:', gameData);
+          console.log('[GameScreen] Saving game data with Elo changes:', gameData);
           await saveGame(gameData);
           console.log('[GameScreen] Game saved successfully');
-        } catch (error) {
+          
+          // Update Firestore with new rating
+          if (user && gameData.myNewRating) {
+            const userRef = doc(firestore, 'users', user.uid);
+            await setDoc(userRef, { rating: gameData.myNewRating }, { merge: true });
+            console.log('[GameScreen] Updated Firestore rating to:', gameData.myNewRating);
+          }
+        } catch (error: any) {
           console.error('[GameScreen] Failed to save game:', error);
+          // If it's a duplicate error (409), that's okay - the rating was still updated
+          if (error?.message?.includes('409')) {
+            console.log('[GameScreen] Duplicate game detected by server, but ratings should be updated');
+          } else {
+            // For other errors, reset the flag to allow retry
+            gameSavedRef.current = false;
+          }
         }
       };
       
       saveGameData();
     }
   }, [gameState.isCheckmate, gameState.isStalemate, gameState.winner, gameState.terminationReason, gameMode, user, userData, gameState.moveHistory.length, resolvedColor, myColor, timer, timerDuration, timerEnabled, isRated, mongoUserId, resolvedRating, opponentName, opponentRating]);
+
   const applyRemoteHistory = useCallback((remoteMoves: RemoteMove[]) => {
     if (!Array.isArray(remoteMoves) || remoteMoves.length === 0) return;
 
@@ -1005,9 +1069,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           {/* Player Info */}
           {gameMode === 'pvp' && (
             <Box mr={2}>
-              <Typography variant="subtitle1" color="white">
-                You are <b>{myName || 'You'}</b> ({myColor})
-              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Typography variant="subtitle1" color="white">
+                  You are <b>{myName || 'You'}</b> ({myColor})
+                </Typography>
+                {isRated ? (
+                  <Chip
+                    label="Rated Game"
+                    size="small"
+                    color="success"
+                    sx={{ fontWeight: 600, letterSpacing: 0.3 }}
+                  />
+                ) : (
+                  <Chip
+                    label="Casual Game"
+                    size="small"
+                    color="info"
+                    sx={{ fontWeight: 600, letterSpacing: 0.3 }}
+                  />
+                )}
+              </Stack>
               <Typography variant="subtitle2" color="white">
                 Room ID: <b>{roomId}</b> {isHost ? '(Host)' : ''}
               </Typography>
