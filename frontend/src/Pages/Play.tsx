@@ -23,7 +23,8 @@ const Play = () => {
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     gameMode: 'ai',
     difficulty: 750, difficultyName: 'Easy',
-    timerEnabled: false, timerDuration: 600
+    timerEnabled: false, timerDuration: 600,
+    isRated: false
   });
   const [myColor, setMyColor] = useState<'white' | 'black'>('white');
   const [myName, setMyName] = useState<string>('');
@@ -42,6 +43,7 @@ const Play = () => {
 
   const handleRoomJoined = (joinedRoomId: string, name: string, color: 'white' | 'black', host: boolean, timerDuration?: number, timerEnabled?: boolean, isRated?: boolean) => {
     console.log('[Play] Room joined with timer settings:', { timerEnabled, timerDuration, isRated });
+    console.log('[Play] Setting gameConfig.isRated to:', isRated);
     setRoomId(joinedRoomId);
     setMyName(name);
     setMyColor(color);
@@ -51,7 +53,7 @@ const Play = () => {
       gameMode: 'pvp',
       timerDuration: timerDuration ?? cfg.timerDuration,
       timerEnabled: timerEnabled ?? cfg.timerEnabled,
-      isRated: isRated ?? cfg.isRated
+      isRated: isRated ?? false  // Use explicit fallback to false instead of cfg.isRated
     }));
     setCurrentScreen('game');
   };

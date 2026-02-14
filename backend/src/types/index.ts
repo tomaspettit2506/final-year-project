@@ -23,6 +23,7 @@ export interface Room {
   gameStartTime?: number;
   timerEnabled?: boolean;
   timerDuration?: number;
+  rated?: boolean;
   createdAt: number;
   timeoutHandle?: NodeJS.Timeout;
   moveHistory?: RoomMove[];

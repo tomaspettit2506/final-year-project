@@ -119,13 +119,16 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       }
     });
 
-    socket.on('createRoom', ({ name, timerEnabled, timerDuration, rating }, callback) => {
+    socket.on('createRoom', ({ name, timerEnabled, timerDuration, isRated, rating }, callback) => {
       const roomId = generateRoomId();
       const newRoom = createRoom();
       newRoom.users = [{ id: socket.id, name, color: 'white', rating }];
-      // Timer enabled by default for multiplayer
-      newRoom.timerEnabled = timerEnabled !== undefined ? timerEnabled : true;
-      newRoom.timerDuration = timerDuration || 600;
+      
+      // ENFORCE: Rated games MUST have timer, Casual games MUST NOT have timer
+      const rated = isRated === true;
+      newRoom.timerEnabled = rated ? true : false;
+      newRoom.timerDuration = rated ? (timerDuration || 600) : 0;
+      newRoom.rated = rated;
 
       rooms[roomId] = newRoom;
       socket.join(roomId);
@@ -141,14 +144,21 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
         users: rooms[roomId].users,
         status: rooms[roomId].status
       });
-      console.log(`Room created: ${roomId} by ${name}. Timer: ${newRoom.timerEnabled ? newRoom.timerDuration + 's' : 'disabled'}. Waiting for Player 2...`);
+      console.log(`Room created: ${roomId} by ${name}. Game Type: ${rated ? 'RATED' : 'CASUAL'}. Timer: ${newRoom.timerEnabled ? newRoom.timerDuration + 's' : 'disabled'}. Waiting for Player 2...`);
     });
 
-    socket.on('joinRoom', ({ name, roomId, rating }, callback) => {
+    socket.on('joinRoom', ({ name, roomId, rating, timerEnabled, timerDuration, isRated }, callback) => {
       // ...existing handler code...
       if (!rooms[roomId]) {
         const newRoom = createRoom();
         newRoom.users = [{ id: socket.id, name, color: 'white', rating }];
+        
+        // ENFORCE: Rated games MUST have timer, Casual games MUST NOT have timer
+        const rated = isRated === true;
+        newRoom.timerEnabled = rated ? true : false;
+        newRoom.timerDuration = rated ? (timerDuration || 600) : 0;
+        newRoom.rated = rated;
+        
         rooms[roomId] = newRoom;
         socket.join(roomId);
         socket.data.roomId = roomId;
@@ -190,13 +200,15 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       if (room.users.length === 2) {
         room.status = 'playing';
         room.gameStartTime = Date.now();
-        console.log(`Game ready in room ${roomId}. Timer: ${room.timerEnabled ? room.timerDuration + 's' : 'disabled'}`);
+        console.log(`Game ready in room ${roomId}. Timer: ${room.timerEnabled ? room.timerDuration + 's' : 'disabled'}. Rated: ${room.rated ? 'YES' : 'NO'}`);
+        console.log(`[DEBUG] Emitting gameReady with rated=${room.rated}, timerEnabled=${room.timerEnabled}, timerDuration=${room.timerDuration}`);
         io.to(roomId).emit('gameReady', {
           players: room.users,
           status: room.status,
           startTime: room.gameStartTime,
           timerEnabled: room.timerEnabled,
-          timerDuration: room.timerDuration
+          timerDuration: room.timerDuration,
+          rated: room.rated
         });
       } else {
         io.to(roomId).emit('roomUpdated', { roomId, users: room.users, status: room.status });

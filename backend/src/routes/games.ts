@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import { User, Game } from '../schemas';
 import { calculateNewRatings } from '../utils/eloCalculator';
 
@@ -29,8 +29,11 @@ router.get('/user/:id', async (req, res) => {
 // POST Game (add game and link to user's gameRecents)
 // Accepts userId (MongoDB _id) OR firebaseUid
 // Will look up user by either identifier
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res) => {
   const { myRating, opponent, opponentRating, date, result, isRated, timeControl, termination, moves, duration, myAccuracy, opponentAccuracy, playerColor, userId, firebaseUid } = req.body;
+  
+  const io = (req.app as any).locals.io;
+  const ratingUpdates: Array<{ firebaseUid?: string; userId?: string; newRating: number }> = [];
   
   console.log(`[Game Save] Received game data:`, { myRating, opponent, opponentRating, result, isRated, playerColor, userId, firebaseUid });
   
@@ -157,6 +160,15 @@ router.post('/', async (req, res) => {
 
           const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true });
           console.log(`[Elo] User updated, current rating in DB: ${updatedUser?.rating}`);
+          
+          // Track rating update for socket notification
+          if (isRated && updatedUser?.firebaseUid) {
+            ratingUpdates.push({
+              firebaseUid: updatedUser.firebaseUid,
+              userId: updatedUser._id.toString(),
+              newRating: myNewRating
+            });
+          }
         }
 
         // If opponent is also a registered user, update their rating too (only if not duplicate)
@@ -192,6 +204,15 @@ router.post('/', async (req, res) => {
                 { new: true }
               );
               console.log(`[Elo] Opponent updated, current rating in DB: ${updatedOpponent?.rating}`);
+              
+              // Track opponent rating update for socket notification
+              if (updatedOpponent?.firebaseUid) {
+                ratingUpdates.push({
+                  firebaseUid: updatedOpponent.firebaseUid,
+                  userId: updatedOpponent._id.toString(),
+                  newRating: opponentNewRating
+                });
+              }
             } else {
               // Add game to opponent's history and update rating
               // Opponent's color is opposite of player's color
@@ -227,6 +248,15 @@ router.post('/', async (req, res) => {
                 { new: true }
               );
               console.log(`[Elo] Opponent updated, current rating in DB: ${updatedOpponent?.rating}`);
+              
+              // Track opponent rating update for socket notification
+              if (updatedOpponent?.firebaseUid) {
+                ratingUpdates.push({
+                  firebaseUid: updatedOpponent.firebaseUid,
+                  userId: updatedOpponent._id.toString(),
+                  newRating: opponentNewRating
+                });
+              }
             }
           } else {
             console.log(`[Elo] Opponent user not found in database for name/email: ${opponent}`);
@@ -241,6 +271,20 @@ router.post('/', async (req, res) => {
       }
     } else {
       console.warn('Warning: Game posted without userId or firebaseUid - game will not be linked to any user');
+    }
+
+    // Emit rating updates via socket.io to notify friends of rating changes
+    if (io && ratingUpdates.length > 0) {
+      ratingUpdates.forEach((update) => {
+        if (update.firebaseUid) {
+          // Broadcast to all users that this friend's rating has changed
+          io.emit('friend_rating_updated', {
+            userId: update.firebaseUid,
+            newRating: update.newRating
+          });
+          console.log(`[Socket] Emitted friend_rating_updated for user ${update.firebaseUid} with rating ${update.newRating}`);
+        }
+      });
     }
 
     console.log(`[Game Save] Successfully saved game, returning response`);

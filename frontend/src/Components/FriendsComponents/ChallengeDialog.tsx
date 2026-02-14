@@ -36,7 +36,15 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
   };
 
   const handleGameTypeChange = (e: SelectChangeEvent<string>) => {
-    setRated(e.target.value === "rated");
+    const isRated = e.target.value === "rated";
+    setRated(isRated);
+    // If switching to casual, reset timeControl to "0" (no timer)
+    // If switching to rated, set default timeControl to "10" if it was "0"
+    if (!isRated) {
+      setTimeControl("0");
+    } else if (timeControl === "0") {
+      setTimeControl("10");
+    }
   };
 
   const handleClose = () => {
@@ -62,26 +70,6 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
 
         <Box display="grid" gap={2} py={1}>
           <FormControl fullWidth size="small" disabled={loading}>
-            <InputLabel id="time-control-label">
-              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-                <AccessTimeIcon fontSize="small" /> Time Control
-              </Box>
-            </InputLabel>
-            <Select
-              labelId="time-control-label"
-              id="time-control"
-              value={timeControl}
-              label="Time Control"
-              onChange={handleTimeChange}
-            >
-              <MenuItem value="10">10 mins</MenuItem>
-              <MenuItem value="15">15 mins</MenuItem>
-              <MenuItem value="30">30 mins</MenuItem>
-              <MenuItem value="60">60 mins</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth size="small" disabled={loading}>
             <InputLabel id="game-type-label">
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                 <EmojiEventsIcon fontSize="small" /> Game Type
@@ -94,10 +82,32 @@ const ChallengeDialog: React.FC<ChallengeDialogProps> = ({ open, onOpenChange, f
               label="Game Type"
               onChange={handleGameTypeChange}
             >
-              <MenuItem value="rated">Rated</MenuItem>
-              <MenuItem value="casual">Casual</MenuItem>
+              <MenuItem value="rated">Rated (with Timer)</MenuItem>
+              <MenuItem value="casual">Casual (no Timer)</MenuItem>
             </Select>
           </FormControl>
+
+          {rated && (
+            <FormControl fullWidth size="small" disabled={loading}>
+              <InputLabel id="time-control-label">
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                  <AccessTimeIcon fontSize="small" /> Time Control
+                </Box>
+              </InputLabel>
+              <Select
+                labelId="time-control-label"
+                id="time-control"
+                value={timeControl}
+                label="Time Control"
+                onChange={handleTimeChange}
+              >
+                <MenuItem value="10">10 mins</MenuItem>
+                <MenuItem value="15">15 mins</MenuItem>
+                <MenuItem value="30">30 mins</MenuItem>
+                <MenuItem value="60">60 mins</MenuItem>
+              </Select>
+            </FormControl>
+          )}
         </Box>
       </DialogContent>
 

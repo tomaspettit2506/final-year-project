@@ -107,11 +107,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     isMountedRef.current = true;
     gameSavedRef.current = false; // Reset saved flag on mount
     console.log('[GameScreen] Component mounted, isMountedRef set to true');
+    console.log('[GameScreen] Received props:', { gameMode, isRated, timerEnabled, timerDuration });
     return () => {
       isMountedRef.current = false;
       console.log('[GameScreen] Component unmounting, isMountedRef set to false');
     };
   }, []);
+
+  // Log when isRated changes
+  useEffect(() => {
+    console.log('[GameScreen] isRated prop changed to:', isRated);
+  }, [isRated]);
 
   // Keep resolved color/name in sync with incoming props
   useEffect(() => { setResolvedColor(myColor); }, [myColor]);

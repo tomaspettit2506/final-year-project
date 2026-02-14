@@ -94,6 +94,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'fromUserId, toUserId, and roomId are required' });
     }
 
+    // Enforce game type rules: Rated = with Timer, Casual = no Timer
+    const isRated = rated === true;
+    const finalTimeControl = isRated ? (timeControl || '10') : '0';
+
     // Build flexible filters but avoid invalid ObjectId cast errors
     const buildUserFilter = (id: string) => {
       const filters: any[] = [{ firebaseUid: id }];
@@ -122,8 +126,8 @@ router.post('/', async (req, res) => {
       fromUser: fromUser._id,
       toUser: toUser._id,
       roomId,
-      timeControl: timeControl || '10',
-      rated: rated || false
+      timeControl: finalTimeControl,
+      rated: isRated
     });
     await newInvite.save();
     await newInvite.populate('fromUser', 'name email rating firebaseUid');

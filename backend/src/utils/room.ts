@@ -16,6 +16,7 @@ export function createRoom(): Room {
     status: 'waiting',
     timerEnabled: false,
     timerDuration: 600,
+    rated: false,
     createdAt: Date.now(),
     moveHistory: []
   };

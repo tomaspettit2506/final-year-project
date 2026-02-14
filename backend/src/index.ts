@@ -69,6 +69,9 @@ app.use(
 );
 app.use(express.json());
 
+// Attach io instance to app for use in routes
+app.locals.io = io;
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });

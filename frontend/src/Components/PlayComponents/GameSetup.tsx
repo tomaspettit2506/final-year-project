@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { socket } from '../../Services/socket';
 import { useAuth } from '../../Context/AuthContext';
@@ -26,12 +26,29 @@ interface GameSetupProps {
 }
 
 const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
+  const htp = [
+    { rule: "Choose your game mode: Play against AI or a friend." },
+    { rule: "If playing against AI, select your desired difficulty level." },
+    { rule: "If playing with a friend, create or join a room using the Room ID." },
+    { rule: "Once everything is set, start the game and enjoy!" },
+    { rule: "Click a piece to select it" },
+    { rule: "Green dots show legal moves" },
+    { rule: "Click a highlighted square to move" },
+    { rule: "White starts, players alternate turns" },
+    { rule: "Use drag & drop or click to move pieces"}
+  ];
+
   const theme = useTheme();
   const { isDark } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, userData } = useAuth();
+  const accountName = (userData?.name || user?.displayName || '').trim();
+  const isAuthenticated = Boolean(user);
+  const hasAccountName = Boolean(accountName);
+
+  // AI states
   const [selectedMode, setSelectedMode] = useState<GameMode>('ai');
   const [difficulty, setDifficulty] = useState<number>(750);
   const [difficultyName, setDifficultyName] = useState<string>('Medium');
@@ -50,7 +67,9 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const [timerDuration, setTimerDuration] = useState(600); // 10 minutes default
   const [waitingTime, setWaitingTime] = useState(0); // seconds
   const [socketReady, setSocketReady] = useState(false);
-  const [isRated, setIsRated] = useState(false); // Track if the game is rated or casual
+  const [isRated, setIsRated] = useState(true); // Default to rated game (matches timerEnabled default)
+  const autoJoinAttemptedRef = useRef(false); // Track if auto-join has been attempted
+  const [inviteSettingsLoaded, setInviteSettingsLoaded] = useState(false); // Track if invite settings have been loaded
 
   const formatWaitingTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -75,22 +94,31 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated && hasAccountName && name !== accountName) {
+      setName(accountName);
+    }
+  }, [isAuthenticated, hasAccountName, accountName, name]);
+
   // Handle URL parameters for auto-joining
   useEffect(() => {
     const roomIdParam = searchParams.get('roomId');
     const autoJoinParam = searchParams.get('autoJoin');
+    const isRatedParam = searchParams.get('isRated');
     
     if (roomIdParam && autoJoinParam === 'true') {
-      console.log('[GameSetup] Auto-join detected, roomId:', roomIdParam);
+      console.log('[GameSetup] Auto-join detected, roomId:', roomIdParam, 'isRated:', isRatedParam);
       setSelectedMode('pvp');
       setMpStep('join');
       setRoomId(roomIdParam);
       
-      // Auto-fill name from authenticated user
-      if (user) {
-        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Player');
-        setName(displayName);
-        console.log('[GameSetup] Auto-filled name:', displayName);
+      // Read isRated from URL parameter
+      const urlIsRated = isRatedParam === 'true';
+      
+      // Auto-fill name from authenticated user profile
+      if (isAuthenticated && hasAccountName) {
+        setName(accountName);
+        console.log('[GameSetup] Auto-filled name:', accountName);
       }
 
       // Fetch game invite settings for this room
@@ -100,25 +128,75 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
           .then(invite => {
             if (invite) {
               console.log('[GameSetup] Loaded game invite settings:', invite);
+              const isRatedGame = invite.rated === true;
+              const timeControlValue = invite.timeControl || '0';
+              
               // Convert timeControl (string in minutes) to seconds
-              const minutes = parseInt(invite.timeControl || '10');
-              const duration = minutes * 60;
-              setTimerDuration(duration);
-              // Only enable timer for RATED games, disable for casual games
-              setTimerEnabled(invite.rated === true);
-              setIsRated(invite.rated === true);
-              console.log('[GameSetup] Game is', invite.rated ? 'RATED (timer enabled)' : 'CASUAL (timer disabled)');
+              const minutes = parseInt(timeControlValue);
+              const duration = minutes > 0 ? minutes * 60 : 600; // Default to 10 mins if invalid
+              
+              console.log('[GameSetup] Parsed timer duration:', { timeControlValue, minutes, duration, isRatedGame });
+              
+              // Set timer duration - for rated games use the specified duration, for casual games set to 0
+              if (isRatedGame) {
+                setTimerDuration(duration);
+              } else {
+                setTimerDuration(0); // No timer for casual games
+              }
+              
+              // ENFORCE: Rated games MUST have timer, Casual games MUST NOT have timer
+              setTimerEnabled(isRatedGame);
+              setIsRated(isRatedGame);
+              
+              console.log('[GameSetup] Game is', isRatedGame ? `RATED (timer enabled: ${duration}s)` : 'CASUAL (timer disabled)');
+              setInviteSettingsLoaded(true); // Mark settings as loaded
+            } else {
+              // Fallback to URL parameter if invite not found
+              console.log('[GameSetup] No invite found, using URL parameter isRated:', urlIsRated);
+              setTimerEnabled(urlIsRated);
+              setIsRated(urlIsRated);
+              if (urlIsRated) {
+                setTimerDuration(600); // Default 10 minutes for rated games
+              } else {
+                setTimerDuration(0); // No timer for casual games
+              }
+              setInviteSettingsLoaded(true); // Mark settings as loaded (using defaults)
             }
           })
-          .catch(err => console.error('[GameSetup] Failed to load invite settings:', err));
+          .catch(err => {
+            console.error('[GameSetup] Failed to load invite settings:', err);
+            // Fallback to URL parameter on error
+            console.log('[GameSetup] Fetch error, using URL parameter isRated:', urlIsRated);
+            setTimerEnabled(urlIsRated);
+            setIsRated(urlIsRated);
+            if (urlIsRated) {
+              setTimerDuration(600); // Default 10 minutes for rated games
+            } else {
+              setTimerDuration(0); // No timer for casual games
+            }
+            setInviteSettingsLoaded(true); // Mark settings as loaded (using defaults)
+          });
+      } else {
+        // If not authenticated, use URL parameter
+        console.log('[GameSetup] Not authenticated, using URL parameter isRated:', urlIsRated);
+        setTimerEnabled(urlIsRated);
+        setIsRated(urlIsRated);
+        if (urlIsRated) {
+          setTimerDuration(600); // Default 10 minutes for rated games
+        } else {
+          setTimerDuration(0); // No timer for casual games
+        }
+        setInviteSettingsLoaded(true); // Mark settings as loaded
       }
     }
-  }, [searchParams, user]);
+  }, [searchParams, isAuthenticated, hasAccountName, accountName, user?.uid]);
 
   const handleModeChange = (mode: GameMode) => {
     setSelectedMode(mode);
     // If switching to PvP, show multiplayer setup
     if (mode === 'pvp') setMpStep('choose');
+    // Reset invite settings loaded flag when changing modes
+    setInviteSettingsLoaded(false);
   };
 
   // Auto-join when coming from challenge with roomId
@@ -126,14 +204,21 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     const roomIdParam = searchParams.get('roomId');
     const autoJoinParam = searchParams.get('autoJoin');
     
-    if (roomIdParam && autoJoinParam === 'true' && name && mpStep === 'join' && !joining && socketReady) {
-      console.log('[GameSetup] Auto-joining room with name:', name);
-      // Small delay to ensure socket is ready
+    // Reset auto-join flag when roomId changes
+    if (roomIdParam !== roomId) {
+      autoJoinAttemptedRef.current = false;
+    }
+    
+    // Wait for invite settings to be loaded before auto-joining
+    if (roomIdParam && autoJoinParam === 'true' && name && mpStep === 'join' && !joining && socketReady && inviteSettingsLoaded && !autoJoinAttemptedRef.current) {
+      console.log('[GameSetup] Auto-joining room with name:', name, 'isRated:', isRated, 'timerEnabled:', timerEnabled, 'timerDuration:', timerDuration);
+      autoJoinAttemptedRef.current = true;
+      // Small delay to ensure socket is ready and state is updated
       setTimeout(() => {
         handleJoinRoom();
       }, 500);
     }
-  }, [name, mpStep, socketReady]);
+  }, [name, mpStep, socketReady, isRated, timerEnabled, timerDuration, roomId, inviteSettingsLoaded]);
 
   // Multiplayer socket listeners
   useEffect(() => {
@@ -145,7 +230,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       if (data.timerDuration !== undefined) setTimerDuration(data.timerDuration);
       if (data.rated !== undefined) setIsRated(data.rated);
 
-      const resolvedRated = data.rated ?? isRated;
+      // Use data.rated directly from server instead of relying on potentially stale state
+      const resolvedRated = data.rated !== undefined ? data.rated : isRated;
 
       // Resolve the current player details from the payload (helps Player 2 who may receive
       // gameReady before the join callback finishes setting state)
@@ -210,10 +296,17 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   // Create Room
   const handleCreateRoom = () => {
     setError('');
-    if (!name.trim()) {
-      setError('Please enter your name.');
+    if (!isAuthenticated) {
+      setError('Please log in to create a room.');
       return;
     }
+    if (!hasAccountName) {
+      setError('Please set your profile name before creating a room.');
+      return;
+    }
+    
+    // Mark invite settings as loaded for manual room creation
+    setInviteSettingsLoaded(true);
     
     // Ensure socket is connected
     if (!socket.connected) {
@@ -222,14 +315,16 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     }
     
     const rating = userData?.rating || 1200;
-    console.log('[handleCreateRoom] Emitting createRoom with:', { name, timerEnabled, timerDuration, isRated, rating });
-    socket.emit('createRoom', { name, timerEnabled, timerDuration, isRated, rating }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
+    const resolvedName = accountName;
+    console.log('[handleCreateRoom] Emitting createRoom with:', { name: resolvedName, timerEnabled, timerDuration, isRated, rating });
+    console.log('[handleCreateRoom] Game Type:', isRated ? 'RATED' : 'CASUAL', '| Timer:', timerEnabled ? `${timerDuration}s` : 'disabled');
+    socket.emit('createRoom', { name: resolvedName, timerEnabled, timerDuration, isRated, rating }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
       console.log('[handleCreateRoom] Received callback:', res);
       if (res.success && res.roomId && res.color) {
         setCreatedRoomId(res.roomId);
         setPlayerColor(res.color);
         setIsHost(true);
-        setRoomUsers([{ id: socket.id || '', name, color: res.color }]);
+        setRoomUsers([{ id: socket.id || '', name: resolvedName, color: res.color }]);
         setMpStep('waiting');
         console.log(`Room created: ${res.roomId}. You are ${res.color}. Game Type: ${isRated ? 'RATED' : 'CASUAL'} (Timer: ${timerEnabled ? timerDuration + 's' : 'disabled'}). Waiting for opponent...`);
       } else {
@@ -241,9 +336,22 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   // Join Room
   const handleJoinRoom = () => {
     setError('');
-    if (!name.trim() || !roomId.trim()) {
-      setError('Please enter your name and Room ID.');
+    if (!isAuthenticated) {
+      setError('Please log in to join a room.');
       return;
+    }
+    if (!hasAccountName) {
+      setError('Please set your profile name before joining a room.');
+      return;
+    }
+    if (!roomId.trim()) {
+      setError('Please enter your Room ID.');
+      return;
+    }
+    
+    // Mark invite settings as loaded for manual join (if not already loaded from URL)
+    if (!inviteSettingsLoaded) {
+      setInviteSettingsLoaded(true);
     }
     
     setJoining(true);
@@ -261,7 +369,9 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     });
     
     const rating = userData?.rating || 1200;
-    console.log('[handleJoinRoom] Emitting joinRoom with roomId:', roomId, 'name:', name, 'rating:', rating);
+    const resolvedName = accountName;
+    console.log('[handleJoinRoom] Emitting joinRoom with settings:', { roomId, name: resolvedName, rating, timerEnabled, timerDuration, isRated });
+    console.log('[handleJoinRoom] Game Type:', isRated ? 'RATED' : 'CASUAL', '| Timer:', timerEnabled ? `${timerDuration}s` : 'disabled');
     
     // Add a timeout to catch if the callback never fires
     const timeoutId = setTimeout(() => {
@@ -270,7 +380,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       setError('Server did not respond. Check your Room ID and try again.');
     }, 10000);
     
-    socket.emit('joinRoom', { name, roomId, rating }, (res: { success: boolean; color?: 'white' | 'black'; users?: RoomUser[]; message?: string }) => {
+    socket.emit('joinRoom', { name: resolvedName, roomId, rating, timerEnabled, timerDuration, isRated }, (res: { success: boolean; color?: 'white' | 'black'; users?: RoomUser[]; message?: string }) => {
       clearTimeout(timeoutId);
       console.log('[handleJoinRoom] Received callback:', res);
       setJoining(false);
@@ -350,9 +460,11 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
           <Box mb={isMobile ? 4 : 6}>
             <Button
               variant="contained"
-              color="warning"
               onClick={() => navigate('/tutorial')}
-              sx={{ fontSize: isMobile ? '0.9rem' : '1.1rem', px: 3, py: 1.5 }}
+              sx={{ fontSize: isMobile ? '0.9rem' : '1.1rem', px: 3, py: 1.5, bgcolor: isDark ? 'rgba(79, 70, 229, 0.25)' : 'rgba(79, 70, 229, 0.75)', 
+                borderColor: '#4F46E5', color: '#ebebef', boxShadow: 3,
+              "&:hover": {bgcolor: isDark ? 'rgba(79, 70, 229, 0.35)' : 'rgba(79, 70, 229, 0.85)'}}
+            }
             >
               🎓 Need Help? View Tutorial
             </Button>
@@ -447,7 +559,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                   <Typography color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 600 }}>
                     Select Difficulty
                   </Typography>
-                  <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+                  <Grid container spacing={isMobile ? 2 : 4} sx={{ justifyContent: 'center' }}>
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                       <Button
                         fullWidth
@@ -575,7 +687,12 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         sx={{ 
                           py: 1.5,
                           fontSize: isMobile ? '1rem' : '1.1rem',
-                          fontFamily: 'Arial Black, Gadget, sans-serif',
+                          fontWeight: 600,
+                          fontFamily: difficulty === 2200 && difficultyName === 'Rocket' 
+                            ? '"Courier New", "Roboto Mono", "Consolas", monospace' 
+                            : 'inherit',
+                          letterSpacing: difficulty === 2200 && difficultyName === 'Rocket' ? '0.1em' : 'normal',
+                          textTransform: difficulty === 2200 && difficultyName === 'Rocket' ? 'uppercase' : 'none',
                           ...(difficulty === 2200 && difficultyName === 'Rocket' && {
                             bgcolor: 'rgb(20, 184, 166)',
                             borderColor: '#14B8A6',
@@ -599,45 +716,103 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Typography variant="h6" color="text.primary" mb={3} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
                         Multiplayer Setup
                       </Typography>
-                      <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
-                        <Grid size={{ xl: 12 }}>
-                          <Button variant="contained" onClick={() => setMpStep('create')}>Create Room 🚀</Button>
+                      <Grid container spacing={isMobile ? 2 : 4} sx={{ justifyContent: 'center' }}>
+                        <Grid sx={{ xs: 12, sm: 6 }}>
+                          <Button
+                            onClick={() => setMpStep('create')}
+                            variant="contained"
+                            sx={{
+                              p: isMobile ? 2 : 3,
+                              borderRadius: 2, borderWidth: 2,
+                              bgcolor: 'rgba(79, 70, 229, 0.25)', borderColor: '#4F46E5',
+                              color: '#ebebef', boxShadow: 3,
+                              width: isMobile ? '100%' : 'auto', height: '100%',
+                              fontSize: isMobile ? '1rem' : '1.1rem',
+                              "&:hover": {
+                                bgcolor: 'rgba(79, 70, 229, 0.35)'
+                              }
+                            }}
+                          >
+                            <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
+                              🏠 Create Room
+                            </Box>
+                          </Button>
                         </Grid>
-                        <Grid size={{ xl: 12 }}>
-                          <Button variant="outlined" onClick={() => setMpStep('join')}>Join Room 🚀</Button>
+                        <Grid sx={{ xs: 12, sm: 6 }}>
+                          <Button
+                            onClick={() => setMpStep('join')}
+                            variant="contained"
+                            sx={{
+                              p: isMobile ? 2 : 3,
+                              borderRadius: 2, borderWidth: 2,
+                              bgcolor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4F46E5',
+                              color: '#ebebef', boxShadow: 3,
+                              width: isMobile ? '115%' : 'auto', height: '100%',
+                              fontSize: isMobile ? '1rem' : '1.1rem',
+                              "&:hover": {
+                                bgcolor: 'rgba(79, 70, 229, 0.25)'
+                              }
+                            }}
+                          >
+                            <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
+                              🔑 Join Room
+                            </Box>
+                          </Button>
                         </Grid>
                       </Grid>
                     </>
                   )}
-
                   {mpStep === 'create' && (
                     <>
                       <Typography variant="h6" color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
                         Create Room
                       </Typography>
+                    {!isAuthenticated && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          Please log in to create a room.
+                        </Alert>
+                      )}
+                      {isAuthenticated && !hasAccountName && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          Please set your profile name before creating a room.
+                        </Alert>
+                      )}
                       <TextField
                         label="Your Name"
-                        value={name}
+                        value={isAuthenticated ? accountName : name}
                         onChange={e => setName(e.target.value)}
                         fullWidth
                         margin="normal"
-                        disabled={!!createdRoomId}
+                        disabled={isAuthenticated || !!createdRoomId}
+                        helperText={
+                          isAuthenticated
+                            ? (hasAccountName ? 'Locked to your account name.' : 'Set your profile name to continue.')
+                            : 'Log in to use multiplayer rooms.'
+                        }
                         sx={{ color: 'white' }}
                       />
                       
                       {!createdRoomId && (
                         <>
                           <Box display="flex" alignItems="center" justifyContent="space-between" mt={3} mb={2}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <Typography color="text.primary" sx={{ fontSize: isMobile ? '1rem' : '1.1rem' }}>
-                                ⏲️ Enable Timer (Rated Game)
+                            <Box display="flex" flexDirection="column">
+                              <Typography color="text.primary" sx={{ fontSize: isMobile ? '1rem' : '1.1rem', fontWeight: 500 }}>
+                                ⏲️ {timerEnabled ? 'Rated Game (with Timer)' : 'Casual Game (no Timer)'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.75rem' : '0.85rem' }}>
+                                {timerEnabled ? 'Timer enabled • Affects rating' : 'No timer • Relaxed play'}
                               </Typography>
                             </Box>
                             <Switch
                               checked={timerEnabled}
                               onChange={(_, checked) => {
                                 setTimerEnabled(checked);
-                                setIsRated(checked); // Rated games require a timer
+                                setIsRated(checked); // Rated games require a timer, casual games don't
+                                if (!checked) {
+                                  setTimerDuration(0); // Reset timer duration for casual games
+                                } else if (timerDuration === 0) {
+                                  setTimerDuration(600); // Set default timer for rated games
+                                }
                               }}
                             />
                           </Box>
@@ -669,7 +844,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         </Alert>
                       )}
                       {!createdRoomId && (
-                        <Button fullWidth variant="contained" color="primary" onClick={handleCreateRoom} sx={{ mt: 2 }}>Create</Button>
+                        <Button fullWidth variant="contained" color="primary" onClick={handleCreateRoom} disabled={!isAuthenticated || !hasAccountName} sx={{ mt: 2 }}>Create</Button>
                       )}
                       <Button fullWidth variant="text" color="secondary" onClick={() => { setMpStep('choose'); setCreatedRoomId(''); }} sx={{ mt: 2 }}>Back</Button>
                     </>
@@ -680,14 +855,31 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Typography variant="h6" color="text.primary" mb={2} sx={{ fontSize: isMobile ? '1.3rem' : '1.5rem', fontWeight: 600 }}>
                         Join Room
                       </Typography>
-                      <TextField label="Your Name" value={name}
+                      {!isAuthenticated && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          Please log in to join a room.
+                        </Alert>
+                      )}
+                      {isAuthenticated && !hasAccountName && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                          Please set your profile name before joining a room.
+                        </Alert>
+                      )}
+                      <TextField label="Your Name" value={isAuthenticated ? accountName : name}
                         onChange={e => setName(e.target.value)} fullWidth
-                        margin="normal" sx={{ color: 'white' }} />
+                        margin="normal"
+                        disabled={isAuthenticated}
+                        helperText={
+                          isAuthenticated
+                            ? (hasAccountName ? 'Locked to your account name.' : 'Set your profile name to continue.')
+                            : 'Log in to use multiplayer rooms.'
+                        }
+                        sx={{ color: 'white' }} />
                         
                       <TextField label="Room ID" value={roomId}
                         onChange={e => setRoomId(e.target.value.toUpperCase())}
                         fullWidth margin="normal" sx={{ color: 'white' }} />
-                      <Button fullWidth variant="contained" color="primary" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={joining}>
+                      <Button fullWidth variant="contained" color="primary" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={!isAuthenticated || !hasAccountName || !roomId.trim() || joining}>
                         {joining ? 'Joining...' : 'Join'}
                       </Button>
                       <Button fullWidth variant="text" color="secondary" onClick={() => setMpStep('choose')} sx={{ mt: 2 }}>Back</Button>
@@ -735,7 +927,6 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       )}
                     </>
                   )}
-
                   {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
                 </Box>
               )}
@@ -745,14 +936,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                   🚀 How To Play:
                 </Typography>
                 <Box component="ul" sx={{ pl: 3, color: 'text.secondary', mt: 1, fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
-                  <li>Choose your game mode: Play against AI or a friend.</li>
-                  <li>If playing against AI, select your desired difficulty level.</li>
-                  <li>If playing with a friend, create or join a room using the Room ID.</li>
-                  <li>Once everything is set, start the game and enjoy!</li>
-                  <li>Click a piece to select it</li>
-                  <li>Green dots show legal moves</li>
-                  <li>Click a highlighted square to move</li>
-                  <li>White starts, players alternate turns</li>
+                  {htp.map((how, index) => ( <li key={index}>{how.rule}</li> ))}
                 </Box>
               </Box>
 
@@ -761,28 +945,16 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                 <Button
                   onClick={handleStartGame}
                   variant="contained"
-                  sx={{ 
-                    width: '100%', 
-                    height: 56, 
-                    bgcolor: 'rgba(124, 58, 237, 0.85)', 
-                    fontSize: isMobile ? '1.1rem' : '1.3rem',
+                  sx={{ width: '100%', height: 56, 
+                    bgcolor: 'rgba(124, 58, 237, 0.85)', fontSize: isMobile ? '1.1rem' : '1.3rem',
                     fontWeight: 600,
                     ':hover': { bgcolor: 'rgba(109, 40, 217, 0.9)' } 
                   }}
-                  size="large"
-                >
-                  Start Game
-                </Button>
-              )}
+                  size="large">Start Game</Button>
+                )}
             </Box>
           </CardContent>
         </Card>
-
-        <Box mt={6} textAlign="center">
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
-            Use drag & drop or click to move pieces
-          </Typography>
-        </Box>
       </Box>
     </Box>
   );
