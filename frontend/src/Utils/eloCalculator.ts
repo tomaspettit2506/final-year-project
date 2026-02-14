@@ -68,3 +68,21 @@ export const calculateNewRatings = (
     player2Change
   };
 };
+
+/**
+ * Get rating tier classification based on Elo rating
+ * @param rating - Elo rating
+ * @returns Rating tier string
+ */
+export const getRatingTier = (rating: number): string => {
+  if (rating >= 2400) return 'Grandmaster';
+  if (rating >= 2200) return 'International Master';
+  if (rating >= 2000) return 'FIDE Master';
+  if (rating >= 1800) return 'Candidate Master';
+  if (rating >= 1600) return 'Expert';
+  if (rating >= 1400) return 'Class A';
+  if (rating >= 1200) return 'Class B';
+  if (rating >= 1000) return 'Class C';
+  if (rating >= 800) return 'Class D';
+  return 'Beginner';
+};
