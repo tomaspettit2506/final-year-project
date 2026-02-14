@@ -11,6 +11,7 @@ interface SentRequest {
   name: string;
   username: string;
   rating: number;
+  avatarColor?: string;
   online: boolean;
   sentAt: string;
   status?: string;
@@ -53,7 +54,7 @@ const SentRequests: React.FC<SentRequestsProps> = ({ requests }) => {
                     variant={request.online ? "dot" : undefined}
                     invisible={!request.online}
                   >
-                    <Avatar>
+                    <Avatar sx={{ backgroundColor: request.avatarColor }}>
                       {request.name.charAt(0).toUpperCase()}{request.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                     </Avatar>
                   </Badge>

@@ -6,6 +6,7 @@ interface GameInvite {
   id: string;
   fromUserId: string;
   fromUserName: string;
+  fromUserAvatarColor?: string;
   fromUserRating?: number;
   roomId: string;
   timeControl: string;
@@ -56,7 +57,7 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                     overlap="circular"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   >
-                    <Avatar sx={{ width: 40, height: 40 }}>
+                    <Avatar sx={{ width: 40, height: 40, backgroundColor: invite.fromUserAvatarColor }}>
                       {invite.fromUserName.charAt(0).toUpperCase()}{invite.fromUserName.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                     </Avatar>
                   </Badge>
@@ -72,9 +73,15 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                       )}
                     </Box>
                     <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                      <Typography color="text.secondary" variant="body2">
-                        ⏲️ {invite.timeControl} mins • {invite.rated ? "Rated" : "Casual"}
-                      </Typography>
+                      {invite.rated ? (
+                        <Typography color="text.secondary" variant="body2">
+                          ⏲️ {invite.timeControl} mins • 🏆 Rated
+                        </Typography>
+                      ) : (
+                        <Typography color="text.secondary" variant="body2">
+                          🎮 No Timer • Casual
+                        </Typography>
+                      )}
                     </Box>
                     <Typography color="text.secondary" variant="caption">
                       📅 {new Date(invite.createdAt).toLocaleString()}

@@ -5,6 +5,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useAuth } from "../../Context/AuthContext";
 import { useTheme as useAppTheme } from "../../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { getRatingTier } from "../../Utils/eloCalculator";
 import ProfileDialog from "./ProfileDialog";
 import GameDialog from "./GameDialog";
 import ChatDialog from "./ChatDialog";
@@ -18,6 +19,7 @@ interface Friend {
   username: string;
   rating: number;
   online: boolean;
+  avatarColor?: string;
   lastSeen?: string;
   games?: any[];
   firebaseUid?: string;
@@ -269,7 +271,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
 
       // Navigate challenger to play page to join their own room
       setTimeout(() => {
-        navigate(`/play?roomId=${roomId}&autoJoin=true`);
+        navigate(`/play?roomId=${roomId}&autoJoin=true&isRated=${rated}`);
       }, 1000);
 
       return roomId;
@@ -552,7 +554,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       variant={friend.online ? "dot" : undefined}
                       invisible={!friend.online}
                     >
-                      <Avatar sx={{ width: 40, height: 40 }}>
+                      <Avatar sx={{ width: 40, height: 40, backgroundColor: friend.avatarColor }}>
                         {friend.name.charAt(0).toUpperCase()}{friend.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                       </Avatar>
                     </Badge>
@@ -560,7 +562,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                     <Box sx={{ minWidth: 0 }}>
                       <Box display="flex" alignItems="center" gap={1}>
                         <Typography>{friend.name}</Typography>
-                        <Chip label={friend.rating} color="secondary" size="small" />
+                        <Chip label={`${friend.rating} - ${getRatingTier(friend.rating)}`} color="secondary" size="small" />
                       </Box>
                       <Typography color="text.secondary" variant="body2">
                         {friend.online ? "🟢 Online" : ` 🕒 Last seen ${friend.lastSeen}`}
@@ -703,6 +705,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           friendName={selectedFriend.name}
           friendEmail={selectedFriend.email || selectedFriend.username}
           friendRating={selectedFriend.rating}
+          friendAvatarColor={selectedFriend.avatarColor}
           wins={profileStats.wins}
           losses={profileStats.losses}
           draws={profileStats.draws}

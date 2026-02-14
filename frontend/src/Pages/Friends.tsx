@@ -20,6 +20,7 @@ interface Friend {
   username: string;
   rating: number;
   online: boolean;
+  avatarColor?: string;
   lastSeen?: string;
   firebaseUid?: string;
   mongoId?: string;
@@ -90,6 +91,7 @@ const Friends = () => {
       username,
       rating: friend.friendRating ?? populatedUser?.rating ?? 1200,
       online: false,
+      avatarColor: friend.friendAvatarColor || populatedUser?.avatarColor,
       lastSeen: friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : undefined,
       games: populatedUser?.gameRecents,
     };
@@ -173,6 +175,28 @@ const Friends = () => {
     };
   }, [user?.uid]);
 
+  // Listen for friend rating updates
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const handleFriendRatingUpdate = (data: any) => {
+      const { userId, newRating } = data;
+      setFriends((prevFriends) =>
+        prevFriends.map((friend) =>
+          friend.firebaseUid === userId || friend.mongoId === userId || friend.id === userId
+            ? { ...friend, rating: newRating }
+            : friend
+        )
+      );
+    };
+
+    socket.on('friend_rating_updated', handleFriendRatingUpdate);
+
+    return () => {
+      socket.off('friend_rating_updated', handleFriendRatingUpdate);
+    };
+  }, [user?.uid]);
+
   // Fetch pending requests from backend
   const fetchPendingRequests = async () => {
     if (!user?.uid) return;
@@ -192,6 +216,7 @@ const Friends = () => {
           name,
           username: (req.fromUser?.email && req.fromUser.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
           rating: req.fromUser?.rating ?? 1200,
+          avatarColor: req.fromUser?.avatarColor,
           online: false,
           receivedAt: req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recently',
         };
@@ -233,6 +258,7 @@ const Friends = () => {
           id: invite._id || invite.id,
           fromUserId: invite.fromUserId,
           fromUserName,
+          fromUserAvatarColor: invite.fromUser?.avatarColor,
           fromUserRating: invite.fromUser?.rating ?? 1200,
           roomId: invite.roomId,
           timeControl: invite.timeControl,
@@ -264,6 +290,7 @@ const Friends = () => {
           name,
           username: (req.toUser?.email && req.toUser.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
           rating: req.toUser?.rating ?? 1200,
+          avatarColor: req.toUser?.avatarColor,
           online: false,
           sentAt: req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'Recently',
           status: req.status || 'pending',
@@ -398,7 +425,7 @@ const Friends = () => {
   return (
     <>
     <AppBar title={"Friends"} isBackButton={false} isSettings={true} isExit={true} />
-    <Box sx={{ minHeight: "100vh", bgcolor: pageBg, py: 6, backgroundImage: `url(${FriendsTheme})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <Box sx={{ minHeight: "150vh", bgcolor: pageBg, py: 6, backgroundImage: `url(${FriendsTheme})`, backgroundSize: isMobile ? 'cover' : '100%', backgroundPosition: 'center' }}>
       <Container maxWidth="md">
         <Box mb={2}>
           <Typography variant="h4" sx={{ color: "white" }}>Friends</Typography>

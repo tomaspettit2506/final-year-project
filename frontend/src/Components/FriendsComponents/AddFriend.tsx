@@ -8,6 +8,7 @@ interface User {
   username: string;
   rating: number;
   online: boolean;
+  avatarColor?: string;
   isFriend: boolean;
   isPending: boolean;
   firebaseUid?: string;
@@ -41,6 +42,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           name,
           username: (u.email && u.email.split?.('@')?.[0]) || (name.replace(/\s+/g, '_').toLowerCase()),
           rating: u.rating ?? 1200,
+          avatarColor: u.avatarColor,
           online: false,
           isFriend: false,
           isPending: false,
@@ -176,7 +178,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
                         variant={user.online ? "dot" : undefined}
                         invisible={!user.online}
                       >
-                        <Avatar sx={{ width: 40, height: 40 }}>
+                        <Avatar sx={{ width: 40, height: 40, backgroundColor: user.avatarColor }}>
                           {user.name.charAt(0).toUpperCase()}{user.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                         </Avatar>
                       </Badge>

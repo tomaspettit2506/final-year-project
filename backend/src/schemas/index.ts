@@ -67,6 +67,7 @@ const userSchema = new mongoose.Schema({
   email: String,
   firebaseUid: { type: String, unique: true, sparse: true },
   rating: Number,
+  avatarColor: String,
   gameRecents: [gameSchema],
   friends: [friendSchema]
 });

@@ -14,6 +14,7 @@ interface PendingRequest {
   name: string;
   username: string;
   rating: number;
+  avatarColor?: string;
   online: boolean;
   receivedAt: string;
 }
@@ -57,7 +58,7 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                     variant={request.online ? "dot" : undefined}
                     invisible={!request.online}
                   >
-                    <Avatar>
+                    <Avatar sx={{ backgroundColor: request.avatarColor }}>
                       {request.name.charAt(0).toUpperCase()}{request.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                     </Avatar>
                   </Badge>

@@ -10,6 +10,7 @@ interface ProfileDialogProps {
   friendName: string;
   friendEmail: string;
   friendRating: number;
+  friendAvatarColor?: string;
   wins: number;
   losses: number;
   draws: number;
@@ -17,7 +18,7 @@ interface ProfileDialogProps {
 }
 
 const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
-  friendName, friendEmail, friendRating,
+  friendName, friendEmail, friendRating, friendAvatarColor,
   wins, losses, draws, isLoading,
 }) => {
   const totalGames = wins + losses + draws;
@@ -49,7 +50,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
           <Box display="flex" flexDirection="column" gap={2}>
             <Box display="flex" alignItems="center" gap={2}>
               <Avatar
-                sx={{ width: 72, height: 72 }}
+                sx={{ width: 72, height: 72, backgroundColor: friendAvatarColor }}
               >
                 {friendName.charAt(0).toUpperCase()}{friendName.split(' ')[1]?.charAt(0).toUpperCase() || ''}
               </Avatar>

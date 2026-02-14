@@ -8,6 +8,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, firestore } from "../firebase"; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
+import { getRandomColor } from "../Utils/avatarColors";
 import WelcomeApp from "../assets/img-theme/WelcomeApp.jpeg";
 
 // Features for the slideshow
@@ -46,12 +47,14 @@ const Landing = () => {
       if (screen === "signup") {
         const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
         const user = userCredential.user;
+        const avatarColor = getRandomColor();
 
         // Save user details in Firestore
         await setDoc(doc(firestore, "users", user.uid), {
           name: form.name,
           rating: form.rating,
           email: form.email || "",
+          avatarColor: avatarColor,
         });
         // Notify backend about new user
         try {
@@ -61,7 +64,8 @@ const Landing = () => {
             body: JSON.stringify({
               name: form.name,
               email: form.email,
-              rating: form.rating
+              rating: form.rating,
+              avatarColor: avatarColor
             }),
           });
         } catch (err) {
@@ -90,6 +94,7 @@ const Landing = () => {
           name: user.displayName || "",
           email: user.email || "",
           rating: 500, // Default rating
+          avatarColor: getRandomColor(),
         });
       }
     } catch (error: unknown) {

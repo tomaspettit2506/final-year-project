@@ -17,9 +17,9 @@ router.get('/', async (req, res) => {
 
 // POST User
 router.post('/', async (req, res) => {
-  const { name, email, rating } = req.body;
+  const { name, email, rating, avatarColor } = req.body;
   try {
-    const newUser = new User({ name, email, rating });
+    const newUser = new User({ name, email, rating, avatarColor });
     await newUser.save();
     return res.status(201).json(newUser);
   } catch (error) {
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
 // GET or CREATE User by email
 router.post('/email/:email', async (req, res) => {
   const email = req.params.email;
-  const { name, rating, firebaseUid } = req.body;
+  const { name, rating, firebaseUid, avatarColor } = req.body;
   try {
     let user: any;
     
@@ -51,7 +51,8 @@ router.post('/email/:email', async (req, res) => {
       const newUserData: any = {
         name: name || email.split('@')[0],
         email,
-        rating: rating || 500
+        rating: rating || 500,
+        avatarColor: avatarColor
       };
       
       // Only add firebaseUid if provided to avoid undefined in unique field
@@ -64,6 +65,10 @@ router.post('/email/:email', async (req, res) => {
     } else if (firebaseUid && !user.firebaseUid) {
       // Update user with firebaseUid if they didn't have one
       user.firebaseUid = firebaseUid;
+      // Also update avatarColor if provided and user doesn't have one
+      if (avatarColor && !user.avatarColor) {
+        user.avatarColor = avatarColor;
+      }
       await user.save();
     }
 

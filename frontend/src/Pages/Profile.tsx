@@ -13,6 +13,7 @@ import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
 import ProfileLight from "../assets/img-theme/ProfileLight.jpeg";
 import ProfileDark from "../assets/img-theme/ProfileDark.jpeg";
+import { Trophy, Target, TrendingUp } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -100,6 +101,7 @@ const Profile = () => {
   };
 
   // Delete a recent game
+  /*
   const deleteRecentGame = async (gameId: string) => {
     if (!gameId) {
       console.error('Error: Game ID is undefined');
@@ -115,6 +117,19 @@ const Profile = () => {
     } catch (err) {
       console.error('Error deleting game:', err);
     }
+  };*/
+  const deleteRecentGame = (gameId: string) => {
+    if (!gameId) {
+      console.error('Error: Game ID is undefined');
+      return;
+    }
+    // Remove from recentGames
+    const updatedRecentGames = recentGames.filter(game => (game._id || game.id) !== gameId);
+    setRecentGames(updatedRecentGames);
+    
+    // Remove from filteredGames
+    const updatedFilteredGames = filteredGames.filter(game => (game._id || game.id) !== gameId);
+    setFilteredGames(updatedFilteredGames);
   };
 
   const applyGameFilter = (games: any[], filter: string) => {
@@ -285,6 +300,7 @@ const Profile = () => {
           <Avatar sx={{ 
             width: 72, 
             height: 72,
+            backgroundColor: userData?.avatarColor,
             color: isDark ? "#ddaaff" : "#5500aa",
             boxShadow: '0 4px 8px rgba(85, 0, 170, 0.2)'
           }}>
@@ -295,7 +311,7 @@ const Profile = () => {
             <Typography variant="h5" sx={{ fontWeight: "bold", color: "#5500aa" }}>
               {userData?.name || user?.displayName || "No Name Set"}
             </Typography>
-            <Typography variant="body2" sx={{ color: "#666" }}>
+            <Typography variant="body2" sx={{ color: isDark ? "#fff" : "#666" }}>
               @{username}{memberSince ? ` • Member since ${memberSince}` : ""}
             </Typography>
           </Box>
@@ -304,20 +320,23 @@ const Profile = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2, mt: 3 }}>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" sx={{ color: "#666" }}>Rating</Typography>
-              <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.rating || 0}</Typography>
+              <Target/>
+              <Typography variant="body2" sx={{ color: isDark ? "#fff" : "#666" }}>Rating</Typography>
+              <Typography variant="h5" fontWeight="bold" color={isDark ? "#ddaaff" : "#5500aa"}>{userData?.rating || 0}</Typography>
             </CardContent>
           </Card>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" sx={{ color: "#666" }}>Wins</Typography>
-              <Typography variant="h5" fontWeight="bold" color="#5500aa">{userData?.wins || 0}</Typography>
+              <Trophy/>
+              <Typography variant="body2" sx={{ color: isDark ? "#fff" : "#666" }}>Wins</Typography>
+              <Typography variant="h5" fontWeight="bold" color={isDark ? "#ddaaff" : "#5500aa"}>{userData?.wins || 0}</Typography>
             </CardContent>
           </Card>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.08)', backgroundColor: isDark ? "#2c1e4d" : "#ffffffcc" }}>
             <CardContent>
-              <Typography variant="body2" sx={{ color: "#666" }}>Win Rate</Typography>
-              <Typography variant="h5" fontWeight="bold" color="#5500aa">{winRate}%</Typography>
+              <TrendingUp /> 
+              <Typography variant="body2" sx={{ color: isDark ? "#fff" : "#666" }}>Win Rate</Typography>
+              <Typography variant="h5" fontWeight="bold" color={isDark ? "#ddaaff" : "#5500aa"}>{winRate}%</Typography>
             </CardContent>
           </Card>
         </Box>
@@ -326,37 +345,37 @@ const Profile = () => {
       <Divider sx={{ mb: 3, bgcolor: "#ddaaff" }} />
 
       {/* Game Statistics Section */}
-      <Typography variant="h6" sx={{ mb: 2 }} color="#5500aa" fontWeight="bold">Game Statistics</Typography>
+      <Typography variant="h6" sx={{ mb: 2 }} color={isDark ? "#000000" : "#5500aa"} fontWeight="bold">Game Statistics</Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{xs: 3}}>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#ffffff" }}>
+        <Grid size={{xs: 6, sm: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#ffffffcc" : "#ffffff", height: "100%" }}>
             <CardContent>
-              <Typography variant="h6" color="#5500aa">Total Games</Typography>
-              <Typography variant="h4" fontWeight="bold" color="#5500aa">{totalGames}</Typography>
+              <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Total Games</Typography>
+              <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{totalGames}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{xs: 3}}>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#41fe4a" }}>
+        <Grid size={{xs: 6, sm: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#45a34a" : "#41fe4a", height: "100%" }}>
             <CardContent>
-              <Typography variant="h6" color="#5500aa">Wins</Typography>
-              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.wins || 0}</Typography>
+              <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Wins</Typography>
+              <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.wins || 0}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{xs: 3}}>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#f39980" }}>
+        <Grid size={{xs: 6, sm: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#f39980" : "#ed704e", height: "100%" }}>
             <CardContent>
-              <Typography variant="h6" color="#5500aa">Losses</Typography>
-              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.losses || 0}</Typography>
+              <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Losses</Typography>
+              <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.losses || 0}</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{xs: 3}}>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: "#dddddd" }}>
+        <Grid size={{xs: 6, sm: 3}}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#ffffffaa" : "#ffffffcc", height: "100%" }}>
             <CardContent>
-              <Typography variant="h6" color="#5500aa">Draws</Typography>
-              <Typography variant="h4" fontWeight="bold" color="#5500aa">{userData?.draws || 0}</Typography>
+              <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Draws</Typography>
+              <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.draws || 0}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -366,7 +385,7 @@ const Profile = () => {
       <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', mb: 3 }}>
         <CardContent>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ color: "#5500aa", fontWeight: "bold" }}>Recent Games</Typography>
+            <Typography variant="h6" sx={{ color: isDark ? "#fff" : "#5500aa", fontWeight: "bold" }}>Recent Games</Typography>
             <FormControl sx={{ minWidth: 150, backgroundColor: isDark ? "#1e1b23d9" : "#ffffffcc", borderRadius: 1 }}>
               <MuiSelect
                 value={gameFilter}
@@ -398,7 +417,7 @@ const Profile = () => {
                     <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Moves</TableCell>
                     <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Time Control</TableCell>
                     <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Details</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Delete</TableCell>
+                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Remove</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

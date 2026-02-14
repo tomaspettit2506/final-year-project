@@ -61,7 +61,7 @@ router.get('/:firebaseUid', async (req, res) => {
       .filter((id: any) => id && mongoose.Types.ObjectId.isValid(id)) as mongoose.Types.ObjectId[];
 
     const friendUsers = await User.find({ _id: { $in: friendObjectIds } })
-      .select('name email rating firebaseUid gameRecents')
+      .select('name email rating firebaseUid gameRecents avatarColor')
       .lean();
 
     const friendMap = new Map(friendUsers.map((u) => [u._id.toString(), u]));
@@ -74,6 +74,7 @@ router.get('/:firebaseUid', async (req, res) => {
         friendName: populated?.name || friend.friendName,
         friendEmail: populated?.email || friend.friendEmail,
         friendRating: populated?.rating ?? friend.friendRating,
+        friendAvatarColor: populated?.avatarColor,
         gameRecents: populated?.gameRecents,
         addedAt: friend.addedAt
       };
