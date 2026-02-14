@@ -397,7 +397,7 @@ const Friends = () => {
 
   return (
     <>
-    <AppBar title={"Friends"} isBackButton={true} isSettings={true} isExit={true} />
+    <AppBar title={"Friends"} isBackButton={false} isSettings={true} isExit={true} />
     <Box sx={{ minHeight: "100vh", bgcolor: pageBg, py: 6, backgroundImage: `url(${FriendsTheme})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <Container maxWidth="md">
         <Box mb={2}>

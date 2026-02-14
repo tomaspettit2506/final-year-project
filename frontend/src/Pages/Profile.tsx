@@ -271,7 +271,7 @@ const Profile = () => {
 
   return (
     <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', pb: 5 }}>
-    <AppBar title="Settings" isBackButton={false} isSettings={true} isExit={true}/>
+    <AppBar title="My Profile" isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ padding: 3, textAlign: "center", maxWidth: 700, mx: "auto" }}>
       {/* User Info Section */}
       <Paper sx={{ 
@@ -408,8 +408,8 @@ const Profile = () => {
                     <TableRow 
                       key={gameId}
                       sx={{
-                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#b3ebc4' : game.result === 'loss' ? isDark ? '#7f1d1d' : '#fef2f2' : '#fef2f2',
-                        '&:hover': { backgroundColor: game.result === 'win' ? '#f0fdf4' : game.result === 'loss' ? '#fef2f2' : '#fafafa' }
+                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#b3ebc4' : game.result === 'loss' ? isDark ? '#7f1d1d' : '#fef2f2' : '#a5a0a0',
+                        '&:hover': { backgroundColor: game.result === 'win' ? '#9becb3' : game.result === 'loss' ? '#f0a7a7' : '#c4bfbf' }
                       }}
                     >
                       <TableCell>{new Date(game.date).toLocaleDateString()}</TableCell>
@@ -430,7 +430,7 @@ const Profile = () => {
                         <Button
                           variant="outlined"
                           size="small"
-                          sx={{ color: "text.primary", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: '#f7f0ff' } }}
+                          sx={{ color: isDark ? "#ffffff" : "#000000", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: isDark ? '#2c2c2c' : '#f7f0ff' } }}
                           onClick={() => handleViewGameDetails(game)}
                         >
                           View
