@@ -938,17 +938,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     }
     
     // Determine next player based on move history length
-    // In AI mode after undoing 2 moves, it's always white's turn
-    const nextPlayer = gameMode === 'ai' ? 'white' : (newHistory.length % 2 === 0 ? 'white' : 'black');
+    // White always plays on even move counts (0, 2, 4...), Black on odd counts (1, 3, 5...)
+    const nextPlayer = newHistory.length % 2 === 0 ? 'white' : 'black';
     const isCheck = isKingInCheck(newBoard, nextPlayer);
     
     setGameState({ board: newBoard, currentPlayer: nextPlayer, selectedPosition: null,
       legalMoves: [], moveHistory: newHistory, capturedPieces: newCapturedPieces, isCheck,
       isCheckmate: false, isStalemate: false, winner: null });
 
-    // Store redo moves for potential replaying
+    // Store redo moves for potential replaying in correct order
     // These will be cleared when a new move is made (allowing revision without forced sequence)
-    setRedoMoves([...undoMoves.reverse()]);
+    setRedoMoves(undoMoves);
   };
 
   const handleRedo = () => {
@@ -961,11 +961,35 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
     let newBoard = gameState.board;
     let newMoveHistory = [...gameState.moveHistory];
     let newCapturedPieces = { white: [...gameState.capturedPieces.white], black: [...gameState.capturedPieces.black] };
+    let successfulRedoCount = 0;
 
     for (let i = 0; i < movesToRedo; i++) {
       if (i >= redoMoves.length) break;
       
       const moveToRedo = redoMoves[i];
+      
+      // Validate move before applying: check piece exists and belongs to current player
+      const piece = newBoard[moveToRedo.from.row]?.[moveToRedo.from.col];
+      if (!piece) {
+        console.error(`[Redo] Invalid move: no piece at ${moveToRedo.from.row}-${moveToRedo.from.col}`);
+        break;
+      }
+      
+      const currentPlayer = newMoveHistory.length % 2 === 0 ? 'white' : 'black';
+      if (piece.color !== currentPlayer) {
+        console.error(`[Redo] Invalid move: piece color ${piece.color} doesn't match current player ${currentPlayer}`);
+        break;
+      }
+      
+      // Validate move is legal for this piece
+      const legalMoves = getLegalMoves(newBoard, moveToRedo.from);
+      const isLegalMove = legalMoves.some(m => m.row === moveToRedo.to.row && m.col === moveToRedo.to.col);
+      if (!isLegalMove) {
+        console.error(`[Redo] Invalid move: ${moveToRedo.notation} is not legal on current board`);
+        break;
+      }
+      
+      // All validations passed, apply the move
       const isCastling = moveToRedo.isCastling ?? isCastlingMove(newBoard, moveToRedo.from, moveToRedo.to);
       
       newBoard = isCastling
@@ -981,6 +1005,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       }
 
       newMoveHistory.push(moveToRedo);
+      successfulRedoCount++;
     }
 
     const nextPlayer = newMoveHistory.length % 2 === 0 ? 'white' : 'black';
@@ -997,7 +1022,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       isCheck
     }));
     
-    const newRedoMoves = redoMoves.slice(movesToRedo);
+    // Only remove successfully applied moves from redo list
+    const newRedoMoves = redoMoves.slice(successfulRedoCount);
     setRedoMoves(newRedoMoves);
   };
 
@@ -1054,7 +1080,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       // For AI mode, just go back
       setTimeout(() => { onBackToSetup(); }, 5000);
     }
-    
     setConfirmDialogOpen(false);
   };
 

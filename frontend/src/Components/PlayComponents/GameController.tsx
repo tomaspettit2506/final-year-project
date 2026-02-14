@@ -8,6 +8,8 @@ import PauseIcon from '@mui/icons-material/Pause';
 import FlagIcon from '@mui/icons-material/Flag';
 import CachedIcon from '@mui/icons-material/Cached';
 
+import { Tooltip } from "@mui/material";
+
 interface GameControllerProps {
   gameMode: 'ai' | 'pvp';
   onUndo?: () => void;
@@ -40,6 +42,7 @@ const GameController: React.FC<GameControllerProps> = ({
 
   // Render AI mode controls
   const renderAIControls = () => [
+  <Tooltip key="undo" title={canUndo ? "Undo last move" : "No moves to undo"}>
     <BottomNavigationAction 
       key="undo"
       label="Undo" 
@@ -47,7 +50,10 @@ const GameController: React.FC<GameControllerProps> = ({
       sx={{ color: getIconColor(!canUndo) }} 
       onClick={onUndo}
       disabled={!canUndo}
-    />,
+    />
+  </Tooltip>,
+
+  <Tooltip key="redo" title={canRedo ? "Redo last undone move" : "No moves to redo"}>
     <BottomNavigationAction 
       key="redo"
       label="Redo" 
@@ -55,14 +61,20 @@ const GameController: React.FC<GameControllerProps> = ({
       sx={{ color: getIconColor(!canRedo) }} 
       onClick={onRedo}
       disabled={!canRedo}
-    />,
+    />
+</Tooltip>,
+
+  <Tooltip key="resign" title="Resign from the game">
     <BottomNavigationAction 
       key="resign"
       label="Resign" 
       icon={<FlagIcon />} 
       sx={{ color: getIconColor(false) }} 
       onClick={onResign}
-    />,
+    />
+  </Tooltip>,
+
+  <Tooltip key="flip" title="Flip board">
     <BottomNavigationAction 
       key="flip"
       label="Flip" 
@@ -70,11 +82,13 @@ const GameController: React.FC<GameControllerProps> = ({
       sx={{ color: getIconColor(false) }} 
       onClick={onFlip}
     />
+  </Tooltip>
   ];
 
   // Render PvP mode controls
   const renderPvPControls = () => [
     isPaused ? (
+    <Tooltip key="resume" title="Resume game">
       <BottomNavigationAction 
         key="resume"
         label="Resume" 
@@ -82,7 +96,9 @@ const GameController: React.FC<GameControllerProps> = ({
         sx={{ color: getIconColor(false) }} 
         onClick={onPlay}
       />
+    </Tooltip>
     ) : (
+    <Tooltip key="pause" title="Pause game">
       <BottomNavigationAction 
         key="pause"
         label="Pause" 
@@ -90,14 +106,19 @@ const GameController: React.FC<GameControllerProps> = ({
         sx={{ color: getIconColor(false) }} 
         onClick={onPause}
       />
+    </Tooltip>
     ),
+    <Tooltip key="resign" title="Resign from the game">
     <BottomNavigationAction 
       key="resign"
       label="Resign" 
       icon={<FlagIcon />} 
       sx={{ color: getIconColor(false) }} 
       onClick={onResign}
-    />,
+    />
+  </Tooltip>,
+
+  <Tooltip key="flip" title="Flip board">
     <BottomNavigationAction 
       key="flip"
       label="Flip" 
@@ -105,6 +126,7 @@ const GameController: React.FC<GameControllerProps> = ({
       sx={{ color: getIconColor(false) }} 
       onClick={onFlip}
     />
+  </Tooltip>
   ];
 
   return (
