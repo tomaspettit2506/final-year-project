@@ -115,6 +115,10 @@ const Home = () => {
     setSelectedGameDetails(null);
   };
 
+  // Welcome Section Theme
+const welcomeBgColor = isDark ? "rgba(6, 6, 6, 0.55)" : "rgba(255, 255, 255, 0.55)";
+const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
+
   // Show loading indicator while fetching data
   if (loading) {
     return (
@@ -133,15 +137,18 @@ const Home = () => {
 
     return(
       <Box sx={{ backgroundImage: `url(${HomeTheme})`, backgroundSize: 'cover', minHeight: '100vh' }}>
-      <AppBar title="Home" isBackButton={false} isSettings={true} isExit={true}/>
+      <AppBar isBackButton={false} isSettings={true} isExit={true}/>
     <Box sx={{ p: 3, pb: 10 }}>
       {/* Welcome Section */}
-      <Box sx={{ mb: 4, textAlign: "center" }}>
-        <Typography variant="h4" color="#a042ff" fontWeight="bold" fontFamily={"Times New Roman"} gutterBottom>
+      <Box sx={{ mb: 4, textAlign: "center", bgcolor: welcomeBgColor, p: 3, borderRadius: "12px",
+        minWidth: isMobile ? "90%" : "60%", mx: "auto", boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)"
+       }}>
+        <Typography variant="h4" color={welcomeTextColor} fontWeight="bold" fontFamily={"Times New Roman"} gutterBottom>
           Welcome, {userData?.name || "Chess Player"}
         </Typography>
         {userData?.rating && (
-          <Typography variant="body1" color="text.primary" sx={{ mt: 1, fontSize: "36px", fontWeight: "bold", fontFamily: "Times New Roman", color: "#e7dbf4" }}>
+          <Typography variant="body1" color="text.primary" sx={{ mt: 1, fontSize: "36px", fontWeight: "bold", fontFamily: "Times New Roman", 
+          color: isDark ? "#e7dbf4" : "#240c3d" }}>
             Your Rating: {userData.rating}
           </Typography>
         )}
@@ -195,7 +202,9 @@ const Home = () => {
                       <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                      <strong>Accuracy Move:</strong> <LinearProgress variant="determinate" value={game.myAccuracy} /> {game.myAccuracy}%
+                      <strong>Accuracy Move:</strong> <LinearProgress sx={{ height: "12px", borderRadius: "6px", borderColor: "#240c3d", borderWidth: 3, 
+                        '& .MuiLinearProgress-bar': { bgcolor: game.result === "win" ? "#52ac73" : game.result === "loss" ? "#cf5959" : "#a0a4ac" } }} 
+                        variant="determinate" value={game.myAccuracy} /> {game.myAccuracy}%
                     </Typography>
                     <Button
                       variant="outlined"

@@ -45,7 +45,7 @@ function Tutorial() {
 
   return (
     <>
-      <AppBar title="Chess Tutorial" isBackButton={false} isSettings={true}  isExit={true}/>
+      <AppBar isBackButton={false} isSettings={true}  isExit={true}/>
       <Box sx={{ width: isMobile ? '100%' : 'auto', typography: "body1", p: 3, backgroundImage: `url(${ChessGalaxyTheme})`, backgroundSize: 'cover', borderRadius: 2 }}>
         <TabContext value={value}>
           <Box sx={{ borderColor: "divider", display: "flex", justifyContent: "center" }}>

@@ -73,7 +73,7 @@ const Settings: React.FC = () => {
 
   return (
     <>
-    <AppBar title="Settings" isBackButton={true} isSettings={false} isExit={true}/>
+    <AppBar isBackButton={true} isSettings={false} isExit={true}/>
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", p: 2,
       backgroundImage: `url(${isDark ? SettingsDark : SettingsLight})`,
       backgroundSize: 'cover',

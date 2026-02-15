@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import SpaceTheme from '../assets/img-theme/space_theme.jpg';
 
 interface AppBarComponentProps {
-    title: string;
+    title?: string;
     isBackButton?: boolean;
     isSettings?: boolean;
     isExit?: boolean;

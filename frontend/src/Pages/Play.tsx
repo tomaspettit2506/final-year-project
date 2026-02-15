@@ -71,7 +71,7 @@ const Play = () => {
 
   return (
     <Box>
-      <AppBar title={`Player vs ${gameConfig.gameMode}`} isBackButton={false} isSettings={false} isExit={false}/>
+      <AppBar title={`Player vs ${gameConfig.gameMode.toUpperCase()}`} isBackButton={false} isSettings={false} isExit={false}/>
       <GameScreen
         gameMode={gameConfig.gameMode}
         difficulty={gameConfig.difficulty} difficultyName={gameConfig.difficultyName}
