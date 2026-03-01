@@ -1,5 +1,7 @@
 import type { Move } from '../../Types/chess';
-import { Badge, Box, Typography } from '@mui/material';
+import { Box, Chip, Typography } from '@mui/material';
+import { useTheme as useAppTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
 
 interface MoveHistoryProps {
   moves: Move[];
@@ -41,6 +43,8 @@ const getAccuracyLabel = (accuracyClass?: string) => {
 
 const MoveHistory: React.FC<MoveHistoryProps> = ({ moves }) => {
   const movePairs: Array<{ white: Move; black?: Move }> = [];
+  const theme = useAppTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   for (let i = 0; i < moves.length; i += 2) {
     movePairs.push({
@@ -60,41 +64,46 @@ const MoveHistory: React.FC<MoveHistoryProps> = ({ moves }) => {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4">Move History</Typography>
         {avgAccuracy !== null && (
-          <Box sx={{ fontSize: 'sm', color: 'text.secondary' }}>
+          <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
             Avg: {avgAccuracy}%
           </Box>
         )}
       </Box>
         {movePairs.length === 0 ? (
-          <Typography sx={{ fontSize: 'sm'}}>No moves yet</Typography>
+          <Typography sx={{ fontSize: '0.875rem' }}>No moves yet</Typography>
         ) : (
-          <Box sx={{ spaceY: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {movePairs.map((pair, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, fontSize: 'sm', alignItems: 'center' }}>
-                <Typography sx={{ width: 8 }}>{index + 1}.</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  {/* White Move */}
-                  <Typography sx={{display: 'flex'}}>{pair.white.notation}</Typography>
+              <Box key={index} sx={{ display: 'grid', gridTemplateColumns: isMobile ? '50px 1fr 1fr' : '40px 1fr 1fr', gap: 2, fontSize: '0.875rem', alignItems: 'center', py: 0.5 }}>
+                {/* Move Number */}
+                <Typography sx={{ fontWeight: 'bold' }}>{index + 1}.</Typography>
+                
+                {/* White Move */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography>{pair.white.notation}</Typography>
                   {pair.white.accuracyClass && (
-                    <Badge 
-                      sx={{ alignItems: 'center', fontSize: 'large', px: 1, py: 0, height: 10, ...getAccuracyColor(pair.white.accuracyClass) }}
-                    >
-                      {getAccuracyLabel(pair.white.accuracyClass)}
-                    </Badge>
+                    <Chip
+                      size="small"
+                      label={getAccuracyLabel(pair.white.accuracyClass)}
+                      sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor(pair.white.accuracyClass) }}
+                    />
                   )}
                 </Box>
-                {pair.black && (
-                  <Box sx={{ alignItems: 'end', gap: 5 }}>
-                    {/* Black Move */}
-                    <Typography sx={{display: 'flex'}}>{pair.black.notation}</Typography>
+                
+                {/* Black Move */}
+                {pair.black ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography>{pair.black.notation}</Typography>
                     {pair.black.accuracyClass && (
-                      <Badge 
-                        sx={{ alignItems: 'center', fontSize: 'large', px: 1, py: 0, height: 10, ...getAccuracyColor(pair.black.accuracyClass) }}
-                      >
-                        {getAccuracyLabel(pair.black.accuracyClass)}
-                      </Badge>
+                      <Chip
+                        size="small"
+                        label={getAccuracyLabel(pair.black.accuracyClass)}
+                        sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor(pair.black.accuracyClass) }}
+                      />
                     )}
                   </Box>
+                ) : (
+                  <Box />
                 )}
               </Box>
             ))}

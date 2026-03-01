@@ -1,11 +1,17 @@
 import type { Move } from '../../Types/chess';
-import { Badge, Box, Card, LinearProgress, Typography } from '@mui/material';
+import { Box, Card, Chip, LinearProgress, Typography } from '@mui/material';
+import { useTheme as useAppTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
 
 interface AccuracyStatsProps {
   moves: Move[];
 }
 
 const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
+  const theme = useAppTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const movesWithAccuracy = moves
     .map((m, idx) => ({ m, idx }))
     .filter(({ m }) => m.accuracy !== undefined);
@@ -37,16 +43,16 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
     , playerMoves[0]);
 
     return (
-      <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 3 }}>
-        <Typography variant="h5" sx={{ color: 'text.secondary', mb: 2 }}>
+      <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1 }}>
+        <Typography variant="h5" sx={{ color: "text.primary", mb: 2 }}>
           {label}
         </Typography>
 
-        <Box sx={{ spaceY: 4 }}>
-          <Box sx={{ spaceY: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography sx={{ fontSize: 'sm' }}>Overall Accuracy</Typography>
-              <Typography sx={{ fontSize: 'sm' }}>{avgAccuracy}%</Typography>
+              <Typography sx={{ fontSize: '0.875rem' }}>Overall Accuracy</Typography>
+              <Typography sx={{ fontSize: '0.875rem' }}>{avgAccuracy}%</Typography>
             </Box>
             <LinearProgress
               value={avgAccuracy}
@@ -55,54 +61,54 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
                 mt: 0.5,
                 height: 8,
                 borderRadius: 2,
-                bgcolor: "#f0e6ff",
+                bgcolor: isDark ? "#2c2c2c" : "#f0e6ff",
                 "& .MuiLinearProgress-bar": { bgcolor: "green" },
               }}
             />
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <Typography sx={{ fontSize: 'text.sm' }}>Move Quality</Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, fontSize: 'xs' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2, mb: 3, px: 2, py: 3 }}>
+            <Typography sx={{ fontSize: '0.875rem' }}>Move Quality</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, fontSize: '0.75rem' }}>
               {excellentMoves > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Badge sx={{ color: 'green' }}>Excellent</Badge>
-                  <Typography>{excellentMoves}</Typography>
+                  <Typography component="span" sx={{ color: 'green', pr: 2, fontSize: '0.75rem' }}>Excellent</Typography>
+                  <Chip label={excellentMoves} size="small" sx={{ backgroundColor: '#e8f5e9', color: 'green', fontWeight: 'bold' }} />
                 </Box>
               )}
               {goodMoves > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Badge sx={{ color: 'blue' }}>Good</Badge>
-                  <Typography>{goodMoves}</Typography>
+                  <Typography component="span" sx={{ color: 'blue', pr: 2, fontSize: '0.75rem' }}>Good</Typography>
+                  <Chip label={goodMoves} size="small" sx={{ backgroundColor: '#e3f2fd', color: 'blue', fontWeight: 'bold' }} />
                 </Box>
               )}
               {inaccuracies > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Badge sx={{ color: 'yellow' }}>Inaccuracies</Badge>
-                  <Typography>{inaccuracies}</Typography>
+                  <Typography component="span" sx={{ color: '#ca8a04', pr: 2, fontSize: '0.75rem' }}>Inaccuracies</Typography>
+                  <Chip label={inaccuracies} size="small" sx={{ backgroundColor: '#f4e0bf', color: 'yellow', fontWeight: 'bold' }} />
                 </Box>
               )}
               {mistakes > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Badge sx={{ color: 'orange' }}>Mistakes</Badge>
-                  <Typography>{mistakes}</Typography>
+                  <Typography component="span" sx={{ color: 'orange', pr: 2, fontSize: '0.75rem' }}>Mistakes</Typography>
+                  <Chip label={mistakes} size="small" sx={{ backgroundColor: '#ffebee', color: 'orange', fontWeight: 'bold' }} />
                 </Box>
               )}
               {blunders > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Badge sx={{ color: 'red' }}>Blunders</Badge>
-                  <Typography>{blunders}</Typography>
+                  <Typography component="span" sx={{ color: 'red', pr: 2, fontSize: '0.75rem' }}>Blunders</Typography>
+                  <Chip label={blunders} size="small" sx={{ backgroundColor: '#ffebee', color: 'red', fontWeight: 'bold' }} />
                 </Box>
               )}
             </Box>
           </Box>
 
           {bestMove && (
-            <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: 'sm', mb: 1 }}>
-                <Badge>⚡Best Move</Badge>
+            <Box sx={{ pt: 2, p: 3, borderTop: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.875rem', mb: 1 }}>
+                <Typography component="span" sx={{ fontSize: '0.875rem' }}>⚡Best Move</Typography>
               </Box>
-              <Typography sx={{ fontSize: 'xs', color: 'text.secondary' }}>
+              <Typography sx={{ fontSize: '0.75rem', color: "text.primary" }}>
                 {bestMove.notation} ({bestMove.accuracy}%)
               </Typography>
             </Box>
@@ -113,9 +119,9 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
   };
 
   return (
-    <Card sx={{ p: 4, bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}>
+    <Card sx={{ p: 4, border: 1, borderColor: 'divider' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-        <Typography variant="h4" sx={{ color: "text.secondary" }}> 🎯 Accuracy Stats</Typography>
+        <Typography variant="h4" sx={{ color: "text.primary" }}>🎯 Accuracy Stats</Typography>
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
