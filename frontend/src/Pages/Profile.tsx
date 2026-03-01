@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
 import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
-  TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, FormControl,
-  MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
+  TextField, IconButton, FormControl, Tooltip,
+  MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useAppTheme } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
@@ -18,9 +18,9 @@ import { Trophy, Target, TrendingUp } from 'lucide-react';
 const Profile = () => {
   const { user } = useAuth();
   const { isDark } = useTheme();
+  const appTheme = useAppTheme();
+  const isMobile = useMediaQuery(appTheme.breakpoints.down('sm'));
   const apiBaseUrl = getApiBaseUrl();
-  const muiTheme = useMuiTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [mongoUserId, setMongoUserId] = useState<string | null>(null);
@@ -266,6 +266,9 @@ const Profile = () => {
   const memberSince = user?.metadata?.creationTime
     ? new Date(user.metadata.creationTime).getDate() + " " + new Date(user.metadata.creationTime).toLocaleString("default", { month: "short" }) + " " + new Date(user.metadata.creationTime).getFullYear()
     : undefined;
+  const visibleRecentGameCards = isMobile ? 1 : 2;
+  const recentGameCardHeight = 225;
+  const recentGamesListHeight = visibleRecentGameCards * recentGameCardHeight + (visibleRecentGameCards - 1) * 16;
 
   return (
     <Box sx={{ backgroundImage: isDark ? `url(${ProfileDark})` : `url(${ProfileLight})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '100vh', pb: 5 }}>
@@ -390,69 +393,87 @@ const Profile = () => {
           </Box>
 
           {filteredGames.length > 0 ? (
-            <TableContainer sx={{ maxHeight: isMobile ? 300 : 400 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: "#f9f0ff" }}>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Date</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Opponent</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Result</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Moves</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold" }}>Time Control</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Details</TableCell>
-                    <TableCell sx={{ color: "#5500aa", fontWeight: "bold", textAlign: "center" }}>Remove</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredGames.map((game) => {
-                    const gameId = game._id || game.id;
-                    return (
-                    <TableRow 
-                      key={gameId}
-                      sx={{
-                        backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#b3ebc4' : game.result === 'loss' ? isDark ? '#7f1d1d' : '#fef2f2' : '#a5a0a0',
-                        '&:hover': { backgroundColor: game.result === 'win' ? '#9becb3' : game.result === 'loss' ? '#f0a7a7' : '#c4bfbf' }
-                      }}
-                    >
-                      <TableCell>{new Date(game.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{game.opponent} ({game.opponentRating})</TableCell>
-                      <TableCell>
-                        <Typography 
-                          sx={{ 
-                            fontWeight: "bold",
-                            color: game.result === 'win' ? '#22c55e' : game.result === 'loss' ? '#ef4444' : '#666'
-                          }}
-                        >
-                          {game.result?.charAt(0).toUpperCase() + game.result?.slice(1)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{game.moves}</TableCell>
-                      <TableCell>{game.timeControl}+0</TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                maxHeight: recentGamesListHeight,
+                overflowY: "auto",
+                overflowX: "hidden",
+                pr: 1,
+                scrollBehavior: "smooth",
+                '&::-webkit-scrollbar': { width: '8px' },
+                '&::-webkit-scrollbar-track': { bgcolor: isDark ? '#2c2c2c' : '#f0f0f0', borderRadius: '4px' },
+                '&::-webkit-scrollbar-thumb': { bgcolor: '#ddaaff', borderRadius: '4px', '&:hover': { bgcolor: '#5500aa' } }
+              }}
+            >
+              {filteredGames.map((game) => {
+                const gameId = game._id || game.id;
+                return (
+                  <Card
+                    key={gameId}
+                    sx={{
+                      width: '100%',
+                      minHeight: recentGameCardHeight,
+                      borderRadius: 2,
+                      backgroundColor: game.result === 'win' ? isDark ? '#14532d' : '#b3ebc4' : game.result === 'loss' ? isDark ? '#7f1d1d' : '#fef2f2' : '#a5a0a0',
+                      boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 6px 16px rgba(85, 0, 170, 0.2)',
+                        transform: 'translateY(-4px)'
+                      }
+                    }}
+                  >
+                    <CardContent>
+                      <Typography variant="body2" sx={{ color: isDark ? '#f1f1f1' : '#121212', fontWeight: 'bold', mb: 1 }}>
+                        {new Date(game.date).toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: isDark ? '#f1f1f1' : '#121212', fontWeight: 'bold', mb: 1 }}>
+                        vs {game.opponent}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: isDark ? '#f1f1f1' : '#121212', mb: 1 }}>
+                        Rating: {game.opponentRating}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontWeight: 'bold',
+                          color: game.result === 'win' ? '#22c55e' : game.result === 'loss' ? '#ef4444' : '#666',
+                          mb: 1
+                        }}
+                      >
+                        {game.result?.charAt(0).toUpperCase() + game.result?.slice(1)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: isDark ? '#f1f1f1' : '#121212', mb: 2 }}>
+                        Moves: {game.moves} | Time: {game.timeControl}+0
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button
                           variant="outlined"
                           size="small"
-                          sx={{ color: isDark ? "#ffffff" : "#000000", borderColor: "#ddaaff", '&:hover': { borderColor: '#5500aa', bgcolor: isDark ? '#2c2c2c' : '#f7f0ff' } }}
+                          fullWidth
+                          sx={{ color: isDark ? "#ffffff" : "#000000", borderColor: "#ddaaff", '&:hover': { color: isDark ? "#ffffff" : "#5500aa", borderColor: '#5500aa', bgcolor: isDark ? '#2c2c2c' : '#f7f0ff' } }}
                           onClick={() => handleViewGameDetails(game)}
                         >
                           View
                         </Button>
-                      </TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
+                        <Tooltip title="Remove Game">
                         <IconButton
-                          aria-label="delete"
+                          size="small"
                           color="error"
                           onClick={() => removeRecentGame(gameId)}
+                          sx={{ flex: '0 0 auto' }}
                         >
                           🗑️
                         </IconButton>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                        </Tooltip>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </Box>
           ) : (
             <Box sx={{ textAlign: "center", py: 3 }}>
               <Typography variant="body1" sx={{ color: "text.secondary", mb: 2 }}>
@@ -460,7 +481,7 @@ const Profile = () => {
               </Typography>
               <Button
                 variant="contained"
-                sx={{ 
+                sx={{
                   bgcolor: "#ccaaef",
                   borderRadius: '12px',
                   boxShadow: '0 4px 12px rgba(85, 0, 170, 0.2)',
