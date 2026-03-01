@@ -43,6 +43,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         main: '#5500aa',
       },
     },
+    typography: {
+      fontFamily: 'Audiowide, sans-serif',
+    },
   });
 
   return (

@@ -9,29 +9,46 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Guardians of the Chess Grandmaster',
-        short_name: 'GOTCG',
-        description: 'A chess game with a twist, combining strategy and adventure.',
-        theme_color: '#ffffff',
-        icons: [
+        "name": "Guardians of the Chess Grandmaster",
+        "short_name": "GOTCG",
+        "theme_color": "#000000",
+        "background_color": "#ffffff",
+        "display": "standalone",
+        "orientation": "any",
+        "start_url": "/",
+        "description": "A chess game for anyone who wants to become a Chess Grandmaster",
+        "icons": [
           {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
           },
           {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
           }
-        ]
-      }
+        ],
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === "document",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-cache",
+            },
+          },
+          {
+            urlPattern: ({ request }) =>
+              ["style", "script", "image"].includes(request.destination),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "asset-cache",
+            },
+          },
+        ],
+      },
     })
   ],
   server: {
