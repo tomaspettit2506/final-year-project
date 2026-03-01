@@ -100,25 +100,8 @@ const Profile = () => {
     }
   };
 
-  // Delete a recent game
-  /*
-  const deleteRecentGame = async (gameId: string) => {
-    if (!gameId) {
-      console.error('Error: Game ID is undefined');
-      return;
-    }
-    try {
-      const res = await fetch(`/game/${gameId}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(`Failed to delete game (${res.status}): ${msg}`);
-      }
-      await fetchRecentGames();
-    } catch (err) {
-      console.error('Error deleting game:', err);
-    }
-  };*/
-  const deleteRecentGame = (gameId: string) => {
+  // Remove a recent game
+  const removeRecentGame = (gameId: string) => {
     if (!gameId) {
       console.error('Error: Game ID is undefined');
       return;
@@ -459,7 +442,7 @@ const Profile = () => {
                         <IconButton
                           aria-label="delete"
                           color="error"
-                          onClick={() => deleteRecentGame(gameId)}
+                          onClick={() => removeRecentGame(gameId)}
                         >
                           🗑️
                         </IconButton>

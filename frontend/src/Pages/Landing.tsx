@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
 import { motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
@@ -22,6 +22,7 @@ const slides = [
 ];
 
 const Landing = () => {
+  const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<"landing" | "login" | "signup">("landing");
   const [form, setForm] = useState({ name: "", rating: 500, email: "", password: "" });
 
@@ -30,6 +31,11 @@ const Landing = () => {
     return () => {
       document.body.style.overflow = "auto"; // Restore scrolling when unmounting
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000); // Simulate loading
+    return () => clearTimeout(timer);
   }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => 
@@ -102,6 +108,14 @@ const Landing = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress color="secondary" />
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -120,9 +134,9 @@ const Landing = () => {
     >
       {/* LANDING PAGE WITH SLIDESHOW */}
       {screen === "landing" && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ width: "100%", maxWidth: "400px", backgroundColor: "rgba(0, 0, 0, 0.6)", padding: "2rem", borderRadius: "15px" }}>
-          <Typography variant="h5" fontWeight="bold">Welcome to Guardians of the Chess Grandmaster</Typography>
-          <Typography variant="h6" sx={{ mt: 2 }}>Your AI-powered study planner and portfolio builder.</Typography>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="chessboard-landing" transition={{ duration: 0.5 }} style={{ width: "100%", maxWidth: "400px", backgroundColor: "rgba(0, 0, 0, 0.6)", padding: "2rem", borderRadius: "15px" }}>
+          <Typography variant="h5" fontWeight="bold" sx={{fontSize: "2rem"}}>Welcome to Guardians of the Chess Grandmaster</Typography>
+          <Typography variant="h6" sx={{ mt: 2, fontSize: "1.5rem" }}>Your Chess Journey Awaits</Typography>
 
           {/* Slideshow */}
           <Swiper
@@ -132,13 +146,13 @@ const Landing = () => {
             autoplay={{ delay: 4000, disableOnInteraction: false }}
             spaceBetween={50}
             slidesPerView={1}
-            style={{ width: "100%", height: "300px", marginTop: "20px" }}
+            style={{ width: "100%", height: "300px", marginTop: "12px" }}
           >
             {slides.map((slide, index) => (
               <SwiperSlide key={index}>
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-                  <Typography variant="h5" fontWeight="bold" sx={{color: "white"}}>{slide.title}</Typography>
-                  <Typography variant="body1" sx={{ mt: 1, maxWidth: "300px", color: "white" }}>{slide.description}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", fontSize: "1rem", padding: "5rem" }}>
+                  <Typography variant="h5" fontWeight="bold">{slide.title}</Typography>
+                  <Typography variant="body1" sx={{ mt: 1, maxWidth: "300px" }}>{slide.description}</Typography>
                 </Box>
               </SwiperSlide>
             ))}
@@ -156,14 +170,13 @@ const Landing = () => {
         <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             
             {/* Back Arrow at the Top */}
-            <IconButton onClick={() => setScreen("landing")} sx={{ position: "absolute", top: 20, left: 20, color: "black"}}>
+            <IconButton onClick={() => setScreen("landing")} sx={{ position: "absolute", top: 20, left: 20, color: "white"}}>
             ⬅️
             </IconButton>
 
             <Box
               sx={{
                 color: "white",
-                background: "linear-gradient(transparent, grey, black, transparent)", 
                 backdropFilter: "blur(10px)",
                 padding: "40px",
                 borderRadius: "15px",
@@ -171,11 +184,14 @@ const Landing = () => {
                 maxWidth: "400px",
                 boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               }}
+              className="chessboard-landing"
             >
             <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Log In</Typography>
             <form onSubmit={handleSubmit}>
-            <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2}} />
-            <TextField label="Password" name="password" type="password" fullWidth  onChange={handleChange} required sx={{ mb: 2}} />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(24, 159, 255)", padding: "20px", borderRadius: "10px" }}>
+                <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+                <TextField label="Password" name="password" type="password" fullWidth  onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+              </Box>
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mb: 5, py: 1.5 }}>Log In</Button>
             </form>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -186,7 +202,8 @@ const Landing = () => {
                   mt: 2,
                   py: 0.8, // Smaller padding
                   px: 2, // Less horizontal padding
-                  maxWidth: "280px", // Smaller box width
+                  width: "100%", // Smaller box width
+                  height: "48px", // Smaller box height
                   backgroundColor: "black", 
                   color: "#e4e4e4ff", 
                   borderColor: "#221f25ff",
@@ -205,10 +222,15 @@ const Landing = () => {
                 Continue with Google
               </Button>
             </Box>
-            <Typography variant="body2" sx={{ mt: 2, color: "white" }}>Don't have an account? 
+            <Typography variant="body2" sx={{ mt: 2, fontSize: "1.25rem" }}>Don't have an account? 
             <Button onClick={() => setScreen("signup")}     
               sx={{
               textTransform: "uppercase",
+              bgcolor: "black",
+              border: "2px solid #e4e4e4ff",
+              borderRadius: "8px",
+              padding: "0.25rem 0.75rem",
+              marginLeft: "8px",
               color: "white", // Ensures contrast
               fontWeight: "bold",
               "&:hover": {
@@ -232,7 +254,6 @@ const Landing = () => {
             </IconButton>
             <Box
               sx={{
-                background: "linear-gradient(transparent, grey, black, transparent)", 
                 backdropFilter: "blur(10px)",
                 padding: "40px",
                 borderRadius: "15px",
@@ -240,13 +261,16 @@ const Landing = () => {
                 maxWidth: "400px",
                 boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               }}
+              className="chessboard-landing"
             >
             <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Sign Up</Typography>
             <form onSubmit={handleSubmit}>
-            <TextField label="Full Name" name="name" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
-            <TextField label="Rating" placeholder="E.g. 500 or 1000" name="rating" type="number" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
-            <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
-            <TextField label="Password" name="password" type="password" fullWidth onChange={handleChange} required sx={{ mb: 2 }} />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(24, 159, 255)", padding: "20px", borderRadius: "10px" }}>
+                <TextField label="Full Name" name="name" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+                <TextField label="Rating" placeholder="E.g. 500 or 1000" name="rating" type="number" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+                <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+                <TextField label="Password" name="password" type="password" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
+              </Box>
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ py: 1.5 }}>Sign Up</Button>
             </form>
           </Box>
