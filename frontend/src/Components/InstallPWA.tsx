@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import GetAppIcon from '@mui/icons-material/GetApp';
+import { useTheme as useAppTheme } from "../Context/ThemeContext";
 
 const InstallPWA: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const isDark = useAppTheme();
 
   const handleInstallClick = () => {
     setOpen(true);
@@ -21,8 +23,8 @@ const InstallPWA: React.FC = () => {
         onClick={handleInstallClick} 
         sx={{ 
           width: "100%",
-          bgcolor: "#110b16",
-          '&:hover': { bgcolor: "#ffffffa1", color: "#3c3741" },
+          bgcolor: isDark ? "#110b16" : "#ffffff",
+          '&:hover': { bgcolor: isDark ? "#ffffffa1" : "#3c3741", color: isDark ? "#3c3741" : "#ffffffa1" },
           borderRadius: '8px',
           fontWeight: 500,
         }}
@@ -34,14 +36,14 @@ const InstallPWA: React.FC = () => {
         onClose={handleClose}
         PaperProps={{
           sx: {
-            borderRadius: '12px',
-            p: 1
+            bgcolor: isDark ? "#110b16" : "#ffffff",
+            color: isDark ? "#fff" : "#000000",
           }
         }}
       >
-        <DialogTitle sx={{ color: "#3c3741", fontWeight: "bold" }}>📲 How to Install GOTCG</DialogTitle>
+        <DialogTitle sx={{ fontWeight: "bold", color: isDark ? "#fff" : "#000000" }}>📲 How to Install GOTCG</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#333" }}>
+          <DialogContentText sx={{ color: isDark ? "#fff" : "#000000" }}>
             🔹 <strong>Chrome (Android & Desktop):</strong><br />
             &nbsp;&nbsp;&nbsp;- Tap the three dots (⋮) in the top-right<br />
             &nbsp;&nbsp;&nbsp;- Select 'Install App'<br /><br />
@@ -58,7 +60,7 @@ const InstallPWA: React.FC = () => {
           <Button 
             onClick={handleClose} 
             sx={{ 
-              color: "#a861f0",
+              color: isDark ? "#a861f0" : "#a861f0",
               fontWeight: 500
             }}
           >
