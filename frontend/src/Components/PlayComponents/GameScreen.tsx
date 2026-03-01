@@ -56,6 +56,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
   const [redoMoves, setRedoMoves] = useState<Move[]>([]);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoExitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);  const gameStateRef = useRef(gameState);
   const difficultyRef = useRef(difficulty);  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const terminationReasonRef = useRef<string | undefined>(undefined);
@@ -98,6 +99,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       isMountedRef.current = false;
       if (timerIntervalRef.current !== null) clearInterval(timerIntervalRef.current);
       if (aiTimeoutRef.current !== null) clearTimeout(aiTimeoutRef.current);
+      if (autoExitTimeoutRef.current !== null) clearTimeout(autoExitTimeoutRef.current);
     };
   }, []);
 
@@ -170,6 +172,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
             });
           }
           
+          // Auto-exit after 5 seconds
+          autoExitTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current) {
+              onBackToSetup();
+            }
+          }, 5000);
+          
           return {
             ...prev,
             [currentPlayer]: 0,
@@ -209,7 +218,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       else if (difficultyRef.current < 900) thinkingTime = 200 + Math.random() * 200; // 200-400ms
       else if (difficultyRef.current < 1300) thinkingTime = 400 + Math.random() * 200; // 400-600ms
       else if (difficultyRef.current < 1700) thinkingTime = 600 + Math.random() * 300; // 600-900ms
-      else if (difficultyRef.current < 2200) thinkingTime = 900 + Math.random() * 300; // 900-1200ms
+      else if (difficultyRef.current < 2200) thinkingTime = 800 + Math.random() * 300; // 900-1200ms
       else thinkingTime = 1200 + Math.random() * 600; // 1200-1800ms (Rocket level)
       
       const timeoutId = setTimeout(() => {
@@ -561,6 +570,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         winner: (data.winner ?? null) as 'white' | 'black' | null,
         terminationReason: normalizedReason
       }));
+      
+      // Auto-exit after 5 seconds for all game endings
+      autoExitTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          onBackToSetup();
+        }
+      }, 5000);
     };
 
     const handleOpponentDisconnected = () => {
@@ -860,6 +876,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           reason: isCheckmateState ? 'checkmate' : 'stalemate'
         });
       }
+      
+      // Auto-exit after 5 seconds when game ends locally (AI mode or local detection)
+      if (isCheckmateState || isStalemateState) {
+        autoExitTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) {
+            onBackToSetup();
+          }
+        }, 5000);
+      }
     }
 
     setGameState(newGameState);
@@ -912,6 +937,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           reason: isCheckmateState ? 'checkmate' : 'stalemate'
         });
       }
+    }
+    
+    // Auto-exit after 5 seconds when promotion results in game end
+    if (isCheckmateState || isStalemateState) {
+      autoExitTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          onBackToSetup();
+        }
+      }, 5000);
     }
     
     // Clear redo moves when promotion move is made (allows piece revision)

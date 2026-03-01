@@ -120,9 +120,18 @@ function minimax(
     return 0; // Stalemate
   }
   
+  // Order moves: captures first for better pruning
+  const orderedMoves = [...moves].sort((a, b) => {
+    const aCapture = board[a.to.row][a.to.col] !== null;
+    const bCapture = board[b.to.row][b.to.col] !== null;
+    if (aCapture && !bCapture) return -1;
+    if (!aCapture && bCapture) return 1;
+    return 0;
+  });
+  
   if (isMaximizing) {
     let maxScore = -Infinity;
-    for (const move of moves) {
+    for (const move of orderedMoves) {
       const newBoard = applyMove(board, move.from, move.to);
       const score = minimax(newBoard, depth - 1, alpha, beta, false, color);
       maxScore = Math.max(maxScore, score);
@@ -132,7 +141,7 @@ function minimax(
     return maxScore;
   } else {
     let minScore = Infinity;
-    for (const move of moves) {
+    for (const move of orderedMoves) {
       const newBoard = applyMove(board, move.from, move.to);
       const score = minimax(newBoard, depth - 1, alpha, beta, true, color);
       minScore = Math.min(minScore, score);
@@ -169,8 +178,8 @@ export function getAIMove(
     // Master: depth-4 minimax
     return getHardMove(board, allMoves, aiColor, 4);
   } else {
-    // Rocket: depth-5 minimax (special level - extremely challenging)
-    return getHardMove(board, allMoves, aiColor, 5);
+    // Rocket: depth-4 minimax with better move ordering (special level - extremely challenging)
+    return getHardMove(board, allMoves, aiColor, 4);
   }
 }
 
@@ -284,10 +293,26 @@ function getHardMove(
   aiColor: PieceColor,
   depth: number
 ): { from: Position; to: Position } {
-  let bestMove = moves[0];
+  // Optimize move ordering for better alpha-beta pruning
+  // Prioritize: 1) Captures, 2) Center control, 3) Other moves
+  const orderedMoves = [...moves].sort((a, b) => {
+    const aCapture = board[a.to.row][a.to.col] !== null;
+    const bCapture = board[b.to.row][b.to.col] !== null;
+    
+    if (aCapture && !bCapture) return -1;
+    if (!aCapture && bCapture) return 1;
+    
+    // Prioritize center squares (3,3), (3,4), (4,3), (4,4)
+    const aCenterDist = Math.abs(a.to.row - 3.5) + Math.abs(a.to.col - 3.5);
+    const bCenterDist = Math.abs(b.to.row - 3.5) + Math.abs(b.to.col - 3.5);
+    
+    return aCenterDist - bCenterDist;
+  });
+  
+  let bestMove = orderedMoves[0];
   let bestScore = -Infinity;
   
-  for (const move of moves) {
+  for (const move of orderedMoves) {
     const newBoard = applyMove(board, move.from, move.to);
     const score = minimax(newBoard, depth, -Infinity, Infinity, false, aiColor);
     
