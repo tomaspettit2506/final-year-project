@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "dist/functions.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
@@ -9,8 +9,7 @@
     "dev:8001": "PORT=8001 nodemon src/index.ts",
     "dev:8002": "PORT=8002 nodemon src/index.ts",
     "build": "tsc",
-    "serve": "firebase emulators:start --only functions",
-    "deploy": "firebase deploy --only functions"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",

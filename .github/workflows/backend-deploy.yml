@@ -1,4 +1,4 @@
-name: Deploy Backend to Firebase
+name: Deploy Backend to Cloud Run
 
 on:
   push:
@@ -13,9 +13,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
     defaults:
       run:
         working-directory: backend
+
+    env:
+      SERVICE_NAME: gotcg-backend
+      REGION: ${{ secrets.GCP_REGION }}
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
     steps:
       - name: Checkout code
@@ -31,20 +40,36 @@ jobs:
       - name: Install backend dependencies
         run: npm ci
 
-      - name: Build backend functions
+      - name: Build backend
         run: npm run build
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy to Firebase Functions
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only functions --token "$FIREBASE_TOKEN"
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+          source: ./backend
+          flags: --allow-unauthenticated
+          env_vars: |
+            NODE_ENV=production
+            CLIENT_URL=${{ secrets.CLIENT_URL }}
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
 
       - name: Notify deployment success
-        run: echo "Backend deployed successfully to Firebase Functions!"
+        run: echo "Backend deployed successfully to Cloud Run!"
 
       - name: Notify deployment failure
         if: failure()
-        run: echo "Backend deployment to Firebase failed. Please check workflow logs."
+        run: echo "Backend deployment to Cloud Run failed. Please check workflow logs."
