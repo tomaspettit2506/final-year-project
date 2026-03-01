@@ -57,7 +57,7 @@ function Tutorial() {
               sx={{
                 width: isMobile ? '100%' : 'auto',
                 minWidth: isMobile ? 'auto' : '550px',
-                bgcolor: isDark ? '#1E293B' : '#E0F2FE',
+                bgcolor: isDark ? '#1E293Bad' : '#E0F2FEad',
                 borderRadius: 15,
                 overflowX: 'auto',
                 overflowY: 'hidden',
