@@ -159,7 +159,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
             <Typography variant="h5" color="#a042ff" fontWeight="bold" gutterBottom>
                 Your Game Recents 🎮
             </Typography>
-            <Button color="primary" onClick={() => navigate("/profile")} sx={{ color: "white", fontWeight: "bold" }}>
+            <Button onClick={() => navigate("/profile")} sx={{ color: "white", fontWeight: "bold", bgcolor: "#d6c3ea", borderRadius: "8px", boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)", fontSize: isMobile ? "10px" : "16px" }}>
                 See All
             </Button>
           </Box>
@@ -191,7 +191,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
                     flexShrink: 0,
                   }}
                 >
-                  <CardContent sx={{ color: isDark ? "white" : "#333" }}>
+                  <CardContent sx={{ color: "#333" }}>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
                       {game.opponent || "Opponent"}
                     </Typography>
@@ -202,7 +202,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
                       <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                      <strong>Accuracy Move:</strong> <LinearProgress sx={{ mt: 1, mb: 1, height: "12px", borderRadius: "6px", border: "2px solid", borderColor: isDark ? "#e7dbf4" : "#240c3d", 
+                      <strong>Accuracy Move:</strong> <LinearProgress sx={{ mt: 1, mb: 1, height: "12px", borderRadius: "6px", border: "2px solid", borderColor: "#240c3d", 
                         '& .MuiLinearProgress-bar': { bgcolor: game.result === "win" ? "#52ac73" : game.result === "loss" ? "#cf5959" : "#a0a4ac" } }} 
                         variant="determinate" value={game.myAccuracy} /> {game.myAccuracy}%
                     </Typography>

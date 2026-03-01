@@ -17,7 +17,7 @@ const slides = [
   { title: "Meet the Guardians", description: "Mystical protectors and mentors guide the Grandmaster through challenges." },
   { title: "The Challenger Approaches", description: "A cunning rival tests every move, every decision, and every strategy." },
   { title: "The Battle Unfolds", description: "Every move matters. Witness the clash of minds and tactics on the board." },
-  { title: "Victory & Legacy", description: "The Grandmaster’s triumph reveals the power of guidance, patience, and strategy." },
+  { title: "Victory & Legacy", description: "The Grandmaster's triumph reveals the power of guidance, patience, and strategy." },
   { title: "Your Turn to Master", description: "Use AI-powered tools to plan, learn, and build your chess and life strategy." }
 ];
 
@@ -27,11 +27,16 @@ const Landing = () => {
   const [form, setForm] = useState({ name: "", rating: 500, email: "", password: "" });
 
   useEffect(() => {
-    document.body.style.overflow = "hidden"; // Disable scrolling
+    // Only disable scrolling on landing screen, allow scrolling on other screens
+    if (screen === "landing") {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
     return () => {
-      document.body.style.overflow = "auto"; // Restore scrolling when unmounting
+      document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [screen]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000); // Simulate loading
@@ -130,6 +135,7 @@ const Landing = () => {
         backgroundImage: `url(${WelcomeApp})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        overflowY: screen === "landing" ? "hidden" : "auto",
       }}
     >
       {/* LANDING PAGE WITH SLIDESHOW */}
@@ -150,7 +156,7 @@ const Landing = () => {
           >
             {slides.map((slide, index) => (
               <SwiperSlide key={index}>
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", fontSize: "1rem", padding: "5rem" }}>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", fontSize: "1rem" }}>
                   <Typography variant="h5" fontWeight="bold">{slide.title}</Typography>
                   <Typography variant="body1" sx={{ mt: 1, maxWidth: "300px" }}>{slide.description}</Typography>
                 </Box>
@@ -159,7 +165,7 @@ const Landing = () => {
           </Swiper>
 
           {/* Get Started Button */}
-          <Button variant="contained" color="secondary" sx={{ mt: 4, px: 4, py: 1.5, fontSize: "1.2rem" }} onClick={() => setScreen("login")}>
+          <Button variant="contained" sx={{ mt: 4, px: 4, py: 1.5, fontSize: "1.2rem", bgcolor: "rgb(51, 106, 145)" }} onClick={() => setScreen("login")}>
             Get Started
           </Button>
         </motion.div>
@@ -188,27 +194,27 @@ const Landing = () => {
             >
             <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Log In</Typography>
             <form onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(24, 159, 255)", padding: "20px", borderRadius: "10px" }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(68, 87, 101)", padding: "20px", borderRadius: "10px" }}>
                 <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
                 <TextField label="Password" name="password" type="password" fullWidth  onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
               </Box>
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mb: 5, py: 1.5 }}>Log In</Button>
+            <Button type="submit" variant="contained" fullWidth sx={{ mb: 5, py: 1.5, border: "2px solid rgb(51, 106, 145)", bgcolor: "rgb(51, 106, 145)" }}>Log In</Button>
             </form>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
                 variant="outlined"
                 startIcon={<GoogleIcon />}
                 sx={{
-                  mt: 2,
+                  mt: 0.25, // Slightly less top margin
                   py: 0.8, // Smaller padding
                   px: 2, // Less horizontal padding
                   width: "100%", // Smaller box width
                   height: "48px", // Smaller box height
                   backgroundColor: "black", 
-                  color: "#e4e4e4ff", 
-                  borderColor: "#221f25ff",
+                  color: "#e4e4e4ff",
+                  border: "2px solid #e4e4e4ff",
                   borderRadius: "8px", // Softer rounded edges
-                  fontSize: "0.85rem", // Slightly smaller text
+                  fontSize: "1.05rem", // Slightly smaller text
                   fontWeight: "600",
                   textTransform: "none",
                   "&:hover": {
@@ -223,14 +229,15 @@ const Landing = () => {
               </Button>
             </Box>
             <Typography variant="body2" sx={{ mt: 2, fontSize: "1.25rem" }}>Don't have an account? 
-            <Button onClick={() => setScreen("signup")}     
+            <Button fullWidth onClick={() => setScreen("signup")}     
               sx={{
               textTransform: "uppercase",
               bgcolor: "black",
               border: "2px solid #e4e4e4ff",
               borderRadius: "8px",
+              fontSize: "1.5rem",
               padding: "0.25rem 0.75rem",
-              marginLeft: "8px",
+              mt: 1.5,
               color: "white", // Ensures contrast
               fontWeight: "bold",
               "&:hover": {
@@ -265,13 +272,13 @@ const Landing = () => {
             >
             <Typography variant="h4" fontWeight="bold" sx={{ mb: 3.5 }}>Sign Up</Typography>
             <form onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(24, 159, 255)", padding: "20px", borderRadius: "10px" }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, bgcolor: "rgb(68, 87, 101)", padding: "20px", borderRadius: "10px" }}>
                 <TextField label="Full Name" name="name" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
                 <TextField label="Rating" placeholder="E.g. 500 or 1000" name="rating" type="number" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
                 <TextField label="Email" name="email" type="email" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
                 <TextField label="Password" name="password" type="password" fullWidth onChange={handleChange} required sx={{ mb: 2, bgcolor: "rgba(69, 69, 69, 0.85)" }} />
               </Box>
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ py: 1.5 }}>Sign Up</Button>
+            <Button type="submit" variant="contained" fullWidth sx={{ py: 1.5, border: "2px solid rgb(51, 106, 145)", bgcolor: "rgb(51, 106, 145)" }}>Sign Up</Button>
             </form>
           </Box>
         </motion.div>
