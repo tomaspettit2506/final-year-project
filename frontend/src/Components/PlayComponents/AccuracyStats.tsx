@@ -2,6 +2,7 @@ import type { Move } from '../../Types/chess';
 import { Box, Card, Chip, LinearProgress, Typography } from '@mui/material';
 import { useTheme as useAppTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
+import { getAccuracyColor, getAccuracyLabel } from '../../Utils/accuracyColors';
 
 interface AccuracyStatsProps {
   moves: Move[];
@@ -67,45 +68,45 @@ const AccuracyStats: React.FC<AccuracyStatsProps> = ({ moves }) => {
             />
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2, mb: 3, px: 2, py: 3 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: 1, mb: 2, px: 0, py: 0 }}>
             <Typography sx={{ fontSize: '0.875rem' }}>Move Quality</Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, fontSize: '0.75rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, fontSize: '0.75rem', width: 'auto' }}>
               {excellentMoves > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography component="span" sx={{ color: 'green', pr: 2, fontSize: '0.75rem' }}>Excellent</Typography>
-                  <Chip label={excellentMoves} size="small" sx={{ backgroundColor: '#e8f5e9', color: 'green', fontWeight: 'bold' }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={getAccuracyLabel('excellent')} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('excellent') }} />
+                  <Chip label={excellentMoves} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('excellent') }} />
                 </Box>
               )}
               {goodMoves > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography component="span" sx={{ color: 'blue', pr: 2, fontSize: '0.75rem' }}>Good</Typography>
-                  <Chip label={goodMoves} size="small" sx={{ backgroundColor: '#e3f2fd', color: 'blue', fontWeight: 'bold' }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={getAccuracyLabel('good')} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('good') }} />
+                  <Chip label={goodMoves} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('good') }} />
                 </Box>
               )}
               {inaccuracies > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography component="span" sx={{ color: '#ca8a04', pr: 2, fontSize: '0.75rem' }}>Inaccuracies</Typography>
-                  <Chip label={inaccuracies} size="small" sx={{ backgroundColor: '#f4e0bf', color: 'yellow', fontWeight: 'bold' }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={getAccuracyLabel('inaccuracy')} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('inaccuracy') }} />
+                  <Chip label={inaccuracies} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('inaccuracy') }} />
                 </Box>
               )}
               {mistakes > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography component="span" sx={{ color: 'orange', pr: 2, fontSize: '0.75rem' }}>Mistakes</Typography>
-                  <Chip label={mistakes} size="small" sx={{ backgroundColor: '#ffebee', color: 'orange', fontWeight: 'bold' }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={getAccuracyLabel('mistake')} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('mistake') }} />
+                  <Chip label={mistakes} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('mistake') }} />
                 </Box>
               )}
               {blunders > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography component="span" sx={{ color: 'red', pr: 2, fontSize: '0.75rem' }}>Blunders</Typography>
-                  <Chip label={blunders} size="small" sx={{ backgroundColor: '#ffebee', color: 'red', fontWeight: 'bold' }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Chip label={getAccuracyLabel('blunder')} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('blunder') }} />
+                  <Chip label={blunders} size="small" sx={{ fontSize: '0.75rem', px: 0.5, ...getAccuracyColor('blunder') }} />
                 </Box>
               )}
             </Box>
           </Box>
 
           {bestMove && (
-            <Box sx={{ pt: 2, p: 3, borderTop: 1, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.875rem', mb: 1 }}>
+            <Box sx={{ pt: 1.5, p: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem', mb: 0.5 }}>
                 <Typography component="span" sx={{ fontSize: '0.875rem' }}>⚡Best Move</Typography>
               </Box>
               <Typography sx={{ fontSize: '0.75rem', color: "text.primary" }}>

@@ -323,8 +323,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           let termination: string;
           if (effectiveTerminationReason === 'timeout') termination = 'timeout';
           else if (effectiveTerminationReason === 'resignation') termination = 'resignation';
+          else if (effectiveTerminationReason === 'abandonment') termination = 'abandonment';
           else if (gameState.isCheckmate) termination = 'checkmate';
           else if (gameState.isStalemate) termination = 'stalemate';
+          // Note: 'draw' is reserved for agreed draws, threefold repetition, fifty-move rule (not yet implemented)
           else termination = 'unknown';
           
           // Calculate game duration
@@ -560,7 +562,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
 
       const normalizedReason = data.reason || data.result;
       const isDraw = data.isDraw ?? data.result === 'stalemate';
-      const isDecisive = data.result === 'checkmate' || data.result === 'resignation' || data.result === 'timeout';
+      const isDecisive = data.result === 'checkmate' || data.result === 'resignation' || data.result === 'timeout' || data.result === 'abandonment';
       
       // Update local game state based on server notification
       setGameState(prev => ({
@@ -570,6 +572,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         winner: (data.winner ?? null) as 'white' | 'black' | null,
         terminationReason: normalizedReason
       }));
+      terminationReasonRef.current = normalizedReason;
       
       // Auto-exit after 5 seconds for all game endings
       autoExitTimeoutRef.current = setTimeout(() => {
@@ -585,8 +588,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
       setGameState(prev => ({
         ...prev,
         isCheckmate: true,
-        winner: resolvedColor
+        winner: resolvedColor,
+        terminationReason: 'abandonment'
       }));
+      terminationReasonRef.current = 'abandonment';
     };
 
     socket.on('moveMade', handleMoveMade);

@@ -445,6 +445,16 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     });
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        console.log('Room ID copied to clipboard:', text);
+      })
+      .catch(err => {
+        console.error('Failed to copy Room ID:', err);
+      });
+  };
+
   return (
     <Box
       sx={{
@@ -906,7 +916,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       </Box>
                       <Card variant="outlined" sx={{ mb: 2, bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
                         <CardContent sx={{ p: 2, fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                          <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Room ID: <strong>{createdRoomId || roomId}</strong></Typography>
+                          <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Room ID: <strong style={{color: isDark ? "#d6c3ea" : "#240c3d"}}>{createdRoomId || roomId}</strong></Typography>
+                          <Button size="small" variant="outlined" onClick={() => copyToClipboard(createdRoomId || roomId)} sx={{ mb: 1 }}>Copy Room ID</Button>
                           <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Your Color: <strong>{playerColor?.toUpperCase()}</strong></Typography>
                           <Typography variant="body2" color="textSecondary" sx={{ fontWeight: roomUsers.length === 2 ? 'bold' : 'normal', fontSize: isMobile ? '1rem' : '1.3rem' }}>
                             Players in room: {roomUsers.length}/2

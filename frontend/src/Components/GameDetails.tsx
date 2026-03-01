@@ -81,6 +81,7 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
       case 'resignation': return { icon: <FlagIcon fontSize="small" />, text: 'Resignation' };
       case 'timeout': return { icon: <TimerOffIcon fontSize="small" />, text: 'Timeout' };
       case 'draw': return { icon: <HandshakeIcon fontSize="small" />, text: 'Draw' };
+      case 'stalemate': return { icon: <HandshakeIcon fontSize="small" />, text: 'Stalemate' };
       case 'abandonment': return { icon: <FlagIcon fontSize="small" />, text: 'Abandonment' };
       default: return { icon: null, text: termination };
     }

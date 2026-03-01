@@ -1,6 +1,9 @@
 export type PieceType = 'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn';
 export type PieceColor = 'white' | 'black';
 
+// Termination reasons matching backend schema (backend/src/schemas/index.ts)
+export type TerminationReason = 'checkmate' | 'resignation' | 'timeout' | 'draw' | 'abandonment' | 'stalemate' | 'unknown';
+
 export interface Piece {
   type: PieceType;
   color: PieceColor;

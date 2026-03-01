@@ -21,11 +21,17 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
     if (time < 30) return 'error.main';
     if (time < 60) return 'warning.main';
     if (isCurrentPlayer) return 'text.primary';
-    return 'white';
+    return 'text.secondary';
   };
 
   const getRowBg = (isCurrent: boolean) =>
-    isCurrent && isActive ? 'white' : 'black' === currentPlayer ? 'rgba(28, 25, 25, 0.86)' : 'rgba(0, 0, 0, 0.04)';
+    isCurrent && isActive ? 'action.selected' : 'action.hover';
+
+  const getRowBorderColor = (isCurrent: boolean) =>
+    isCurrent && isActive ? 'primary.main' : 'divider';
+
+  const getLabelColor = (isCurrent: boolean) =>
+    isCurrent && isActive ? 'text.primary' : 'text.secondary';
 
   return (
     <Card variant="outlined">
@@ -45,14 +51,13 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
                 px: 2,
                 py: 1.5,
                 borderRadius: 1,
-                color: currentPlayer === 'black' ? 'white' : 'black',
                 border: '1px solid',
-                borderColor: currentPlayer === 'black' ? 'black' : 'divider',
+                borderColor: getRowBorderColor(currentPlayer === 'black'),
                 bgcolor: getRowBg(currentPlayer === 'black'),
                 transition: 'background-color 150ms ease',
               }}
             >
-              <Typography variant="body2">Black</Typography>
+              <Typography variant="body2" color={getLabelColor(currentPlayer === 'black')}>Black</Typography>
               <Typography
                 variant="h6"
                 sx={{ fontVariantNumeric: 'tabular-nums', color: getTimeColor(blackTime, currentPlayer === 'black') }}
@@ -71,12 +76,12 @@ const Timer: React.FC<TimerProps> = ({ whiteTime, blackTime, currentPlayer, isAc
                 py: 1.5,
                 borderRadius: 1,
                 border: '1px solid',
-                borderColor: currentPlayer === 'white' ? 'black' : 'divider',
+                borderColor: getRowBorderColor(currentPlayer === 'white'),
                 bgcolor: getRowBg(currentPlayer === 'white'),
                 transition: 'background-color 150ms ease',
               }}
             >
-              <Typography variant="body2">White</Typography>
+              <Typography variant="body2" color={getLabelColor(currentPlayer === 'white')}>White</Typography>
               <Typography
                 variant="h6"
                 sx={{ fontVariantNumeric: 'tabular-nums', color: getTimeColor(whiteTime, currentPlayer === 'white') }}
