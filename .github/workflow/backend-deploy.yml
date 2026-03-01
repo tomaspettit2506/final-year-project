@@ -1,0 +1,27 @@
+name: Deploy Backend to Firebase
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Deploy to Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only functions --token $FIREBASE_TOKEN
+
+      - name: Notify deployment success
+        run: echo "Backend deployed successfully to Firebase!"
+      - name: Notify deployment failure
+        if: failure()
+        run: echo "Backend deployment to Firebase failed. Please check the logs for details."
