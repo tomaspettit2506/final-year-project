@@ -34,7 +34,7 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
                         ⬅️
                     </IconButton>
                 )}
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: isDark ? 'white' : 'white', fontFamily: 'Times New Roman', fontWeight: 'bold' }}>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     {title}
                 </Typography>
                 <Tooltip title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}>
