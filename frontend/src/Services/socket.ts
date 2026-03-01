@@ -1,6 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 
 function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+
   // 1. Check for backend port override in query parameter (for testing multiple instances)
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
@@ -30,14 +32,22 @@ function resolveApiBaseUrl(): string {
     }
   }
 
-  // 3. Fallback to environment variable if it's set and NOT localhost
-  const configured = import.meta.env.VITE_BACKEND_URL;
-  if (configured && !configured.includes("localhost")) {
-    return configured;
+  // 3. Use configured backend URL when provided.
+  if (configured) {
+    return configured.replace(/\/$/, '');
   }
 
-  // 4. Default to localhost
-  return "http://localhost:8000";
+  // 4. In development, default to localhost backend.
+  if (import.meta.env.DEV) {
+    return "http://localhost:8000";
+  }
+
+  // 5. Production fallback: same host as frontend.
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+
+  return '';
 }
 
 const URL = resolveApiBaseUrl();

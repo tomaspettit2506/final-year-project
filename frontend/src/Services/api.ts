@@ -1,7 +1,17 @@
 function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+
   // In dev, prefer same-origin requests so Vite proxy handles API calls.
   if (import.meta.env.DEV) {
+    if (configured) {
+      return configured.replace(/\/$/, '');
+    }
     return '';
+  }
+
+  // In production, always prioritize explicit environment configuration.
+  if (configured) {
+    return configured.replace(/\/$/, '');
   }
 
   // 1. Try to derive from current window location (most robust for Codespaces)
@@ -23,14 +33,8 @@ function resolveApiBaseUrl(): string {
     }
   }
 
-  // 2. Use configured API/base URL if provided
-  const configured = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
-  if (configured) {
-    return configured;
-  }
-
-  // 3. Default to localhost
-  return "http://localhost:8000";
+  // 2. Final fallback: same-origin (never localhost in production by default).
+  return '';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
