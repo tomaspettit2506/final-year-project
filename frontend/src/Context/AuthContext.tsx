@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { getUserRating } from "../Utils/FirestoreService"; 
+import { getUserRating } from "../Utils/FirestoreService";
+import { requestNotificationPermission } from "../Utils/Notifications"; 
 
 // Define authentication context type
 interface AuthContextType {
@@ -24,6 +25,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentUser) {
         const userProfile = await getUserRating(currentUser.uid); // ✅ Fetch Firestore Data
         setUserData(userProfile);
+        // Request notification permission when user logs in
+        await requestNotificationPermission();
       } else {
         setUserData(null);
       }

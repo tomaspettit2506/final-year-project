@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Avatar, 
-  Badge, Chip, Button, IconButton, Menu, MenuItem, Typography, Snackbar, Alert } from "@mui/material";
+  Badge, Chip, Button, IconButton, Menu, MenuItem, Typography, Snackbar, Alert, useTheme, useMediaQuery } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useAuth } from "../../Context/AuthContext";
 import { useTheme as useAppTheme } from "../../Context/ThemeContext";
@@ -35,6 +35,8 @@ interface FriendsListProps {
 
 const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onChallengeStarted }) => {
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { isDark } = useAppTheme();
   const navigate = useNavigate();
   const apiBaseUrl = getApiBaseUrl();
@@ -521,6 +523,10 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
             <Typography color={isDark ? 'text.primary' : 'text.secondary'}>
               {searchQuery ? "No friends found" : "No friends yet. Add some friends to get started!"}
             </Typography>
+            <Button sx={{ alignSelf: "flex-start", bgcolor: "#d6c3ea", color: "white", mt: 2,
+                     boxShadow: isDark ? "2px 4px 8px rgba(255, 255, 255, 0.78)" : "2px 4px 8px rgba(0, 0, 0, 0.779)", fontWeight: "bold", fontSize: isMobile ? "13px" : "16px", borderRadius: "8px" }} onClick={() => navigate("/play")}>
+                  Play with AI or friends 🎮
+            </Button>
           </Card>
         ) : (
           <Stack

@@ -88,3 +88,82 @@ socket.io.on('reconnect_attempt', () => {
 socket.io.on('reconnect', () => {
   console.log('[Socket.io] ✓ Reconnected');
 });
+
+// Helper function to show notifications directly
+function showNotification(
+  title: string,
+  options?: NotificationOptions
+): void {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      ...options,
+    });
+  }
+}
+
+// Socket event listeners for notifications
+socket.on('friendRequest', (data: any) => {
+  console.log('[Socket.io] ← Received friendRequest event:', data);
+  showNotification('New Friend Request', {
+    body: `${data.senderName || data.senderId} wants to be your friend`,
+    tag: 'friend-request',
+    data: { senderId: data.senderId },
+  });
+});
+
+socket.on('gameInvite', (data: any) => {
+  console.log('[Socket.io] ← Received gameInvite event:', data);
+  showNotification('Game Invite', {
+    body: `${data.senderName || data.senderId} invited you to play chess`,
+    tag: 'game-invite',
+    data: { gameId: data.gameId, senderId: data.senderId },
+  });
+});
+
+socket.on('newMessage', (data: any) => {
+  console.log('[Socket.io] ← Received newMessage event:', data);
+  showNotification('New Message', {
+    body: `${data.senderName || data.senderId}: ${data.message}`,
+    tag: 'message-' + data.senderId,
+    data: { senderId: data.senderId },
+  });
+});
+
+socket.on('gameUpdate', (data: any) => {
+  console.log('[Socket.io] ← Received gameUpdate event:', data);
+  const { gameId, type } = data;
+  let title = 'Game Update';
+  let body = 'Your game has been updated';
+
+  if (type === 'opponentMoved') {
+    title = 'Opponent Moved';
+    body = 'Your opponent made a move';
+  } else if (type === 'gameEnded') {
+    title = 'Game Ended';
+    body = data.result || 'The game has ended';
+  } else if (type === 'gameAbandoned') {
+    title = 'Game Abandoned';
+    body = 'Your opponent abandoned the game';
+  }
+
+  showNotification(title, {
+    body,
+    tag: 'game-update-' + gameId,
+    data: { gameId },
+  });
+});
+
+// Socket event listeners for real-time updates (existing)
+socket.on('friendRequestReceived', (data: any) => {
+  console.log('[Socket.io] ← Received friendRequestReceived event:', data);
+});
+
+socket.on('gameInviteReceived', (data: any) => {
+  console.log('[Socket.io] ← Received gameInviteReceived event:', data);
+});
+
+socket.on('messageReceived', (data: any) => {
+  console.log('[Socket.io] ← Received messageReceived event:', data);
+});
