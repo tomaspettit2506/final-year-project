@@ -511,7 +511,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
                         <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>🤖</Typography>
                         <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600, mb: 1 }}>
-                          Play vs AI
+                          Player vs AI
                         </Typography>
                         <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
                           Challenge the computer
@@ -687,10 +687,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         sx={{ 
                           py: 1.5,
                           fontSize: isMobile ? '1rem' : '1.1rem',
-                          fontWeight: 600,
-                          fontFamily: difficulty === 2200 && difficultyName === 'Rocket' 
-                            ? '"Courier New", "Roboto Mono", "Consolas", monospace' 
-                            : 'inherit',
+                          fontWeight: 300,
                           letterSpacing: difficulty === 2200 && difficultyName === 'Rocket' ? '0.1em' : 'normal',
                           textTransform: difficulty === 2200 && difficultyName === 'Rocket' ? 'uppercase' : 'none',
                           ...(difficulty === 2200 && difficultyName === 'Rocket' && {
@@ -721,6 +718,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                           <Button
                             onClick={() => setMpStep('create')}
                             variant="contained"
+                            fullWidth
                             sx={{
                               p: isMobile ? 2 : 3,
                               borderRadius: 2, borderWidth: 2,
@@ -734,7 +732,13 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                             }}
                           >
                             <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
-                              🏠 Create Room
+                              <Typography variant="body2" sx={{fontSize: isMobile ? '1.2rem' : '1.4rem'}}>🏠</Typography>
+                              <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600 }}>
+                                Create Room
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                                Host a game and wait for a friend to join
+                              </Typography>
                             </Box>
                           </Button>
                         </Grid>
@@ -742,12 +746,13 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                           <Button
                             onClick={() => setMpStep('join')}
                             variant="contained"
+                            fullWidth
                             sx={{
                               p: isMobile ? 2 : 3,
                               borderRadius: 2, borderWidth: 2,
                               bgcolor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4F46E5',
                               color: '#ebebef', boxShadow: 3,
-                              width: isMobile ? '115%' : 'auto', height: '100%',
+                              width: isMobile ? '100%' : 'auto', height: '100%',
                               fontSize: isMobile ? '1rem' : '1.1rem',
                               "&:hover": {
                                 bgcolor: 'rgba(79, 70, 229, 0.25)'
@@ -755,7 +760,13 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                             }}
                           >
                             <Box sx={{ color: isDark ? '#f1f1f1' : '#121212' }}>
-                              🔑 Join Room
+                              <Typography variant="body2" sx={{ fontSize: isMobile ? '1.2rem' : '1.4rem' }}>🔑</Typography>
+                              <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600 }}>
+                                Join Room
+                              </Typography>
+                              <Typography variant="body1" sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                                Enter a Room ID to join a friend's game
+                              </Typography>
                             </Box>
                           </Button>
                         </Grid>
@@ -826,7 +837,6 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                                   label="Time per player"
                                   onChange={(e) => setTimerDuration(e.target.value as number)}
                                 >
-                                  <MenuItem value={60}>1 minute</MenuItem>
                                   <MenuItem value={600}>10 minutes</MenuItem>
                                   <MenuItem value={900}>15 minutes</MenuItem>
                                   <MenuItem value={1800}>30 minutes</MenuItem>
@@ -878,8 +888,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                         
                       <TextField label="Room ID" value={roomId}
                         onChange={e => setRoomId(e.target.value.toUpperCase())}
-                        fullWidth margin="normal" sx={{ color: 'white' }} />
-                      <Button fullWidth variant="contained" color="primary" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={!isAuthenticated || !hasAccountName || !roomId.trim() || joining}>
+                        fullWidth margin="normal" />
+                      <Button fullWidth variant="contained" onClick={handleJoinRoom} sx={{ mt: 2 }} disabled={!isAuthenticated || !hasAccountName || !roomId.trim() || joining}>
                         {joining ? 'Joining...' : 'Join'}
                       </Button>
                       <Button fullWidth variant="text" color="secondary" onClick={() => setMpStep('choose')} sx={{ mt: 2 }}>Back</Button>
@@ -894,7 +904,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                       <Box display="flex" justifyContent="center" mb={3}>
                         <CircularProgress />
                       </Box>
-                      <Card variant="outlined" sx={{ mb: 2, color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)', bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+                      <Card variant="outlined" sx={{ mb: 2, bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
                         <CardContent sx={{ p: 2, fontSize: isMobile ? '0.9rem' : '1rem' }}>
                           <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Room ID: <strong>{createdRoomId || roomId}</strong></Typography>
                           <Typography sx={{fontSize: isMobile ? '1rem' : '1.3rem'}} variant="body2" color="textSecondary" mb={1}>Your Color: <strong>{playerColor?.toUpperCase()}</strong></Typography>
@@ -935,7 +945,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
                 <Typography sx={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 600 }} variant="body2" color="text.primary" component="div">
                   🚀 How To Play:
                 </Typography>
-                <Box component="ul" sx={{ pl: 3, color: 'text.secondary', mt: 1, fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
+                <Box component="ul" sx={{ pl: 3, mt: 1, fontSize: isMobile ? '0.95rem' : '1.05rem' }}>
                   {htp.map((how, index) => ( <li key={index}>{how.rule}</li> ))}
                 </Box>
               </Box>
