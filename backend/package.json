@@ -1,13 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/functions.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
     "dev:8000": "PORT=8000 nodemon src/index.ts",
     "dev:8001": "PORT=8001 nodemon src/index.ts",
-    "dev:8002": "PORT=8002 nodemon src/index.ts"
+    "dev:8002": "PORT=8002 nodemon src/index.ts",
+    "build": "tsc",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +20,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "firebase-admin": "^13.6.0",
+    "firebase-functions": "^6.5.0",
     "http": "^0.0.1-security",
     "mongodb": "^7.0.0",
     "mongoose": "^8.20.1",
