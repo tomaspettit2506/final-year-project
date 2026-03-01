@@ -5,12 +5,12 @@ import GameDialog from './GameDialog';
 const mockGames = [
   {
     _id: 'game-1',
-    result: 'Win',
+    result: 'win' as const,
     date: '2024-01-01',
   },
   {
     _id: 'game-2',
-    result: 'Loss',
+    result: 'loss' as const,
     date: '2024-01-02',
   }
 ];
@@ -55,8 +55,8 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/Win/i)).toBeInTheDocument();
-    expect(screen.getByText(/Loss/i)).toBeInTheDocument();
+    expect(screen.getByText(/win/i)).toBeInTheDocument();
+    expect(screen.getByText(/loss/i)).toBeInTheDocument();
   });
 
   test('displays game results', () => {
@@ -70,8 +70,8 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/Result: Win/i)).toBeInTheDocument();
-    expect(screen.getByText(/Result: Loss/i)).toBeInTheDocument();
+    expect(screen.getByText(/Result: win/i)).toBeInTheDocument();
+    expect(screen.getByText(/Result: loss/i)).toBeInTheDocument();
   });
 
   test('displays empty state when no games', () => {
