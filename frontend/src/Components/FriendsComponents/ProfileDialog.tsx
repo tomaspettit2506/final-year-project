@@ -59,7 +59,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
                 <Typography variant="body2" color="text.secondary">
                   {friendEmail}
                 </Typography>
-                <Box display="flex" gap={1} mt={1}>
+                <Box display="flex" gap={1} mt={1} flexWrap="wrap">
                   <Chip label={`Rating ${friendRating}`} color="primary" size="small" />
                   <Chip label={ratingTitle} color="secondary" size="small" />
                   <Chip label="Online" color="success" size="small" />

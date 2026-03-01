@@ -202,7 +202,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
                       <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                      <strong>Accuracy Move:</strong> <LinearProgress sx={{ height: "12px", borderRadius: "6px", borderColor: "#240c3d", borderWidth: 3, 
+                      <strong>Accuracy Move:</strong> <LinearProgress sx={{ mt: 1, mb: 1, height: "12px", borderRadius: "6px", border: "2px solid", borderColor: isDark ? "#e7dbf4" : "#240c3d", 
                         '& .MuiLinearProgress-bar': { bgcolor: game.result === "win" ? "#52ac73" : game.result === "loss" ? "#cf5959" : "#a0a4ac" } }} 
                         variant="determinate" value={game.myAccuracy} /> {game.myAccuracy}%
                     </Typography>

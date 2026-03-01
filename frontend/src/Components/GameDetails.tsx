@@ -3,11 +3,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Box,
   Typography,
   IconButton,
-  Button,
   Chip,
   Divider,
   LinearProgress,
@@ -22,8 +20,6 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import FlagIcon from "@mui/icons-material/Flag";
-import DownloadIcon from "@mui/icons-material/Download";
-import AnalyticsIcon from "@mui/icons-material/Analytics";
 import { useTheme } from "../Context/ThemeContext";
 
 interface DetailsProps {
@@ -97,33 +93,6 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
       case 'draw': return 'Draw';
       default: return 'Unknown';
     }
-  };
-
-  const handleDownloadPGN = () => {
-    if (!gameDetails.pgn) {
-      console.warn('No PGN data available');
-      return;
-    }
-
-    const blob = new Blob([gameDetails.pgn], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `chess-game-${gameDetails.date}-${gameDetails.opponent}.pgn`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleViewAnalysis = () => {
-    const gameId = gameDetails._id || gameDetails.id;
-    if (!gameId) {
-      console.warn('No game ID available for analysis');
-      return;
-    }
-    // Navigate to analysis page or open analysis modal
-    window.location.href = `/analysis/${gameId}`;
   };
 
   // Ensure accuracy values are valid numbers between 0-100
@@ -323,27 +292,6 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
           </Box>
         </Box>
       </DialogContent>
-
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button 
-          variant="contained" 
-          fullWidth
-          startIcon={<AnalyticsIcon />}
-          onClick={handleViewAnalysis}
-          disabled={!gameDetails._id && !gameDetails.id}
-        >
-          View Full Analysis
-        </Button>
-        <Button 
-          variant="outlined" 
-          fullWidth
-          startIcon={<DownloadIcon />}
-          onClick={handleDownloadPGN}
-          disabled={!gameDetails.pgn}
-        >
-          Download PGN
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };
