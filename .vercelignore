@@ -1,0 +1,6 @@
+# Vercel Configuration Files
+
+.vercel
+.env*.local
+node_modules
+dist

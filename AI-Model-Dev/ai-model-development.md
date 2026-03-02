@@ -119,3 +119,40 @@ To enhance your chess AI with machine learning:
     - A/B test different model versions by difficulty level
 
 Your current architecture already has the foundation for ML integration through your data collection pipeline and Firebase/MongoDB storage. The game history and accuracy tracking provide valuable training data for future model development.
+
+## Implemented Scripts (Report-First Phase)
+
+The following Python scripts are now implemented in `AI-Model-Dev` to support a reproducible data + analytics pipeline:
+
+1. `data_export.py`
+   - Normalizes game records from local JSON and/or backend games API.
+   - Writes deterministic, versioned exports to `data/raw/` (JSON + CSV + manifest).
+   - Maintains `*_latest` files for downstream scripts.
+
+2. `preprocess_positions.py`
+   - Validates raw exports and produces cleaned datasets in `data/processed/`.
+   - Generates missing-field quality reports and deterministic train/validation split manifests.
+   - Adds explicit placeholders for position-level readiness (`hasFen`, `hasPgn`, `positionTensorReady`).
+
+3. `generate_graphs.py`
+   - Produces publication-ready PNG charts in `img/`:
+     - game outcome distribution
+     - rating-change distribution
+     - accuracy distribution
+     - game-duration distribution
+     - move-count distribution
+
+4. `report_metrics.py`
+   - Outputs machine-readable summaries in `data/reports/`:
+     - dataset size
+     - missing-field rates
+     - class balance
+     - per-user aggregates
+
+5. `training.py` (orchestrator)
+   - Runs export -> preprocess -> graph generation -> metrics reporting end-to-end.
+   - This current phase is data/report focused while PGN/FEN storage is being introduced.
+
+### Current Limitation
+
+Full model training is intentionally gated on PGN/FEN persistence for move-by-move board-state reconstruction. Until position-level storage is available, these scripts provide robust analytics and reproducible data artifacts for reporting and pipeline validation.

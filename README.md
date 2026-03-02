@@ -143,21 +143,50 @@ npm run dev
       VITE_BACKEND_URL=https://your-backend-domain.example
       ```
 
-    ## 🚢 CI/CD Deployment (GitHub Actions)
+    ## 🚢 Production Deployment
 
+    **📖 Full deployment guide: [DEPLOYMENT.md](./DEPLOYMENT.md)**
+
+    ### Quick Overview
+    - **Frontend**: Vercel (PWA with static hosting)
+    - **Backend**: Railway or Render (requires WebSocket support - NOT Vercel)
+    - **Database**: MongoDB Atlas + Firebase
+
+    > ⚠️ **Important**: The backend CANNOT be deployed to Vercel due to WebSocket requirements.
+
+    ### CI/CD (GitHub Actions)
     This repository uses `.github/workflows/frontend_and_backend-deploy.yml` to deploy on every push to `main`.
 
-    - Frontend is deployed to Vercel.
-    - Backend deployment is triggered via a deploy hook URL (for stateful hosting providers).
+    Required GitHub Actions repository secrets:
+    - `VERCEL_TOKEN` - Your Vercel authentication token
+    - `VERCEL_ORG_ID` - Your Vercel organization/team ID
+    - `VERCEL_PROJECT_ID_FRONTEND` - Frontend project ID
+    - `BACKEND_DEPLOY_HOOK_URL` - Railway/Render webhook URL
 
-    Add these GitHub Actions repository secrets:
+    The workflow runs build checks before deployment.
+  
+## AI Model Development
+### Setup
+Navigate to the AI Model Development directory:
+```bash
+cd AI-Model-Dev
+```
 
-    - `VERCEL_TOKEN`
-    - `VERCEL_ORG_ID`
-    - `VERCEL_PROJECT_ID_FRONTEND`
-    - `BACKEND_DEPLOY_HOOK_URL`
+Create a virtual environment:
+```bash
+python -m venv venv
+```
 
-    The workflow also runs frontend and backend build checks before deployment.
+Activate it:
+```bash
+source venv/bin/activate      # macOS/Linux
+venv\Scripts\activate         # Windows
+```
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
 ## 📱 PWA Support
 GOTCG is a Progressive Web App, which means:
