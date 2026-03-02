@@ -122,15 +122,15 @@ npm run dev
     - Click "Connect" and select "Drivers" to get your connection string
     - Add your MongoDB connection string to `/backend/.env`:
       ```
-      MONGODB_URI=mongodb+srv://<username>:<password>@gotcg.cxm6vsx.mongodb.net/
+      MONGO_URI=mongodb+srv://<username>:<password>@gotcg.cxm6vsx.mongodb.net/
       ```
 
 6. Configure environment variables:
     - `/backend/.env`:
       ```
-      MONGODB_URI=your_mongodb_connection_string
-      FIREBASE_PROJECT_ID=your_firebase_project_id
-      FIREBASE_PRIVATE_KEY=your_firebase_private_key
+      MONGO_URI=your_mongodb_connection_string
+      CLIENT_URL=http://localhost:5173
+      FIREBASE_SERVICE_ACCOUNT={...full service account JSON as one line...}
       PORT=8000
       ```
     - `/frontend/.env`:
@@ -138,7 +138,26 @@ npm run dev
       VITE_FIREBASE_API_KEY=your_firebase_api_key
       VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
       VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+      VITE_API_URL=https://your-backend-domain.example
+      # Optional fallback supported in code:
+      VITE_BACKEND_URL=https://your-backend-domain.example
       ```
+
+    ## 🚢 CI/CD Deployment (GitHub Actions)
+
+    This repository uses `.github/workflows/frontend_and_backend-deploy.yml` to deploy on every push to `main`.
+
+    - Frontend is deployed to Vercel.
+    - Backend deployment is triggered via a deploy hook URL (for stateful hosting providers).
+
+    Add these GitHub Actions repository secrets:
+
+    - `VERCEL_TOKEN`
+    - `VERCEL_ORG_ID`
+    - `VERCEL_PROJECT_ID_FRONTEND`
+    - `BACKEND_DEPLOY_HOOK_URL`
+
+    The workflow also runs frontend and backend build checks before deployment.
 
 ## 📱 PWA Support
 GOTCG is a Progressive Web App, which means:
@@ -202,13 +221,13 @@ echo "PORT=8001" >> .env
 ```
 
 **MongoDB connection failed**
-- Verify `MONGODB_URI` in `/backend/.env` is correct
+- Verify `MONGO_URI` (or `MONGODB_URI`) in `/backend/.env` is correct
 - Check your MongoDB Atlas IP allowlist includes your dev machine (or use `0.0.0.0/0` temporarily)
 - Ensure your database user credentials are correct
 - Test connection: `mongosh "<your_connection_string>"`
 
 **Firebase authentication errors in backend**
-- Verify `FIREBASE_PROJECT_ID` and `FIREBASE_PRIVATE_KEY` in `/backend/.env`
+- Verify `FIREBASE_SERVICE_ACCOUNT` in `/backend/.env`
 - Ensure your Firebase service account JSON is correctly formatted (no line breaks in private key)
 - Download fresh service account key from Firebase Console if needed
 
