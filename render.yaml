@@ -12,12 +12,13 @@ services:
       - key: PORT
         value: 8080
       - key: MONGO_URI
-        sync: false
-      - key: FIREBASE_SERVICE_ACCOUNT
+        value: ""
         sync: false
       - key: FIREBASE_SERVICE_ACCOUNT_B64
+        value: ""
         sync: false
       - key: CLIENT_URL
+        value: ""
         sync: false
     healthCheckPath: /health
     autoDeploy: true
