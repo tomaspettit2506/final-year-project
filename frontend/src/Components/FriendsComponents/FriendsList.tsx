@@ -285,7 +285,6 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         severity: "error"
       });
       throw error;
-    } finally {
     }
   };
 

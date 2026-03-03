@@ -81,7 +81,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
     const intervalId = setInterval(async () => {
       try {
         await onReloadChat(friend.id);
-      } catch (error) {
+      } catch {
         // Silently ignore polling errors
       }
     }, 2000);

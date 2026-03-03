@@ -4,15 +4,6 @@ const AVATAR_COLORS = [
   '#FFD3B6', '#FFAAA5', '#FF8B94', '#A8D8EA', '#AA96DA'
 ];
 
-export function getRandomAvatarColor(friendId: string): string {
-  // Use the friend ID as a seed to ensure same color on re-renders
-  const hash = friendId.split('').reduce((acc, char) => {
-    return ((acc << 5) - acc) + char.charCodeAt(0);
-  }, 0);
-  
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
 export function getRandomColor(): string {
   // Return a random color from the palette
   return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];

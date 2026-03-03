@@ -51,35 +51,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-// Get a specific user's friends by Firebase UID
-export async function listFriends(firebaseUid: string): Promise<Friend[]> {
-  const response = await fetch(`${API_BASE_URL}/friend/${firebaseUid}`);
-  return handleResponse<Friend[]>(response);
-}
-
-// Create a new friend entry
-export async function createFriend(friend: { friendName: string; friendEmail: string; friendRating: number; }): Promise<Friend> {
-  const response = await fetch(`${API_BASE_URL}/friend`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(friend),
-  });
-  return handleResponse<Friend>(response);
-}
-
-// Define Friend interface (matches backend response)
-export interface Friend {
-  friendUser?: string;
-  friendFirebaseUid: string;
-  friendName: string;
-  friendEmail: string;
-  friendRating: number;
-  gameRecents?: any;
-  addedAt?: Date;
-}
-
 // Define Game interface
 export interface GameData {
   userId?: string;

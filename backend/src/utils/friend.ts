@@ -24,30 +24,3 @@ export function addFriendIfMissing(user: any, target: any): void {
   }
 }
 
-export function normalizeFriends(friends: any[]): any[] {
-  return (friends || []).map((friend: any) => {
-    const populated = friend.friendUser as any;
-    return {
-      friendUser: friend.friendUser,
-      friendFirebaseUid: populated?.firebaseUid || friend.friendFirebaseUid,
-      friendName: populated?.name || friend.friendName,
-      friendEmail: populated?.email || friend.friendEmail,
-      friendRating: populated?.rating ?? friend.friendRating,
-      gameRecents: populated?.gameRecents,
-      addedAt: friend.addedAt
-    };
-  });
-}
-
-export function removeFriendFromList(
-  friendsArr: any[],
-  targetId: string,
-  targetMongoId?: any
-): any[] {
-  return (friendsArr || []).filter((f: any) => {
-    const byFirebase = f.friendFirebaseUid && f.friendFirebaseUid !== targetId;
-    const byMongo = targetMongoId ? f.friendUser?.toString?.() !== targetMongoId.toString?.() : true;
-    const byRawId = f.friendUser?.toString?.() !== targetId;
-    return byFirebase && byMongo && byRawId;
-  });
-}
