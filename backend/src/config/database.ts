@@ -5,12 +5,16 @@ export async function connectDatabase(): Promise<void> {
 
   const source = process.env.MONGO_URI ? 'MONGO_URI' : process.env.MONGODB_URI ? 'MONGODB_URI' : 'local fallback';
   console.log(`Using MongoDB source: ${source}`);
+  console.log(`Connecting to MongoDB (${MONGODB_URI.split('@')[1] || 'local'})...`);
 
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB');
+    await mongoose.connect(MONGODB_URI, {
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+    });
+    console.log('✅ Connected to MongoDB successfully');
   } catch (err) {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err);
     throw err;
   }
 }

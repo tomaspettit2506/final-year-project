@@ -33,16 +33,20 @@ export function initializeFirebase(): void {
   const serviceAccount = parseServiceAccount();
 
   if (!serviceAccount) {
-    console.warn('Firebase service account not configured');
+    console.warn('⚠️  Firebase service account not configured - some features will be disabled');
     return;
   }
 
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    console.log('Firebase Admin initialized');
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log('✅ Firebase Admin initialized');
+    } else {
+      console.log('ℹ️  Firebase Admin already initialized');
+    }
   } catch (error) {
-    console.error('Firebase initialization error:', error);
+    console.error('❌ Firebase initialization error:', error);
   }
 }

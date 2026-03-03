@@ -72,19 +72,35 @@ app.use(express.json());
 // Attach io instance to app for use in routes
 app.locals.io = io;
 
+// Track initialization state
+let isInitialized = false;
+let initError: string | null = null;
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date(),
+    initialized: isInitialized,
+    ...(initError && { error: initError })
+  });
 });
 
 // Initialize
 async function initialize(): Promise<void> {
   try {
+    console.log('Initializing services...');
     await connectDatabase();
+    console.log('Database connected');
     initializeFirebase();
+    console.log('Firebase initialized');
+    isInitialized = true;
   } catch (error) {
-    console.error('Initialization error:', error);
-    process.exit(1);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    initError = errorMsg;
+    console.error('Initialization error (non-fatal):', error);
+    // Don't exit - allow server to run in degraded mode
+    // This is important for Railway healthchecks
   }
 }
 
@@ -101,11 +117,14 @@ app.use('/message', messageRoutes);
 const rooms: Record<string, Room> = {};
 registerSocketHandlers(io, rooms);
 
-// Start server
+// Start server immediately (don't wait for initialization)
 const PORT = process.env.PORT || 8000;
 
-initialize().then(() => {
-  httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Initialize services in background (non-blocking)
+initialize().catch((error) => {
+  console.error('Background initialization failed:', error);
 });
