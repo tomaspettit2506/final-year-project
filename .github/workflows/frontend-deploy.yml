@@ -1,0 +1,54 @@
+name: Deploy Frontend (Vercel)
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-deploy.yml'
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Validate deployment secrets
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID_FRONTEND: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "Missing VERCEL_TOKEN secret. Add it in GitHub repo settings (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          if [ -z "$VERCEL_ORG_ID" ]; then
+            echo "Missing VERCEL_ORG_ID secret. Add it in GitHub repo settings (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          if [ -z "$VERCEL_PROJECT_ID_FRONTEND" ]; then
+            echo "Missing VERCEL_PROJECT_ID_FRONTEND secret. Add it in GitHub repo settings (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+
+      - name: Deploy frontend to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        working-directory: frontend
+        run: |
+          vercel deploy --prod --token="$VERCEL_TOKEN"
+
+      - name: Frontend deploy success
+        run: echo "✓ Frontend deployed successfully to Vercel."
