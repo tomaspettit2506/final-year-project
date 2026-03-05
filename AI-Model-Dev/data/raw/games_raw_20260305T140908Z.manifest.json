@@ -1,0 +1,31 @@
+{
+  "generatedAtUtc": "20260305T140908Z",
+  "recordCount": 10,
+  "schemaVersion": "1.0.0",
+  "jsonPath": "/workspaces/final-year-project/AI-Model-Dev/data/raw/games_raw_20260305T140908Z.json",
+  "csvPath": "/workspaces/final-year-project/AI-Model-Dev/data/raw/games_raw_20260305T140908Z.csv",
+  "latestJsonPath": "/workspaces/final-year-project/AI-Model-Dev/data/raw/games_raw_latest.json",
+  "latestCsvPath": "/workspaces/final-year-project/AI-Model-Dev/data/raw/games_raw_latest.csv",
+  "fields": [
+    "gameId",
+    "date",
+    "result",
+    "termination",
+    "isRated",
+    "timeControl",
+    "moves",
+    "duration",
+    "playerColor",
+    "opponent",
+    "myRating",
+    "myNewRating",
+    "ratingChange",
+    "opponentRating",
+    "opponentNewRating",
+    "opponentRatingChange",
+    "myAccuracy",
+    "opponentAccuracy",
+    "userRef",
+    "rawSource"
+  ]
+}

@@ -1,0 +1,11 @@
+gameId,date,result,termination,isRated,timeControl,moves,duration,playerColor,opponent,myRating,myNewRating,ratingChange,opponentRating,opponentNewRating,opponentRatingChange,myAccuracy,opponentAccuracy,userRef,rawSource,hasFen,hasPgn,positionCount,positionTensorReady,split
+69a4406d021328b7657be210,2026-03-01T13:34:37.235Z,win,resignation,True,10,3,0,white,Eric Murray,572.0,591.0,19.0,629.0,610.0,-19.0,76.0,81.0,,games_api_or_json,False,False,0,False,train
+69a464cd64e474e833ab604d,2026-03-01T16:09:49.185Z,win,abandonment,True,10,2,1,black,Tomás Pettit,610.0,625.0,15.0,591.0,576.0,-15.0,84.0,92.0,,games_api_or_json,False,False,0,False,train
+69a4657464e474e833ab60a0,2026-03-01T16:12:35.729Z,win,abandonment,True,10,2,3,white,Tomás Pettit,625.0,639.0,14.0,591.0,577.0,-14.0,86.0,85.0,,games_api_or_json,False,False,0,False,train
+69a4693864e474e833ab610c,2026-03-01T16:28:40.430Z,win,abandonment,True,10,1,0,white,Eric Murray,591.0,609.0,18.0,639.0,621.0,-18.0,74.0,90.0,,games_api_or_json,False,False,0,False,train
+69a47010b4f8bf282b827faa,2026-03-01T16:57:52.201Z,loss,timeout,True,0,7,30,black,Tomás Pettit,639.0,622.0,-17.0,609.0,626.0,17.0,72.0,73.0,,games_api_or_json,False,False,0,False,train
+69a47010b4f8bf282b827fd6,2026-03-01T16:57:52.487Z,win,timeout,True,0,7,11,white,Eric Murray,609.0,626.0,17.0,639.0,622.0,-17.0,82.0,84.0,,games_api_or_json,False,False,0,False,val
+69a476e9b4f8bf282b8281b9,2026-03-01T17:27:05.095Z,win,abandonment,True,10,2,27,black,Tomás Pettit,622.0,638.0,16.0,626.0,610.0,-16.0,84.0,88.0,,games_api_or_json,False,False,0,False,train
+69a47bcbb4f8bf282b828206,2026-03-01T17:47:54.765Z,win,abandonment,True,10,10,9,black,Tomás Pettit,638.0,653.0,15.0,626.0,611.0,-15.0,95.0,87.0,,games_api_or_json,False,False,0,False,train
+69a47cd7b4f8bf282b828271,2026-03-01T17:52:23.494Z,win,abandonment,True,10,8,8,black,Tomás Pettit,638.0,653.0,15.0,626.0,611.0,-15.0,70.0,82.0,,games_api_or_json,False,False,0,False,train
+69a47d4fb4f8bf282b8282a7,2026-03-01T17:54:23.332Z,win,abandonment,True,10,14,79,white,Eric Murray,626.0,643.0,17.0,653.0,636.0,-17.0,84.0,77.0,,games_api_or_json,False,False,0,False,train

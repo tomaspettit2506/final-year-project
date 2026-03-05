@@ -1,8 +1,27 @@
-"""Generate core analytics graphs from processed chess game data."""
+"""Generate core analytics graphs from processed chess game data.
+
+This script reads a cleaned CSV of chess game records and produces a set of PNG charts visualizing key metrics:
+- Outcome distribution (win/loss/draw)
+- Rating change distribution
+- Accuracy distribution
+- Game duration distribution
+- Move count distribution
+
+The script is designed to be flexible in locating the input CSV, with a resolution order that checks:
+1) the exact user-provided path,
+2) a path relative to this script directory (for convenience),
+3) the newest fallback in data/processed.
+
+Output PNG files are saved to a specified directory (default: img/), which is created if it doesn't exist.
+Usage:
+- python generate_graphs.py --input-csv path/to/processed_games.csv --image-dir path/to/output_images/
+
+"""
 
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -12,6 +31,39 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_INPUT_CSV = BASE_DIR / "data" / "processed" / "games_clean_latest.csv"
 DEFAULT_IMAGE_DIR = BASE_DIR / "img"
+
+
+def _resolve_input_csv(input_csv: Path) -> Path:
+	"""Resolve the best available input CSV path.
+
+	Resolution order:
+	1) exact user-provided path,
+	2) path relative to this script directory (for convenience),
+	3) newest fallback in data/processed.
+	"""
+
+	candidate = input_csv.expanduser()
+	if candidate.exists():
+		return candidate
+
+	if not candidate.is_absolute():
+		relative_to_script = (BASE_DIR / candidate).resolve()
+		if relative_to_script.exists():
+			return relative_to_script
+
+	processed_dir = BASE_DIR / "data" / "processed"
+	if processed_dir.exists():
+		for pattern in ["games_clean_latest.csv", "games_clean_*.csv", "*.csv"]:
+			matches = sorted(processed_dir.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
+			if matches:
+				return matches[0]
+
+	raise FileNotFoundError(
+		"Could not find an input CSV for graph generation. "
+		f"Checked: '{input_csv}'. "
+		"Expected processed data in 'AI-Model-Dev/data/processed/'. "
+		"Run preprocessing/pipeline first, or pass --input-csv explicitly."
+	)
 
 
 def _ensure_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -29,7 +81,8 @@ def _save_plot(path: Path) -> None:
 
 def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	image_dir.mkdir(parents=True, exist_ok=True)
-	df = pd.read_csv(input_csv)
+	resolved_input_csv = _resolve_input_csv(input_csv)
+	df = pd.read_csv(resolved_input_csv)
 	df = _ensure_numeric(df, ["ratingChange", "myAccuracy", "duration", "moves"])
 
 	output_files: list[Path] = []
@@ -102,7 +155,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
 	args = parse_args()
-	outputs = generate_graphs(args.input_csv, args.image_dir)
+	try:
+		outputs = generate_graphs(args.input_csv, args.image_dir)
+	except FileNotFoundError as exc:
+		print(f"Error: {exc}", file=sys.stderr)
+		return 1
+
 	print("Generated graph files:")
 	for path in outputs:
 		print(f"- {path}")

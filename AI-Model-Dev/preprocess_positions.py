@@ -2,6 +2,22 @@
 
 This script currently builds game-level cleaned datasets and position placeholders.
 True position tensors require PGN/FEN persistence in backend storage.
+
+The preprocessing steps include:
+- Normalization to a stable schema with consistent columns.
+- Stable sorting by date and gameId for deterministic ordering.
+- Type coercion for numeric fields.
+- A deterministic train/validation split based on a stable hash of gameId.
+- Generation of a quality report with missing field rates and position data readiness.
+
+Output artifacts include:
+- Cleaned CSV and JSON files with timestamped and "latest" versions.
+- A placeholder CSV for position-level data tracking.
+- A split manifest JSON describing the train/validation split.
+- A quality report JSON summarizing dataset completeness and readiness.
+
+Usage:
+- python preprocess_positions.py --input-json path/to/games_raw.json --output-dir path/to/processed/ --val-ratio 0.2
 """
 
 from __future__ import annotations

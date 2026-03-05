@@ -7,6 +7,15 @@ This script supports either:
 Output:
 - JSON and CSV files with deterministic ordering.
 - A machine-readable manifest JSON describing the export.
+
+Run:
+- python data_export.py --input-json path/to/games.json
+OR
+- python data_export.py --api-url https://example.com/api/games
+
+Example output files:
+- python /workspaces/final-year-project/AI-Model-Dev/data_export.py 
+    --api-url https://gotcg-backend-production.up.railway.app/game
 """
 
 from __future__ import annotations

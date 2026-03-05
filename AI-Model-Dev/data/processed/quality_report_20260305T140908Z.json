@@ -1,0 +1,32 @@
+{
+  "generatedAtUtc": "20260305T140908Z",
+  "recordCount": 10,
+  "requiredColumns": [
+    "gameId",
+    "date",
+    "result",
+    "termination",
+    "moves",
+    "duration",
+    "myAccuracy",
+    "opponentAccuracy",
+    "ratingChange",
+    "userRef"
+  ],
+  "missingFieldRates": {
+    "gameId": 0.0,
+    "date": 0.0,
+    "result": 0.0,
+    "termination": 0.0,
+    "moves": 0.0,
+    "duration": 0.0,
+    "myAccuracy": 0.0,
+    "opponentAccuracy": 0.0,
+    "ratingChange": 0.0,
+    "userRef": 1.0
+  },
+  "positionDataReadiness": {
+    "fenAvailableRate": 0.0,
+    "pgnAvailableRate": 0.0
+  }
+}

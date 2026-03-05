@@ -1,0 +1,8 @@
+{
+  "generatedAtUtc": "20260305T140908Z",
+  "trainCount": 9,
+  "valCount": 1,
+  "validationRatio": 0.2,
+  "cleanCsvPath": "/workspaces/final-year-project/AI-Model-Dev/data/processed/games_clean_20260305T140908Z.csv",
+  "cleanJsonPath": "/workspaces/final-year-project/AI-Model-Dev/data/processed/games_clean_20260305T140908Z.json"
+}
