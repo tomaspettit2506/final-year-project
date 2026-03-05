@@ -1,4 +1,27 @@
-"""Generate machine-readable metrics summaries for dissertation/reporting."""
+"""Generate machine-readable metrics summaries for dissertation/reporting.
+
+This script reads a cleaned CSV of chess game records and produces a set of JSON and CSV files summarizing key metrics:
+- Overall dataset summary with missing field rates and class balance.
+- Class balance CSV showing distribution of game outcomes (win/loss/draw).
+- Per-user aggregates CSV with average accuracy, rating change, etc.
+
+The script is designed to be flexible in locating the input CSV, with a resolution order that checks:
+1) the exact user-provided path,
+2) a path relative to this script directory (for convenience),
+3) the newest fallback in data/processed.
+
+Output files are saved to a specified directory (default: data/reports/), which is created if it doesn't exist.
+Usage:
+- python report_metrics.py --input-csv path/to/processed_games.csv --output-dir path/to/output_reports/
+
+Example output files:
+- data/reports/metrics_summary_20240601T120000Z.json
+- data/reports/class_balance_20240601T120000Z.csv
+- data/reports/per_user_aggregates_20240601T120000Z.csv
+- data/reports/metrics_summary_latest.json
+- data/reports/class_balance_latest.csv
+- data/reports/per_user_aggregates_latest.csv
+"""
 
 from __future__ import annotations
 

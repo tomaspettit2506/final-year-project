@@ -1,0 +1,20 @@
+{
+  "generatedAtUtc": "20260305T140909Z",
+  "recordCount": 10,
+  "missingFieldRates": {
+    "gameId": 0.0,
+    "date": 0.0,
+    "result": 0.0,
+    "moves": 0.0,
+    "duration": 0.0,
+    "myAccuracy": 0.0,
+    "opponentAccuracy": 0.0,
+    "ratingChange": 0.0,
+    "userRef": 1.0
+  },
+  "classBalance": {
+    "loss": 1,
+    "win": 9
+  },
+  "uniqueUsers": 1
+}
