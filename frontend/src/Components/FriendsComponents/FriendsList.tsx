@@ -172,7 +172,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setLoadingGames(true);
     setGamesError(null);
     try {
-      const res = await fetch(`/user/${targetId}/games`);
+      const res = await fetch(`${apiBaseUrl}/user/${targetId}/games`);
       if (!res.ok) {
         const msg = await res.text();
         throw new Error(msg || `Failed to load games (status ${res.status})`);
@@ -247,7 +247,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       const roomId = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
       // Send game invite to friend via REST API
-      const response = await fetch('/game-invite', {
+      const response = await fetch(`${apiBaseUrl}/game-invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

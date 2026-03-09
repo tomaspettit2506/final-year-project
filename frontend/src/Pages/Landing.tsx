@@ -9,6 +9,7 @@ import { auth, firestore } from "../firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { getRandomColor } from "../Utils/avatarColors";
+import { getApiBaseUrl } from "../Services/api";
 import WelcomeApp from "../assets/img-theme/WelcomeApp.jpeg";
 
 // Features for the slideshow
@@ -22,6 +23,7 @@ const slides = [
 ];
 
 const Landing = () => {
+  const apiBaseUrl = getApiBaseUrl();
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<"landing" | "login" | "signup">("landing");
   const [form, setForm] = useState({ name: "", rating: 500, email: "", password: "" });
@@ -69,7 +71,7 @@ const Landing = () => {
         });
         // Notify backend about new user
         try {
-          await fetch("/user", {
+          await fetch(`${apiBaseUrl}/user`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

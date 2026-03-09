@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Button, Avatar, Badge, Chip, Typography } from "@mui/material";
 import { useAuth } from "../../Context/AuthContext";
+import { getApiBaseUrl } from "../../Services/api";
 
 interface User {
   id: string;
@@ -20,6 +21,7 @@ interface AddFriendProps {
 
 const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   const { user } = useAuth();
+  const apiBaseUrl = getApiBaseUrl();
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]); // initially empty; populated from backend
   const [hasSearched, setHasSearched] = useState(false);
@@ -30,7 +32,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/user`);
+      const res = await fetch(`${apiBaseUrl}/user`);
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       
@@ -76,7 +78,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
     onSendRequest(userId);
     // POST Request
     try {
-      const res = await fetch('/request', {
+      const res = await fetch(`${apiBaseUrl}/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromUserId: user.uid, toUserId: requestTargetId }),

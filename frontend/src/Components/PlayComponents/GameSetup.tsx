@@ -6,6 +6,7 @@ import type { GameMode } from '../../Types/chess';
 import { Box, Button, Card, CardContent, Grid, TextField, Typography, Alert, CircularProgress, 
   Switch, Select, MenuItem, FormControl, InputLabel, useTheme, useMediaQuery } from '@mui/material';
 import { useTheme as useAppTheme } from '../../Context/ThemeContext';
+import { getApiBaseUrl } from '../../Services/api';
 
 interface RoomUser {
   id: string;
@@ -44,6 +45,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, userData } = useAuth();
+  const apiBaseUrl = getApiBaseUrl();
   const accountName = (userData?.name || user?.displayName || '').trim();
   const isAuthenticated = Boolean(user);
   const hasAccountName = Boolean(accountName);
@@ -123,7 +125,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
       // Fetch game invite settings for this room
       if (user?.uid) {
-        fetch(`/game-invite/room/${roomIdParam}`)
+        fetch(`${apiBaseUrl}/game-invite/room/${roomIdParam}`)
           .then(res => res.ok ? res.json() : null)
           .then(invite => {
             if (invite) {
