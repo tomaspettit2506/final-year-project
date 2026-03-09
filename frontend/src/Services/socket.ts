@@ -13,7 +13,12 @@ function resolveApiBaseUrl(): string {
     }
   }
 
-  // 2. Try to derive from current window location (most robust for Codespaces)
+  // 2. Use configured backend URL when provided.
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  // 3. Try to derive from current window location (most robust for Codespaces)
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
     
@@ -30,11 +35,6 @@ function resolveApiBaseUrl(): string {
         return `${protocol}//${nameFirstMatch[1]}-8000.app.github.dev`;
       }
     }
-  }
-
-  // 3. Use configured backend URL when provided.
-  if (configured) {
-    return configured.replace(/\/$/, '');
   }
 
   // 4. In development, default to localhost backend.

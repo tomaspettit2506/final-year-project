@@ -85,3 +85,45 @@ export async function saveGame(gameData: GameData): Promise<any> {
   });
   return handleResponse<any>(response);
 }
+
+export interface PredictRequestData {
+  requestId?: string;
+  topK?: number;
+  boardState: {
+    fen: string;
+    moves?: string[];
+    playerColor?: 'white' | 'black';
+    moveNumber?: number;
+  };
+}
+
+export interface PredictResponseData {
+  requestId: string;
+  prediction: {
+    bestMove: string;
+    confidence: number;
+    topMoves: Array<{
+      move: string;
+      score: number;
+    }>;
+  };
+  model: {
+    name: string;
+    version: string;
+    source?: string;
+  };
+  source: 'model-service';
+  latencyMs: number;
+}
+
+export async function predictPosition(payload: PredictRequestData): Promise<PredictResponseData> {
+  const response = await fetch(`${API_BASE_URL}/predict`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<PredictResponseData>(response);
+}

@@ -6,6 +6,7 @@ import { setGlobalOptions } from 'firebase-functions/v2';
 
 import { connectDatabase } from './config/database';
 import { initializeFirebase } from './config/firebase';
+import { validateCorsOrigin } from './config/cors';
 
 import userRoutes from './routes/users';
 import gameRoutes from './routes/games';
@@ -19,30 +20,9 @@ setGlobalOptions({ region: 'europe-west1', maxInstances: 10 });
 
 const app: Express = express();
 
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  process.env.CLIENT_URL?.replace('http://', 'https://'),
-  'http://localhost:5173',
-  'https://localhost:5173',
-  'http://localhost:5174',
-  'https://localhost:5174',
-  'http://localhost:5175',
-  'https://localhost:5175',
-].filter(Boolean) as string[];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      try {
-        const hostname = new URL(origin).hostname;
-        if (hostname.endsWith('.app.github.dev')) return callback(null, true);
-      } catch {
-        // Fall through to rejection
-      }
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
-    },
+    origin: validateCorsOrigin,
     credentials: true,
   })
 );
