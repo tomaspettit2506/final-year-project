@@ -1,5 +1,6 @@
 function resolveApiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
+  const defaultProductionFallback = 'https://gotcg-backend-production.up.railway.app';
 
   // In dev, prefer same-origin requests so Vite proxy handles API calls.
   if (import.meta.env.DEV) {
@@ -33,8 +34,10 @@ function resolveApiBaseUrl(): string {
     }
   }
 
-  // 2. Final fallback: same-origin (never localhost in production by default).
-  return '';
+  // 2. Stable production fallback for deployments missing VITE_API_URL/VITE_BACKEND_URL.
+  //    This avoids same-origin requests hitting static hosts (e.g., Vercel) and returning 404.
+  console.warn('[api] Missing VITE_API_URL/VITE_BACKEND_URL in production build; using fallback backend URL.');
+  return defaultProductionFallback;
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
