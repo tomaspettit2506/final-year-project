@@ -21,6 +21,9 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
+      - name: Pin npm version
+        run: npm install -g npm@10.8.2
+
       - name: Install dependencies
         working-directory: backend
         run: npm ci
