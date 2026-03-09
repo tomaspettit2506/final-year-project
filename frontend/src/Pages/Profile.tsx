@@ -63,8 +63,8 @@ const Profile = () => {
         return;
       }
 
-      const endpoint = `/game/user/${userIdToUse}`;
-      const res = await fetch(endpoint);
+      const endpoint = `${apiBaseUrl}/game/user/${encodeURIComponent(userIdToUse)}`;
+      const res = await fetch(endpoint, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch recent games');
       let data = await res.json();
       
