@@ -178,7 +178,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
                 </Button>
               </Box>
               ) : (
-              recentGames.slice(0, 5).map((game, idx) => (
+              recentGames.slice(0, 7).map((game, idx) => (
                 <Card
                   key={game.id || game._id || idx}
                   sx={{

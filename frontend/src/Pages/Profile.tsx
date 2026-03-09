@@ -343,7 +343,7 @@ const Profile = () => {
         </Grid>
         <Grid size={{xs: 6, sm: 3}}>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#45a34a" : "#41fe4a", height: "100%" }}>
-            <CardContent>
+            <CardContent sx={{marginTop: isMobile ? 1 : 2}}>
               <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Wins</Typography>
               <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.wins || 0}</Typography>
             </CardContent>
@@ -351,7 +351,7 @@ const Profile = () => {
         </Grid>
         <Grid size={{xs: 6, sm: 3}}>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#f39980" : "#ed704e", height: "100%" }}>
-            <CardContent>
+            <CardContent sx={{marginTop: isMobile ? 1 : 2}}>
               <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Losses</Typography>
               <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.losses || 0}</Typography>
             </CardContent>
@@ -359,7 +359,7 @@ const Profile = () => {
         </Grid>
         <Grid size={{xs: 6, sm: 3}}>
           <Card sx={{ borderRadius: 2, boxShadow: '0 4px 12px rgba(85, 0, 170, 0.1)', backgroundColor: isDark ? "#ffffffaa" : "#ffffffcc", height: "100%" }}>
-            <CardContent>
+            <CardContent sx={{marginTop: isMobile ? 1 : 2}}>
               <Typography variant="h6" color={isDark ? "#000000" : "#5500aa"}>Draws</Typography>
               <Typography variant="h4" fontWeight="bold" color={isDark ? "#000000" : "#5500aa"}>{userData?.draws || 0}</Typography>
             </CardContent>
