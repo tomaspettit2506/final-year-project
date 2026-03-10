@@ -69,8 +69,8 @@ describe('GameInvites Component', () => {
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/10 mins • Rated/i)).toBeInTheDocument();
-    expect(screen.getByText(/5 mins • Casual/i)).toBeInTheDocument();
+    expect(screen.getByText(/10 mins • 🏆 rated/i)).toBeInTheDocument();
+    expect(screen.getByText(/no timer • casual/i)).toBeInTheDocument();
   });
 
   test('calls onAccept and navigates when accept button is clicked', () => {

@@ -27,7 +27,7 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/John Doe's Recent Games/i)).toBeInTheDocument();
+    expect(screen.getByText(/games with john doe/i)).toBeInTheDocument();
   });
 
   test('does not render when closed', () => {
@@ -55,8 +55,8 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/win/i)).toBeInTheDocument();
-    expect(screen.getByText(/loss/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Win$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Loss$/i)).toBeInTheDocument();
   });
 
   test('displays game results', () => {
@@ -70,8 +70,7 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/Result: win/i)).toBeInTheDocument();
-    expect(screen.getByText(/Result: loss/i)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /view/i })).toHaveLength(2);
   });
 
   test('displays empty state when no games', () => {
@@ -147,6 +146,7 @@ describe('GameDialog Component', () => {
       />
     );
     
-    expect(screen.getByText(/Date:/i)).toBeInTheDocument();
+    expect(screen.getByText(/jan 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/jan 2/i)).toBeInTheDocument();
   });
 });

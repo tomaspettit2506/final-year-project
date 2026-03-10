@@ -30,7 +30,7 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
         <AppBar position="static" sx={{ backgroundImage: `url(${SpaceTheme})`, backgroundSize: 'cover' }}>
             <Toolbar>
                 {isBackButton && (
-                    <IconButton color="inherit" onClick={() => navigate(-1)} className="icon-button">
+                    <IconButton color="inherit" onClick={() => navigate(-1)} className="icon-button" aria-label="Back">
                         ⬅️
                     </IconButton>
                 )}
@@ -38,20 +38,20 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
                     {title}
                 </Typography>
                 <Tooltip title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                    <IconButton color="inherit" onClick={toggleTheme} className="icon-button">
+                    <IconButton color="inherit" onClick={toggleTheme} className="icon-button" aria-label="Toggle theme">
                         {isDark ? "☀️" : "🌙"}
                     </IconButton>
                 </Tooltip>
                 {isSettings && (
                     <Tooltip title="Settings">
-                        <IconButton color="inherit" onClick={() => navigate("/settings")} className="icon-button">
+                        <IconButton color="inherit" onClick={() => navigate("/settings")} className="icon-button" aria-label="Settings">
                             ⚙️
                         </IconButton>
                     </Tooltip>
                 )}
                 {isExit && (
                     <Tooltip title="Logout">
-                        <IconButton color="inherit" onClick={handleLogout} className="icon-button">
+                        <IconButton color="inherit" onClick={handleLogout} className="icon-button" aria-label="Exit">
                             🚪
                         </IconButton>
                     </Tooltip>

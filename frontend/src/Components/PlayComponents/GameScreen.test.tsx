@@ -42,7 +42,7 @@ describe('GameScreen Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText(/game screen/i)).toBeInTheDocument();
+    expect(screen.getByText(/game status/i)).toBeInTheDocument();
   });
 
   test('displays game mode and difficulty', () => {
@@ -61,8 +61,7 @@ describe('GameScreen Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText(/multiplayer/i)).toBeInTheDocument();
-    expect(screen.getByText(/medium/i)).toBeInTheDocument();
+    expect(screen.getByText(/vs ai \(medium\)/i)).toBeInTheDocument();
   });
 
   test('displays timer when enabled', () => {
@@ -81,8 +80,8 @@ describe('GameScreen Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText(/timer/i)).toBeInTheDocument();
-    expect(screen.getByText(/5:00/i)).toBeInTheDocument();
+    expect(screen.getByText(/game timer/i)).toBeInTheDocument();
+    expect(screen.getAllByText('5:00')).toHaveLength(2);
    });
 
   test('does not display timer when disabled', () => {

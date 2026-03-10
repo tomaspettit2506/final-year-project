@@ -71,10 +71,10 @@ describe("ChessBoard Component", () => {
       flipped: false
     });
 
-    const board = screen.getByTestId('chess-board');
-    fireEvent.click(board);
+    const square = screen.getByTestId('square-0-0');
+    fireEvent.click(square);
 
-    expect(onSquareClickMock).toHaveBeenCalled();
+    expect(onSquareClickMock).toHaveBeenCalledWith(0, 0);
   });
 
   test("renders flipped board when flipped prop is true", () => {

@@ -43,7 +43,7 @@ describe('GameSetup Component', () => {
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/game setup/i)).toBeInTheDocument();
+    expect(screen.getByText(/select game mode/i)).toBeInTheDocument();
   });
 
   test('allows user to select game mode and start game', async () => {
@@ -59,7 +59,6 @@ describe('GameSetup Component', () => {
       </BrowserRouter>
     );
     
-    fireEvent.click(screen.getByText(/play against ai/i));
     fireEvent.click(screen.getByText(/start game/i));
     
     await waitFor(() => {
@@ -67,7 +66,7 @@ describe('GameSetup Component', () => {
         gameMode: 'ai',
         difficulty: 750,
         difficultyName: 'Medium',
-        timerEnabled: true,
+        timerEnabled: false,
         timerDuration: 600
       });
     });

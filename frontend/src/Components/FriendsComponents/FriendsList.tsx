@@ -671,6 +671,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
                       onClick={(e) => handleMenuOpen(friend, e)}
                       aria-controls={menuAnchorEl ? "friend-menu" : undefined}
                       aria-haspopup="true"
+                      aria-label="More actions"
                     >
                       <MoreVertIcon />
                     </IconButton>

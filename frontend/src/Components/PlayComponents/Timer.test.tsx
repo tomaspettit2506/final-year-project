@@ -93,7 +93,7 @@ describe('Timer Component', () => {
       />
     );
     
-    expect(screen.getByText('10:00')).toBeInTheDocument();
+    expect(screen.getAllByText('10:00')).toHaveLength(2);
   });
 
   test('displays both timers with different values', () => {

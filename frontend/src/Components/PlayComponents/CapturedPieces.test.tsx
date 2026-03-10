@@ -17,13 +17,15 @@ describe('CapturedPieces Component', () => {
 
     render(<CapturedPieces whiteCaptured={whiteCaptured} blackCaptured={blackCaptured} />);
 
-    expect(screen.getByText(/Captured Pieces/i)).toBeInTheDocument();
+    expect(screen.getByText(/captured by white:/i)).toBeInTheDocument();
+    expect(screen.getByText(/captured by black:/i)).toBeInTheDocument();
   });
 
   test('renders empty state when no pieces are captured', () => {
     render(<CapturedPieces whiteCaptured={[]} blackCaptured={[]} />);
 
-    expect(screen.getByText(/Captured Pieces/i)).toBeInTheDocument();
+    expect(screen.getByText(/captured by white:/i)).toBeInTheDocument();
+    expect(screen.getByText(/captured by black:/i)).toBeInTheDocument();
   });
 
   test('displays material advantage correctly', () => {
@@ -36,7 +38,7 @@ describe('CapturedPieces Component', () => {
 
     render(<CapturedPieces whiteCaptured={whiteCaptured} blackCaptured={blackCaptured} />);
 
-    expect(screen.getByText(/Captured Pieces/i)).toBeInTheDocument();
+    expect(screen.getByText('+4')).toBeInTheDocument();
   });
 });
 

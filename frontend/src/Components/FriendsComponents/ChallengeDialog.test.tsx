@@ -13,7 +13,7 @@ describe('ChallengeDialog Component', () => {
       />
     );
     
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText(/challenge john doe/i)).toBeInTheDocument();
   });
 
   test('does not render when closed', () => {

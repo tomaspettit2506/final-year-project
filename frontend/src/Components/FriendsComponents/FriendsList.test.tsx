@@ -104,8 +104,11 @@ describe('FriendsList Component', () => {
     const moreButtons = screen.getAllByRole('button', { name: /more/i });
     fireEvent.click(moreButtons[0]);
     
-    const removeButton = screen.getByRole('menuitem', { name: /remove/i });
+    const removeButton = screen.getByRole('menuitem', { name: /remove friend/i });
     fireEvent.click(removeButton);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'John Doe' } });
+    fireEvent.click(screen.getByRole('button', { name: /remove friend/i }));
     
     expect(mockOnRemoveFriend).toHaveBeenCalledWith(mockFriends[0]);
   });
@@ -119,7 +122,7 @@ describe('FriendsList Component', () => {
       </BrowserRouter>
     );
     
-    expect(screen.getByText('1200')).toBeInTheDocument();
-    expect(screen.getByText('1350')).toBeInTheDocument();
+    expect(screen.getByText(/1200 -/i)).toBeInTheDocument();
+    expect(screen.getByText(/1350 -/i)).toBeInTheDocument();
   });
 });

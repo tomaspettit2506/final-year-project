@@ -104,7 +104,7 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
                 <DialogTitle>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="h6">Games with {friendName}</Typography>
-                        <IconButton onClick={onClose} size="small">
+                        <IconButton onClick={onClose} size="small" aria-label="Close">
                             <CloseIcon />
                         </IconButton>
                     </Box>

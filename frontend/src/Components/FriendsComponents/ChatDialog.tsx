@@ -191,36 +191,41 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
       sx={{ "& .MuiDialog-paper": { height: 600, display: "flex", flexDirection: "column" } }}
     >
       <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ position: "relative" }}>
-            <Avatar
-              sx={{ width: 40, height: 40, backgroundColor: friend.avatarColor }}
-            >
-              {friend.name.charAt(0).toUpperCase()}{friend.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
-            </Avatar>
-            {friend.online && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  width: 12,
-                  height: 12,
-                  bgcolor: "success.main",
-                  borderRadius: "50%",
-                  border: "2px solid background",
-                }}
-              />
-            )}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ position: "relative" }}>
+              <Avatar
+                sx={{ width: 40, height: 40, backgroundColor: friend.avatarColor }}
+              >
+                {friend.name.charAt(0).toUpperCase()}{friend.name.split(' ')[1]?.charAt(0).toUpperCase() || ''}
+              </Avatar>
+              {friend.online && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    bgcolor: "success.main",
+                    borderRadius: "50%",
+                    border: "2px solid background",
+                  }}
+                />
+              )}
+            </Box>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {friend.name}
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                {friend.online ? "Online" : `Last seen ${friend.lastSeen}`}
+              </Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {friend.name}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {friend.online ? "Online" : `Last seen ${friend.lastSeen}`}
-            </Typography>
-          </Box>
+          <IconButton aria-label="Close chat" onClick={() => onOpenChange(false)}>
+            <X size={18} />
+          </IconButton>
         </Box>
       </DialogTitle>
 
@@ -346,6 +351,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
                           <IconButton
                             size="small"
                             onClick={() => handleReplyStart(message)}
+                            aria-label="Reply"
                             sx={{
                               color: "inherit",
                               p: 0.5,
@@ -360,6 +366,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
                               <IconButton
                                 size="small"
                                 onClick={() => handleEditStart(message)}
+                                aria-label="Edit message"
                                 sx={{ 
                                   color: "inherit",
                                   p: 0.5,
@@ -372,6 +379,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
                               <IconButton
                                 size="small"
                                 onClick={() => handleDelete(message.id)}
+                                aria-label="Delete message"
                                 sx={{ 
                                   color: "inherit",
                                   p: 0.5,
@@ -446,6 +454,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
             onClick={handleSend}
             variant="contained"
             disabled={!messageText.trim()}
+            aria-label="Send message"
             sx={{ minWidth: 40, p: 1 }}
           >
             <Send size={20} />

@@ -151,6 +151,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   return (
     <Box
       ref={boardRef}
+      data-testid="chess-board"
       sx={{
         display: "inline-block",
         backgroundColor: "#27272a",
@@ -190,6 +191,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
             return (
               <Grid size={{ xs: 1 }} key={`${displayRow}-${displayCol}`}>
                 <Box
+                  data-testid={`square-${r}-${c}`}
                   onClick={() => onSquareClick(r, c)}
                   onDrop={(e) => handleDrop(e, r, c)}
                   onDragOver={(e) => {
