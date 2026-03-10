@@ -104,6 +104,9 @@ router.post('/', async (req, res) => {
       if (mongoose.Types.ObjectId.isValid(id)) {
         filters.push({ _id: id });
       }
+      if (typeof id === 'string' && id.includes('@')) {
+        filters.push({ email: id });
+      }
       return { $or: filters };
     };
 

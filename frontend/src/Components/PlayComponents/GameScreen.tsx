@@ -33,6 +33,70 @@ interface GameScreenProps {
   isRated?: boolean;
 }
 
+const promotionFromNotation = (notation?: string): 'queen' | 'rook' | 'bishop' | 'knight' | undefined => {
+  const match = notation?.match(/=([QRBN])/);
+  if (!match) return undefined;
+  const symbol = match[1];
+  if (symbol === 'Q') return 'queen';
+  if (symbol === 'R') return 'rook';
+  if (symbol === 'B') return 'bishop';
+  return 'knight';
+};
+
+const calculatePlayerAccuracies = (moves: Move[]): { white: number; black: number } => {
+  if (!Array.isArray(moves) || moves.length === 0) {
+    return { white: 0, black: 0 };
+  }
+
+  let replayBoard = createInitialBoard();
+  const totals: Record<PieceColor, number> = { white: 0, black: 0 };
+  const counts: Record<PieceColor, number> = { white: 0, black: 0 };
+
+  for (const move of moves) {
+    const movingPiece = replayBoard[move.from.row]?.[move.from.col];
+    if (!movingPiece) {
+      continue;
+    }
+
+    let accuracy = typeof move.accuracy === 'number' ? move.accuracy : undefined;
+    if (accuracy === undefined) {
+      try {
+        accuracy = calculateMoveAccuracy(
+          replayBoard,
+          { from: move.from, to: move.to },
+          movingPiece.color
+        ).accuracy;
+      } catch (error) {
+        console.warn('[GameScreen] Failed to calculate move accuracy during game save:', error);
+      }
+    }
+
+    if (typeof accuracy === 'number' && Number.isFinite(accuracy)) {
+      const normalizedAccuracy = Math.min(100, Math.max(0, Math.round(accuracy)));
+      totals[movingPiece.color] += normalizedAccuracy;
+      counts[movingPiece.color] += 1;
+    }
+
+    const castling = move.isCastling ?? isCastlingMove(replayBoard, move.from, move.to);
+    replayBoard = castling
+      ? executeCastling(replayBoard, move.from, move.to)
+      : simulateMove(replayBoard, move.from, move.to);
+
+    const promotionCandidate = move.promotionTo || promotionFromNotation(move.notation);
+    const promotionTo = promotionCandidate && ['queen', 'rook', 'bishop', 'knight'].includes(promotionCandidate)
+      ? (promotionCandidate as 'queen' | 'rook' | 'bishop' | 'knight')
+      : undefined;
+    if (!castling && movingPiece.type === 'pawn' && promotionTo) {
+      replayBoard = promotePawn(replayBoard, move.to, promotionTo);
+    }
+  }
+
+  return {
+    white: counts.white > 0 ? Math.round(totals.white / counts.white) : 0,
+    black: counts.black > 0 ? Math.round(totals.black / counts.black) : 0
+  };
+};
+
 const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficultyName, timerEnabled, timerDuration, onBackToSetup, myColor = 'white', myName = '', roomId = '', isHost = false, isRated = false }) => {
     // myColor, myName, roomId, isHost are now available for multiplayer logic and display
   const { user, userData } = useAuth();
@@ -333,9 +397,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           const myTimeLeft = effectiveColor === 'white' ? timer.white : timer.black;
           const duration = timerEnabled ? timerDuration - myTimeLeft : gameState.moveHistory.length * 30; // Estimate 30s per move if no timer
           
-          // Calculate accuracies
-          const myAccuracy = Math.min(95, 70 + Math.random() * 25);
-          const opponentAccuracy = Math.min(95, 70 + Math.random() * 25);
+          // Calculate accuracies from actual move quality (white/black), then map to current player's perspective
+          const colorAccuracies = calculatePlayerAccuracies(gameState.moveHistory);
+          const myAccuracy = effectiveColor === 'white' ? colorAccuracies.white : colorAccuracies.black;
+          const opponentAccuracy = effectiveColor === 'white' ? colorAccuracies.black : colorAccuracies.white;
           
           const gameData = {
             userId: userId,

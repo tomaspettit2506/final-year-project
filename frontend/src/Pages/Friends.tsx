@@ -302,6 +302,13 @@ const Friends = () => {
     }
   };
 
+  // Reload Requests when switching to sent tab
+  useEffect(() => {
+    if (tab === 'sent') {
+      fetchSentRequests();
+    }
+  }, [tab]);
+
   // Load friends on initial render or when auth user changes
   useEffect(() => { fetchFriends(); }, [user]);
 

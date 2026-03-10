@@ -96,6 +96,15 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
     }
   };
 
+  const getDurationText = (duration: number) => {
+    if (duration <= 0) return '0s';
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    if (minutes > 0 && seconds > 0) return `${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+  }
+
   // Ensure accuracy values are valid numbers between 0-100
   const myAccuracy = Math.min(100, Math.max(0, gameDetails.myAccuracy || 0));
   const opponentAccuracy = Math.min(100, Math.max(0, gameDetails.opponentAccuracy || 0));
@@ -231,7 +240,7 @@ const GameDetails: React.FC<DetailsProps> = ({ open, onClose, gameDetails }) => 
               <Typography variant="body2" color="text.secondary">
                 Duration
               </Typography>
-              <Typography variant="body1">{safeDuration || 'N/A'}</Typography>
+              <Typography variant="body1">{getDurationText(safeDuration) || 'N/A'}</Typography>
             </Grid>
             <Grid size={{xs: 6}}>
               <Typography variant="body2" color="text.secondary">

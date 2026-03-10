@@ -3,6 +3,7 @@ import React from "react";
 import { Chip, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Avatar, Box
 } from "@mui/material";
+import { useAuth } from "../../Context/AuthContext";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -14,13 +15,15 @@ interface ProfileDialogProps {
   wins: number;
   losses: number;
   draws: number;
+  timePlayedMinutes?: number;
   isLoading?: boolean;
 }
 
 const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   friendName, friendEmail, friendRating, friendAvatarColor,
-  wins, losses, draws, isLoading,
+  wins, losses, draws, timePlayedMinutes, isLoading,
 }) => {
+  const { user } = useAuth();
   const totalGames = wins + losses + draws;
   const winRate = totalGames ? Math.round((wins / totalGames) * 100) : 0;
 
@@ -39,6 +42,25 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   };
 
   const ratingTitle = getRatingTitle(friendRating);
+  const formatTimePlayed = (minutes: number): string => {
+    if (minutes <= 0) return '0m';
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours > 0 && remainingMinutes > 0) return `${hours}h ${remainingMinutes}m`;
+    if (hours > 0) return `${hours}h`;
+    return `${remainingMinutes}m`;
+  };
+
+  const timePlayedLabel = formatTimePlayed(Math.max(0, Math.floor(timePlayedMinutes ?? 0)));
+
+  // When the account has been created, show "Member since X" in the profile dialog. Format the date as "1 Jan 2020"
+  const memberSince = user?.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }) : 'Unknown';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -82,7 +104,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
               </Box>
               <Box sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="body2" color="text.secondary">Time Played</Typography>
-                <Typography variant="h6">{Math.max(1, Math.round(totalGames / 10))}h</Typography>
+                <Typography variant="h6">{timePlayedLabel}</Typography>
               </Box>
             </Box>
 
@@ -103,8 +125,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
             </Box>
 
             <Box sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="body2">Member since January 2023</Typography>
-              <Typography variant="body2">Favorite: Sicilian Defense</Typography>
+              <Typography variant="body2">Member since {memberSince}</Typography>
               <Typography variant="body2">Win streak: {Math.min(wins, 5)} games</Typography>
             </Box>
           </Box>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Avatar, 
-  Badge, Chip, Button, IconButton, Menu, MenuItem, Typography, Snackbar, Alert, useTheme, useMediaQuery } from "@mui/material";
+  Badge, Chip, Button, IconButton, Menu, MenuItem, Typography, Snackbar, Alert, 
+  Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useAuth } from "../../Context/AuthContext";
 import { useTheme as useAppTheme } from "../../Context/ThemeContext";
@@ -57,10 +58,13 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [gameDialogOpen, setGameDialogOpen] = useState(false);
   const [friendGames, setFriendGames] = useState<any[]>([]);
-  const [profileStats, setProfileStats] = useState({ wins: 0, losses: 0, draws: 0 });
+  const [profileStats, setProfileStats] = useState({ wins: 0, losses: 0, draws: 0, timePlayedMinutes: 0 });
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingGames, setLoadingGames] = useState(false);
   const [gamesError, setGamesError] = useState<string | null>(null);
+
+  const [handleOpenDeleteDialog, setHandleOpenDeleteDialog] = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
 
   // Set up socket listeners for real-time messaging
   useEffect(() => {
@@ -113,20 +117,37 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Compute wins, losses, draws, and total time played in minutes from games array
   const computeStatsFromGames = (games: any[]) => {
-    return games.reduce(
+    const stats = games.reduce(
       (acc, game) => {
         // Normalize: lowercase and trim whitespace for consistent comparison
         const result = (game?.result || '').toLowerCase().trim();
         if (['win', 'won'].includes(result)) acc.wins += 1;
         else if (['loss', 'lose', 'lost'].includes(result)) acc.losses += 1;
         else if (['draw', 'tie'].includes(result)) acc.draws += 1;
+
+        const durationSeconds = typeof game?.duration === 'number'
+          ? game.duration
+          : Number(game?.duration);
+        if (Number.isFinite(durationSeconds) && durationSeconds > 0) {
+          acc.totalDurationSeconds += durationSeconds;
+        }
+
         return acc;
       },
-      { wins: 0, losses: 0, draws: 0 }
+      { wins: 0, losses: 0, draws: 0, totalDurationSeconds: 0 }
     );
+
+    return {
+      wins: stats.wins,
+      losses: stats.losses,
+      draws: stats.draws,
+      timePlayedMinutes: Math.floor(stats.totalDurationSeconds / 60)
+    };
   };
 
+  // Map message from server format to UI format
   const mapMessageForUi = (msg: any) => ({
     id: msg._id || msg.id,
     senderId: msg.senderId,
@@ -137,6 +158,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     read: msg.read
   });
 
+  // Fetch friend's games, ensuring we have a MongoDB ID for reliable lookup
   const fetchFriendGames = async (friend: Friend) => {
     let targetId = friend.mongoId;
 
@@ -164,7 +186,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     if (!targetId) {
       setGamesError('Could not determine friend ID');
       setFriendGames([]);
-      setProfileStats({ wins: 0, losses: 0, draws: 0 });
+      setProfileStats({ wins: 0, losses: 0, draws: 0, timePlayedMinutes: 0 });
       setSnackbar({ open: true, message: 'Could not determine friend ID for games', severity: 'error' });
       return [];
     }
@@ -185,7 +207,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       console.error('Error fetching friend games:', error);
       setGamesError(error?.message || 'Failed to load games');
       setFriendGames([]);
-      setProfileStats({ wins: 0, losses: 0, draws: 0 });
+      setProfileStats({ wins: 0, losses: 0, draws: 0, timePlayedMinutes: 0 });
       setSnackbar({
         open: true,
         message: error?.message || 'Failed to load games',
@@ -197,11 +219,13 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
+  // Handle sending a challenge to a friend
   const handleChallenge = (friend: Friend) => {
     setSelectedFriend(friend);
     setChallengeDialogOpen(true);
   };
 
+  // Send challenge to friend via REST API, then navigate to play page to join the game room
   const handleSendChallenge = async (timeControl: string, rated: boolean): Promise<string> => {
     if (!selectedFriend || !user?.email) {
       setSnackbar({
@@ -241,6 +265,16 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
 
     try {
       const ensuredMongoId = await ensureRecipientMongoId();
+      const recipientIdentifier =
+        ensuredMongoId ||
+        selectedFriend.mongoId ||
+        selectedFriend.firebaseUid ||
+        selectedFriend.email ||
+        selectedFriend.id;
+
+      if (!recipientIdentifier) {
+        throw new Error('Could not determine recipient identifier');
+      }
 
       // Generate a unique room ID without creating the socket room yet
       // Both players will join the room when they navigate to the game
@@ -252,7 +286,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromUserId: user.uid,
-          toUserId: ensuredMongoId || selectedFriend.mongoId || selectedFriend.firebaseUid || selectedFriend.id,
+          toUserId: recipientIdentifier,
           roomId,
           timeControl, // timeControl is in minutes (string)
           rated
@@ -288,6 +322,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
+  // Handle opening chat dialog and loading message history
   const handleOpenChat = async (friend: Friend) => {
     setSelectedFriend(friend);
     setChatDialogOpen(true);
@@ -320,6 +355,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
+  // Handle sending a new message, with optimistic UI update and socket emission
   const handleSendMessage = (text: string, friendId: string, replyToId?: string) => {
     const tempId = Math.random().toString(36).substring(2, 11);
     const nowIso = new Date().toISOString();
@@ -374,6 +410,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     });
   };
 
+  // Handle editing a message, with optimistic UI update and socket emission
   const handleEditMessage = (messageId: string, newText: string, friendId: string) => {
     setChatMessages(prevMessages => 
       prevMessages.map(msg => 
@@ -391,6 +428,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     });
   };
 
+  // Handle deleting a message, with optimistic UI update and socket emission
   const handleDeleteMessage = (messageId: string, friendId: string) => {
     setChatMessages(prevMessages => 
       prevMessages.filter(msg => msg.id !== messageId)
@@ -405,6 +443,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     });
   };
 
+  // Handle reloading chat messages, either for initial load or when loading more history, while preserving pending messages
   const handleReloadChat = async (
     friendId: string,
     options?: { before?: string; append?: boolean }
@@ -451,13 +490,16 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     }
   };
 
+  // Handle opening the menu for a friend and setting the selected friend context
   const handleMenuOpen = (friend: Friend, event: React.MouseEvent<HTMLElement>) => {
     setSelectedFriend(friend);
     setMenuAnchorEl(event.currentTarget);
   };
 
+  // Handle closing the menu and clearing the selected friend context
   const handleMenuClose = () => { setMenuAnchorEl(null); };
 
+  // Handle opening profile dialog, loading latest friend data and games for stats
   const openProfileDialog = async (friend: Friend) => {
     setSelectedFriend(friend);
     setProfileDialogOpen(true);
@@ -487,6 +529,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setLoadingProfile(false);
 };
 
+  // Function to open game dialog and load games if not already loaded for profile
   const openGameDialog = async (friend: Friend) => {
     setSelectedFriend(friend);
     setGameDialogOpen(true);
@@ -495,6 +538,20 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       setProfileStats(computeStatsFromGames(friend.games));
     }
     await fetchFriendGames(friend);
+  };
+
+  // Function to open delete confirmation dialog
+  const openDeleteConfirmation = (friend: Friend) => {
+    setSelectedFriend(friend);
+    setHandleOpenDeleteDialog(true);
+    setDeleteConfirmInput("");
+  };
+
+  // Function to close delete confirmation dialog
+  const closeDeleteConfirmation = () => {
+    setHandleOpenDeleteDialog(false);
+    setSelectedFriend(null);
+    setDeleteConfirmInput("");
   };
 
   return (
@@ -643,7 +700,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           }}>View Games</MenuItem>
           <MenuItem
             onClick={() => {
-              if (selectedFriend) onRemoveFriend(selectedFriend);
+              if (selectedFriend) openDeleteConfirmation(selectedFriend);
               handleMenuClose();
             }}
             sx={{ color: "error.main" }}
@@ -714,6 +771,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           wins={profileStats.wins}
           losses={profileStats.losses}
           draws={profileStats.draws}
+          timePlayedMinutes={profileStats.timePlayedMinutes}
           isLoading={loadingProfile}
         />
       )}
@@ -726,6 +784,41 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           loading={loadingGames}
           error={gamesError}
         />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {handleOpenDeleteDialog && selectedFriend && (
+        <Dialog open={handleOpenDeleteDialog} onClose={closeDeleteConfirmation}>
+          <DialogTitle>Confirm Friend Removal</DialogTitle>
+          <DialogContent>
+            <Typography>
+              To confirm, please type the friend's name: <strong>{selectedFriend.name}</strong>
+            </Typography>
+            <TextField
+              fullWidth
+              margin="normal"
+              value={deleteConfirmInput}
+              onChange={(e) => setDeleteConfirmInput(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeDeleteConfirmation}>Cancel</Button>
+            <Button
+              color="error"
+              disabled={deleteConfirmInput !== selectedFriend.name}
+              onClick={() => {
+                if (deleteConfirmInput === selectedFriend.name) {
+                  onRemoveFriend(selectedFriend);
+                  closeDeleteConfirmation();
+                } else {
+                  setSnackbar({ open: true, message: "Name does not match. Please type the exact name to confirm.", severity: "error" });
+                }
+              }}
+            >
+              Remove Friend
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
     </>
   );

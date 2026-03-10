@@ -27,6 +27,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const currentUserId = user?.uid;
   const handleSearch = async () => {
     setHasSearched(true);
     setLoading(true);
@@ -50,6 +51,8 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           isPending: false,
           firebaseUid: u.firebaseUid,
         };
+        // If you own user account here, can't be used on Add Friend page, so filter out later. This is just to ensure we have firebaseUid for all users if available.  
+
       });
       setUsers(mapped);
     } catch (err: any) {
@@ -100,12 +103,16 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   };
 
   const filteredUsers = hasSearched
-    ? users.filter(
-        (user) =>
-          (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.username.toLowerCase().includes(searchQuery.toLowerCase())) &&
-          !user.isFriend
-      )
+    ? users.filter((candidate) => {
+        const matchesSearch =
+          candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          candidate.username.toLowerCase().includes(searchQuery.toLowerCase());
+        const isCurrentUser =
+          !!currentUserId &&
+          (candidate.firebaseUid === currentUserId || candidate.id === currentUserId);
+
+        return matchesSearch && !candidate.isFriend && !isCurrentUser;
+      })
     : [];
 
   return (
