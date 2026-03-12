@@ -1,6 +1,6 @@
 // Page: frontend/src/Pages/Friends.tsx
 import { useState, useEffect, useRef } from "react";
-import { Box, Container, Typography, Tabs, Tab, Badge, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Container, CircularProgress, Typography, Tabs, Tab, Badge, useTheme, useMediaQuery } from "@mui/material";
 import { useAuth } from "../Context/AuthContext";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
@@ -62,6 +62,7 @@ interface GameInvite {
 
 const Friends = () => {
   const { user, userData } = useAuth();
+  const [loading, setLoading] = useState<boolean>(true);
   const apiBaseUrl = getApiBaseUrl();
   const { isDark } = useAppTheme();
   const theme = useTheme();
@@ -110,6 +111,7 @@ const Friends = () => {
     if (!user?.uid) return;
 
     try {
+      setLoading(true);
       const res = await fetch(`${apiBaseUrl}/user/${user.uid}/friends`, {
         credentials: "include",
       });
@@ -118,6 +120,8 @@ const Friends = () => {
       setFriends((data || []).map(mapFriendFromApi));
     } catch (err) {
       console.error('Failed to fetch friends', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -435,6 +439,14 @@ const Friends = () => {
 
   const pageBg = isDark ? "#000000" : "#ffffff";
   const panelBg = isDark ? "#000000d0" : "#ffffffd0";
+
+  if (loading) {
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+      <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+    </Box>
+  );
+}
 
   return (
     <>

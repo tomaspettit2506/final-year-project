@@ -68,6 +68,24 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
   const [handleOpenDeleteDialog, setHandleOpenDeleteDialog] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
 
+  const getGameTimestamp = (game: any): number => {
+    const parsed = game?.date ? new Date(game.date).getTime() : Number.NaN;
+    return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+  };
+
+  const sortGamesNewestFirst = (games: any[]): any[] => {
+    if (!Array.isArray(games) || games.length === 0) return [];
+
+    return games
+      .map((game, index) => ({ game, index, timestamp: getGameTimestamp(game) }))
+      .sort((a, b) => {
+        if (b.timestamp !== a.timestamp) return b.timestamp - a.timestamp;
+        // Keep original relative order for exact timestamp ties
+        return a.index - b.index;
+      })
+      .map((entry) => entry.game);
+  };
+
   // Set up socket listeners for real-time messaging
   useEffect(() => {
     if (!user?.uid) return;
@@ -202,9 +220,10 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         throw new Error(msg || `Failed to load games (status ${res.status})`);
       }
       const data = await res.json();
-      setFriendGames(data || []);
-      setProfileStats(computeStatsFromGames(data || []));
-      return data || [];
+      const normalizedGames = sortGamesNewestFirst(data || []);
+      setFriendGames(normalizedGames);
+      setProfileStats(computeStatsFromGames(normalizedGames));
+      return normalizedGames;
     } catch (error: any) {
       console.error('Error fetching friend games:', error);
       setGamesError(error?.message || 'Failed to load games');
@@ -515,8 +534,9 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setProfileDialogOpen(true);
     setLoadingProfile(true);
     if (friend.games) {
-      setFriendGames(friend.games);
-      setProfileStats(computeStatsFromGames(friend.games));
+      const normalizedGames = sortGamesNewestFirst(friend.games);
+      setFriendGames(normalizedGames);
+      setProfileStats(computeStatsFromGames(normalizedGames));
     }
     
     // Fetch latest friend data to ensure rating/memberSince are current
@@ -589,8 +609,9 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setSelectedFriend(friend);
     setGameDialogOpen(true);
     if (friend.games) {
-      setFriendGames(friend.games);
-      setProfileStats(computeStatsFromGames(friend.games));
+      const normalizedGames = sortGamesNewestFirst(friend.games);
+      setFriendGames(normalizedGames);
+      setProfileStats(computeStatsFromGames(normalizedGames));
     }
     await fetchFriendGames(friend);
   };
@@ -824,6 +845,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           friendEmail={selectedFriend.email || selectedFriend.username}
           friendRating={selectedFriend.rating}
           friendAvatarColor={selectedFriend.avatarColor}
+          games={friendGames}
           wins={profileStats.wins}
           losses={profileStats.losses}
           draws={profileStats.draws}

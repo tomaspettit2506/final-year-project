@@ -47,14 +47,6 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
     const [selectedGame, setSelectedGame] = React.useState<typeof recentGames[number] | null>(null);
     const { isDark } = useTheme();
 
-    // Debug: Log games to see what data we're receiving
-    React.useEffect(() => {
-        if (recentGames.length > 0) {
-            console.log('Game data:', recentGames[0]);
-            console.log('playerColor field:', recentGames[0].playerColor);
-        }
-    }, [recentGames]);
-
     const getResultColor = (result?: string) => {
         switch (result?.toLowerCase()) {
             case 'win': return '#22c55e';
@@ -103,7 +95,9 @@ const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, game
             <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
                 <DialogTitle>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6">Games with {friendName}</Typography>
+                        <Box>
+                            <Typography variant="h6">Games with {friendName}</Typography>
+                        </Box>
                         <IconButton onClick={onClose} size="small" aria-label="Close">
                             <CloseIcon />
                         </IconButton>

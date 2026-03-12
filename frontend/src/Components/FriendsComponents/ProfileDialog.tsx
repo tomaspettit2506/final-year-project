@@ -12,6 +12,7 @@ interface ProfileDialogProps {
   friendEmail: string;
   friendRating: number;
   friendAvatarColor?: string;
+  games?: { result?: string; date?: string }[];
   wins: number;
   losses: number;
   draws: number;
@@ -22,6 +23,7 @@ interface ProfileDialogProps {
 
 const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   friendName, friendEmail, friendRating, friendAvatarColor,
+  games,
   wins, losses, draws, friendMemberSince, timePlayedMinutes, isLoading,
 }) => {
   const totalGames = wins + losses + draws;
@@ -56,6 +58,65 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   const timePlayedLabel = formatTimePlayed(Math.max(0, Math.floor(timePlayedMinutes ?? 0)));
 
   const memberSince = formatMemberSinceDate(friendMemberSince) || 'Unknown';
+
+  const getCurrentWinStreak = (recentGames: { result?: string; date?: string }[]): number => {
+    let streak = 0;
+
+    const gamesWithIndex = recentGames.map((game, index) => {
+      const parsedDate = game?.date ? new Date(game.date).getTime() : Number.NaN;
+      return {
+        game,
+        index,
+        hasValidDate: Number.isFinite(parsedDate),
+        dateValue: Number.isFinite(parsedDate) ? parsedDate : 0
+      };
+    });
+
+    const hasAnyValidDate = gamesWithIndex.some((entry) => entry.hasValidDate);
+
+    const orderedGames = hasAnyValidDate
+      ? [...gamesWithIndex]
+          .sort((a, b) => {
+            if (b.dateValue !== a.dateValue) return b.dateValue - a.dateValue;
+            // Preserve original order for equal dates
+            return a.index - b.index;
+          })
+          .map((entry) => entry.game)
+      : [...recentGames].reverse();
+
+    for (const game of orderedGames) {
+      const result = (game?.result || '').toLowerCase().trim();
+      if (result === 'win' || result === 'won') {
+        streak += 1;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const getBestWinStreak = (recentGames: { result?: string; date?: string }[]): number => {
+    if (!Array.isArray(recentGames) || recentGames.length === 0) return 0;
+
+    let bestStreak = 0;
+    let currentStreak = 0;
+
+    for (const game of recentGames) {
+      const result = (game?.result || '').toLowerCase().trim();
+      if (result === 'win' || result === 'won') {
+        currentStreak += 1;
+        bestStreak = Math.max(bestStreak, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    return bestStreak;
+  };
+
+  const winStreak = getCurrentWinStreak(games || []);
+  const bestStreak = getBestWinStreak(games || []);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -121,7 +182,14 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
 
             <Box sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <Typography variant="body2">Member since {memberSince}</Typography>
-              <Typography variant="body2">Win streak: {Math.min(wins, 5)} games</Typography>
+              <Box display="flex" flexDirection="column" gap={0.5} mt={1}>
+                <Typography variant="caption" sx={{ color: '#22c55e', fontWeight: 600 }}>
+                  Current streak: 🔥 {winStreak} {winStreak === 1 ? 'game' : 'games'}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#fbbf24', fontWeight: 600 }}>
+                  Best streak: 🏆 {bestStreak} {bestStreak === 1 ? 'game' : 'games'}
+                </Typography>
+              </Box>
             </Box>
           </Box>
         )}

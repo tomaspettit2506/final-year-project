@@ -76,4 +76,64 @@ describe('ProfileDialog Component', () => {
 
     expect(screen.getByText('1h')).toBeInTheDocument();
   });
+
+  test('calculates current win streak from recent games order', () => {
+    renderProfileDialog({
+      isLoading: false,
+      games: [
+        { result: 'loss' },
+        { result: 'win' },
+        { result: 'win' }
+      ]
+    });
+
+    expect(screen.getByText(/Current streak:/i)).toBeInTheDocument();
+    expect(screen.getByText(/🔥 2 games/i)).toBeInTheDocument();
+  });
+
+  test('calculates current win streak using latest game dates when input order is mixed', () => {
+    renderProfileDialog({
+      isLoading: false,
+      games: [
+        { result: 'win', date: '2026-03-01T10:00:00.000Z' },
+        { result: 'loss', date: '2026-03-03T10:00:00.000Z' },
+        { result: 'win', date: '2026-03-05T10:00:00.000Z' },
+        { result: 'win', date: '2026-03-04T10:00:00.000Z' }
+      ]
+    });
+
+    expect(screen.getByText(/Current streak:/i)).toBeInTheDocument();
+    expect(screen.getByText(/🔥 2 games/i)).toBeInTheDocument();
+  });
+
+  test('preserves input order for same-date games when calculating streak', () => {
+    renderProfileDialog({
+      isLoading: false,
+      games: [
+        { result: 'win', date: '2026-03-01T00:00:00.000Z' },
+        { result: 'win', date: '2026-03-01T00:00:00.000Z' },
+        { result: 'loss', date: '2026-03-01T00:00:00.000Z' }
+      ]
+    });
+
+    expect(screen.getByText(/Current streak:/i)).toBeInTheDocument();
+    expect(screen.getByText(/🔥 2 games/i)).toBeInTheDocument();
+  });
+
+  test('calculates best win streak across all games', () => {
+    renderProfileDialog({
+      isLoading: false,
+      games: [
+        { result: 'loss' },
+        { result: 'win' },
+        { result: 'win' },
+        { result: 'win' },
+        { result: 'loss' },
+        { result: 'win' }
+      ]
+    });
+
+    expect(screen.getByText(/Best streak:/i)).toBeInTheDocument();
+    expect(screen.getByText(/🏆 3 games/i)).toBeInTheDocument();
+  });
 });
