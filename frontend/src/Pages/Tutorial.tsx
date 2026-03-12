@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, CircularProgress, Tab, useMediaQuery } from "@mui/material";
+import { Box, CircularProgress, Tab, useTheme, useMediaQuery } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
-import { useTheme } from "../Context/ThemeContext";
+import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import ChessGalaxyTheme from "../assets//img-theme/chess_galaxy.jpg";
 
 // Tutorial Components
@@ -15,7 +15,8 @@ import Winning from "../Components/TutorialComponents/Winning";
 import Draw from "../Components/TutorialComponents/Draw";
 
 function Tutorial() {
-  const { isDark } = useTheme();
+  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const [loading, setLoading] = useState(true);
   const [value, setValue] = useState('basic');
   const tabListRef = useRef<HTMLDivElement>(null);
@@ -42,7 +43,7 @@ function Tutorial() {
   };
 
   // Mobile responsiveness
-  const isMobile = useMediaQuery('(max-width:600px)');
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     // Whatever async setup Play needs (e.g. fetching user name/rating)
@@ -58,8 +59,8 @@ function Tutorial() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
       </Box>
     );
   }

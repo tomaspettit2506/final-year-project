@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { CircularProgress, Box, Fade, CssBaseline, ThemeProvider } from "@mui/material";
+import { CircularProgress, Box, Fade, CssBaseline, ThemeProvider, useTheme, useMediaQuery } from "@mui/material";
 import Landing from './Pages/Landing'
 import Home from './Pages/Home'
 import Settings from './Pages/Settings'
@@ -11,18 +11,18 @@ import BottomNav from './Components/BottomNav';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from './firebase';
 import './App.css'
-import { useTheme } from "./Context/ThemeContext"; // <-- Import your custom hook
 
 function App() {
   const location = useLocation();
+  const theme = useTheme();
   const [user, loading] = useAuthState(auth);
-  const { theme } = useTheme(); // <-- Use theme from context
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
 
   if (loading) {
     return (
       <Fade in={loading} timeout={{ enter: 500, exit: 500 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
         </Box>
       </Fade>
     );

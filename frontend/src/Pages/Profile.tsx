@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
-import { useTheme } from "../Context/ThemeContext";
+import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
 import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
   TextField, IconButton, FormControl, Tooltip,
-  MenuItem, Select as MuiSelect, useMediaQuery, useTheme as useAppTheme } from "@mui/material";
+  MenuItem, Select as MuiSelect, useMediaQuery, useTheme } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
@@ -18,9 +18,9 @@ import { formatMemberSinceDate } from "../Utils/memberSince";
 
 const Profile = () => {
   const { user } = useAuth();
-  const { isDark } = useTheme();
-  const appTheme = useAppTheme();
-  const isMobile = useMediaQuery(appTheme.breakpoints.down('sm'));
+  const { isDark } = useAppTheme();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const apiBaseUrl = getApiBaseUrl();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
@@ -252,8 +252,8 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
       </Box>
     );
   }

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../Context/ThemeContext";
+import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import { useBoardTheme } from "../Context/BoardThemeContext";
 import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, Dialog, DialogActions, 
   DialogContent, DialogContentText,DialogTitle, Select, MenuItem, FormControl, FormLabel, 
-  CircularProgress } from "@mui/material";
+  CircularProgress, useTheme, useMediaQuery } from "@mui/material";
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
 import AppBar from "../Components/AppBar";
@@ -15,7 +15,9 @@ import SettingsDark from "../assets/img-theme/SettingsDark.jpeg";
 const Settings: React.FC = () => {
   const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
-  const { isDark } = useTheme();
+  const { isDark } = useAppTheme();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -86,8 +88,8 @@ const Settings: React.FC = () => {
   
     if (loading) {
       return (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-          <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+          <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
         </Box>
       );
     }

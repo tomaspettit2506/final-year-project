@@ -122,8 +122,8 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
   // Show loading indicator while fetching data
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
       </Box>
     );
   }

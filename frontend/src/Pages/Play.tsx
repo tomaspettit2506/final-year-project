@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
 import AppBar from '../Components/AppBar';
 import GameSetupTheme from '../assets/img-theme/GameSetupTheme.jpeg';
 
@@ -19,6 +19,9 @@ interface GameConfig {
 
 
 const Play = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
+
   const [loading, setLoading] = useState<boolean>(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('setup');
   const [gameConfig, setGameConfig] = useState<GameConfig>({
@@ -74,8 +77,8 @@ const Play = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
       </Box>
     );
   }

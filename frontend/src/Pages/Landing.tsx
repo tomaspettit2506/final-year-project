@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, TextField, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
@@ -24,6 +24,8 @@ const slides = [
 
 const Landing = () => {
   const apiBaseUrl = getApiBaseUrl();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
   const [loading, setLoading] = useState(true);
   const [screen, setScreen] = useState<"landing" | "login" | "signup">("landing");
   const [form, setForm] = useState({ name: "", rating: 500, email: "", password: "" });
@@ -117,8 +119,8 @@ const Landing = () => {
 
   if (loading) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
-      <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
+      <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
     </Box>
   );
 }
