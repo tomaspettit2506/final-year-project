@@ -8,6 +8,7 @@ import Play from './Pages/Play'
 import Tutorial from './Pages/Tutorial'
 import Friends from './Pages/Friends'
 import BottomNav from './Components/BottomNav';
+import { useTheme as useAppTheme} from './Context/ThemeContext';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from './firebase';
 import './App.css'
@@ -15,21 +16,22 @@ import './App.css'
 function App() {
   const location = useLocation();
   const theme = useTheme();
+  const muiTheme = useAppTheme();
   const [user, loading] = useAuthState(auth);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
 
   if (loading) {
     return (
       <Fade in={loading} timeout={{ enter: 500, exit: 500 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: isMobile ? 20 : 15 }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20 }} />
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
         </Box>
       </Fade>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={muiTheme.theme}>
       <CssBaseline />
         <div>
           <Routes>
