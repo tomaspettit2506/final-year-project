@@ -5,21 +5,23 @@ const Draw = () => {
   const { isDark } = useAppTheme();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  const size = isMobile ? 44 : 46;
+
   return (
     <Box sx={{ mb: 4, p: isMobile ? 2 : 0 }}>
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? '#0f172ae6' : '#FFFFFFe6', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h2" gutterBottom sx={{fontSize: isMobile ? 20 : 24}}> ♟️ How a Game Can End in a Draw</Typography>
-        <Typography paragraph>
+        <Typography>
           Not every chess game ends with a winner. There are several ways a game can end in a draw (tie).
         </Typography>
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>1. Stalemate</Typography>
+        <Typography variant="h3" sx={{ fontSize: size }}>1. Stalemate</Typography>
         <Box sx={{ p: 4, bgcolor: isDark ? 'rgba(245, 158, 11, 0.12)' : '#FFFBEB', borderLeft: 4, borderColor: isDark ? '#F59E0B' : '#F59E0B', borderRadius: 1, mb: 4, color: isDark ? '#FDE68A' : 'black' }}>
           <Typography><strong>Most common type of draw</strong></Typography>
         </Box>
-        <Typography paragraph>
+        <Typography>
           Stalemate occurs when a player is NOT in check but has no legal moves available. 
           The game immediately ends in a draw.
         </Typography>
@@ -29,8 +31,8 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>2. Insufficient Material</Typography>
-        <Typography paragraph>
+        <Typography variant="h3" sx={{ fontSize: size }}>2. Insufficient Material</Typography>
+        <Typography>
           When neither player has enough pieces to possibly deliver checkmate, the game is automatically drawn.
         </Typography>
         <Box sx={{mb: 2}}>
@@ -45,8 +47,8 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>3. Threefold Repetition</Typography>
-        <Typography paragraph>
+        <Typography variant="h3" sx={{ fontSize: size }}>3. Threefold Repetition</Typography>
+        <Typography>
           If the exact same position occurs three times (with the same player to move), either player can claim a draw.
         </Typography>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
@@ -55,8 +57,8 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>4. Fifty-Move Rule</Typography>
-        <Typography paragraph>
+        <Typography variant="h3" sx={{ fontSize: size }}>4. Fifty-Move Rule</Typography>
+        <Typography>
           If 50 moves occur (by both players) without any pawn moves or captures, either player can claim a draw.
         </Typography>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
@@ -65,8 +67,8 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>5. Mutual Agreement</Typography>
-        <Typography paragraph>
+        <Typography variant="h3" sx={{ fontSize: size }}>5. Mutual Agreement</Typography>
+        <Typography>
           At any point during the game, both players can agree to a draw. This often happens when:
         </Typography>
         <ul className="list-disc list-inside ml-4 space-y-1">
@@ -77,8 +79,8 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
-        <Typography variant="h3" gutterBottom>6. Dead Position</Typography>
-        <Typography paragraph>
+        <Typography variant="h3" sx={{ fontSize: size }}>6. Dead Position</Typography>
+        <Typography>
           When no sequence of legal moves can lead to checkmate, the game is automatically drawn.
         </Typography>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
@@ -87,7 +89,7 @@ const Draw = () => {
       </Card>
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : '#EFF6FF', color: isDark ? '#E2E8F0' : 'black' }}>
-        <Typography variant="h3" gutterBottom>Draw Strategy Tips</Typography>
+        <Typography variant="h3">Draw Strategy Tips</Typography>
         <Box sx={{spaceY: 3}}>
           <div className="flex gap-3">
             <Badge>Defending</Badge>

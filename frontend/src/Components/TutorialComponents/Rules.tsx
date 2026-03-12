@@ -1,5 +1,6 @@
 import { Card, Box, Accordion, AccordionSummary, AccordionDetails, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "../../Context/ThemeContext";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const Rules = () => {
   const { isDark, theme } = useTheme();
@@ -9,8 +10,9 @@ const Rules = () => {
     <Box sx={{ mb: 4, p: isMobile ? 2 : 0, bgcolor: isDark ? '#00000099' : '#ffffffcc' }}>
       <Card sx={{ p: isMobile ? 2 : 6, bgcolor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgb(240, 253, 244)', mb: 4, color: isDark ? '#E2E8F0' : 'inherit' }}>
           <Typography sx={{ fontSize: "2rem", mb: 4 }}> ♟️ Essential Rules</Typography>
-            <Accordion defaultExpanded sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
-                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }}>
+            <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
+                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', 
+                    color: isDark ? '#E2E8F0' : '#0F172A' }} expandIcon={<ExpandMoreIcon />}>
                     <Typography>Check and Checkmate</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -27,7 +29,8 @@ const Rules = () => {
                 </Accordion>
 
                 <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
-                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }}>
+                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', 
+                    color: isDark ? '#E2E8F0' : '#0F172A' }} expandIcon={<ExpandMoreIcon />}>
                     <Typography>Castling</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -46,7 +49,7 @@ const Rules = () => {
                 </Accordion>
 
                 <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
-                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }}>
+                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }} expandIcon={<ExpandMoreIcon />}>
                     <Typography>En Passant</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -58,7 +61,7 @@ const Rules = () => {
                 </Accordion>
 
                 <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
-                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }}>
+                  <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }} expandIcon={<ExpandMoreIcon />}>
                     <Typography>Pawn Promotion</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
@@ -76,7 +79,7 @@ const Rules = () => {
               </Accordion>
 
               <Accordion sx={{ bgcolor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#FFFFFF' }}>
-                <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }}>
+                <AccordionSummary sx={{ bgcolor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(241, 245, 249, 1)', color: isDark ? '#E2E8F0' : '#0F172A' }} expandIcon={<ExpandMoreIcon />}>
                   <Typography>Touch-Move Rule</Typography>
                 </AccordionSummary>
                 <AccordionDetails>

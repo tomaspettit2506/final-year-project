@@ -28,7 +28,7 @@ const PieceGuide: React.FC<PieceGuideProps> = ({
     <Paper sx={{ p: isMobile ? 2 : 3, bgcolor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' }}>
       <Grid container spacing={3}>
         <Grid size={{xs: 12, md: 6}}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, fontSize: isMobile ? '1.5rem' : '2rem' }}>
             <ChessPiece piece={piece} size="lg" />
             <Box>
               <Typography variant="h6">{name}</Typography>
