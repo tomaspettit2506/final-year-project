@@ -2,6 +2,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import { User } from '../schemas';
 import { calculateStats } from '../utils/statsCalculator';
+import { resolveUserCreatedAt } from '../utils/userCreatedAt';
 
 const router = Router();
 
@@ -72,7 +73,12 @@ router.post('/email/:email', async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json(user);
+    const createdAt = resolveUserCreatedAt(user);
+    const payload = typeof (user as any).toObject === 'function' ? (user as any).toObject() : user;
+    res.status(200).json({
+      ...payload,
+      ...(createdAt ? { createdAt } : {})
+    });
   } catch (error) {
     console.error('Error in /user/email:', error);
     return res.status(500).json({ error: 'Failed to get or create user' });
@@ -91,7 +97,12 @@ router.get('/:id', async (req, res) => {
     const user = await User.findOne({ $or: filter });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    return res.json(user);
+    const createdAt = resolveUserCreatedAt(user);
+    const payload = typeof (user as any).toObject === 'function' ? (user as any).toObject() : user;
+    return res.json({
+      ...payload,
+      ...(createdAt ? { createdAt } : {})
+    });
   } catch (error) {
     console.error('Error fetching user:', error);
     return res.status(500).json({ error: 'Failed to fetch user' });
@@ -167,20 +178,62 @@ router.get('/:firebaseUid/friends', async (req, res) => {
       .filter((id: any) => id && mongoose.Types.ObjectId.isValid(id)) as mongoose.Types.ObjectId[];
 
     const friendUsers = await User.find({ _id: { $in: friendObjectIds } })
-      .select('name email rating firebaseUid gameRecents')
+      .select('name email rating firebaseUid gameRecents createdAt')
       .lean();
 
     const friendMap = new Map(friendUsers.map((u) => [u._id.toString(), u]));
 
+    // Legacy fallback: some friend entries may only have firebase UID / email without friendUser ObjectId
+    const friendFirebaseUids = Array.from(new Set(
+      (user.friends || [])
+        .map((f: any) => f.friendFirebaseUid)
+        .filter((uid: any) => typeof uid === 'string' && uid.trim().length > 0)
+    ));
+    const friendEmails = Array.from(new Set(
+      (user.friends || [])
+        .map((f: any) => f.friendEmail)
+        .filter((email: any) => typeof email === 'string' && email.trim().length > 0)
+    ));
+
+    const fallbackQueries: any[] = [];
+    if (friendFirebaseUids.length > 0) fallbackQueries.push({ firebaseUid: { $in: friendFirebaseUids } });
+    if (friendEmails.length > 0) fallbackQueries.push({ email: { $in: friendEmails } });
+
+    const friendFallbackUsers = fallbackQueries.length > 0
+      ? await User.find({ $or: fallbackQueries })
+          .select('name email rating firebaseUid gameRecents createdAt')
+          .lean()
+      : [];
+
+    const friendByFirebaseUid = new Map(
+      friendFallbackUsers
+        .filter((u: any) => typeof u.firebaseUid === 'string' && u.firebaseUid.length > 0)
+        .map((u: any) => [u.firebaseUid, u])
+    );
+    const friendByEmail = new Map(
+      friendFallbackUsers
+        .filter((u: any) => typeof u.email === 'string' && u.email.length > 0)
+        .map((u: any) => [u.email, u])
+    );
+
     const friends = (user.friends || []).map((friend: any) => {
-      const populated = friend.friendUser && friendMap.get(friend.friendUser.toString());
+      const populatedByObjectId = friend.friendUser && friendMap.get(friend.friendUser.toString());
+      const populatedByFirebaseUid = !populatedByObjectId && friend.friendFirebaseUid
+        ? friendByFirebaseUid.get(friend.friendFirebaseUid)
+        : undefined;
+      const populatedByEmail = !populatedByObjectId && !populatedByFirebaseUid && friend.friendEmail
+        ? friendByEmail.get(friend.friendEmail)
+        : undefined;
+      const populated = populatedByObjectId || populatedByFirebaseUid || populatedByEmail;
+      const friendCreatedAt = resolveUserCreatedAt(populated);
       return {
-        friendUser: friend.friendUser,
+        friendUser: friend.friendUser || populated?._id,
         friendFirebaseUid: populated?.firebaseUid || friend.friendFirebaseUid,
         friendName: populated?.name || friend.friendName,
         friendEmail: populated?.email || friend.friendEmail,
         friendRating: populated?.rating ?? friend.friendRating,
         gameRecents: populated?.gameRecents,
+        friendCreatedAt,
         addedAt: friend.addedAt
       };
     });

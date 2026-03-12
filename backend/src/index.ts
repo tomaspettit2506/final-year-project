@@ -15,7 +15,6 @@ import friendRoutes from './routes/friends';
 import requestRoutes from './routes/requests';
 import gameInviteRoutes from './routes/gameInvites';
 import messageRoutes from './routes/messages';
-import predictRoutes from './routes/predict';
 import { validateCorsOrigin } from './config/cors';
 
 dotenv.config();
@@ -83,7 +82,6 @@ app.use('/friends', friendRoutes); // Alias for /friend routes
 app.use('/request', requestRoutes);
 app.use('/game-invite', gameInviteRoutes);
 app.use('/message', messageRoutes);
-app.use('/predict', predictRoutes);
 
 // Socket.IO
 const rooms: Record<string, Room> = {};

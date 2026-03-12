@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema({
   avatarColor: String,
   gameRecents: [gameSchema],
   friends: [friendSchema]
-});
+}, { timestamps: true });
 
 // Add unique indexes to prevent duplicate user creation
 userSchema.index({ email: 1 }, { unique: true, sparse: true });

@@ -13,6 +13,7 @@ import ChatDialog from "./ChatDialog";
 import ChallengeDialog from "./ChallengeDialog";
 import { socket } from "../../Services/socket";
 import { getApiBaseUrl } from "../../Services/api";
+import { deriveMemberSinceFromObjectId } from "../../Utils/memberSince";
 
 interface Friend {
   id: string;
@@ -22,6 +23,7 @@ interface Friend {
   online: boolean;
   avatarColor?: string;
   lastSeen?: string;
+  memberSince?: string;
   games?: any[];
   firebaseUid?: string;
   mongoId?: string;
@@ -501,7 +503,15 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
 
   // Handle opening profile dialog, loading latest friend data and games for stats
   const openProfileDialog = async (friend: Friend) => {
-    setSelectedFriend(friend);
+    const initialMemberSince =
+      friend.memberSince ||
+      deriveMemberSinceFromObjectId(friend.mongoId) ||
+      deriveMemberSinceFromObjectId(friend.id);
+
+    setSelectedFriend({
+      ...friend,
+      memberSince: initialMemberSince
+    });
     setProfileDialogOpen(true);
     setLoadingProfile(true);
     if (friend.games) {
@@ -509,16 +519,61 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       setProfileStats(computeStatsFromGames(friend.games));
     }
     
-    // Fetch latest friend data to ensure rating is current
+    // Fetch latest friend data to ensure rating/memberSince are current
     try {
-      const response = await fetch(`${apiBaseUrl}/user/${friend.firebaseUid || friend.id}`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const updatedFriend = await response.json();
+      const idCandidates = [friend.firebaseUid, friend.mongoId, friend.id].filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      );
+
+      let updatedFriend: any | null = null;
+
+      for (const candidate of idCandidates) {
+        const response = await fetch(`${apiBaseUrl}/user/${encodeURIComponent(candidate)}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          updatedFriend = await response.json();
+          break;
+        }
+      }
+
+      // Legacy fallback for incomplete friend IDs OR when createdAt is missing from the first lookup
+      if (friend.email && (!updatedFriend || !updatedFriend.createdAt)) {
+        const byEmailResponse = await fetch(`${apiBaseUrl}/user/email/${encodeURIComponent(friend.email)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: friend.name,
+            rating: friend.rating,
+            firebaseUid: friend.firebaseUid
+          })
+        });
+
+        if (byEmailResponse.ok) {
+          const byEmailFriend = await byEmailResponse.json();
+          updatedFriend = {
+            ...(updatedFriend || {}),
+            ...byEmailFriend,
+            createdAt: updatedFriend?.createdAt || byEmailFriend?.createdAt
+          };
+        }
+      }
+
+      if (updatedFriend) {
+        const resolvedMemberSince =
+          updatedFriend.createdAt ||
+          deriveMemberSinceFromObjectId(updatedFriend._id) ||
+          friend.memberSince ||
+          deriveMemberSinceFromObjectId(friend.mongoId) ||
+          deriveMemberSinceFromObjectId(friend.id);
+
         setSelectedFriend({
           ...friend,
-          rating: updatedFriend.rating || friend.rating
+          rating: updatedFriend.rating || friend.rating,
+          mongoId: updatedFriend._id || friend.mongoId,
+          firebaseUid: updatedFriend.firebaseUid || friend.firebaseUid,
+          memberSince: resolvedMemberSince
         });
       }
     } catch (error) {
@@ -772,6 +827,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           wins={profileStats.wins}
           losses={profileStats.losses}
           draws={profileStats.draws}
+          friendMemberSince={selectedFriend.memberSince}
           timePlayedMinutes={profileStats.timePlayedMinutes}
           isLoading={loadingProfile}
         />

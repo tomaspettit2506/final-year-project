@@ -5,6 +5,7 @@ import { useAuth } from "../Context/AuthContext";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
 import { useTheme as useAppTheme } from "../Context/ThemeContext";
+import { deriveMemberSinceFromObjectId } from "../Utils/memberSince";
 import FriendsList from "../Components/FriendsComponents/FriendsList";
 import AddFriend from "../Components/FriendsComponents/AddFriend";
 import PendingRequests from "../Components/FriendsComponents/PendingRequests";
@@ -22,6 +23,7 @@ interface Friend {
   online: boolean;
   avatarColor?: string;
   lastSeen?: string;
+  memberSince?: string;
   firebaseUid?: string;
   mongoId?: string;
   email?: string;
@@ -69,7 +71,6 @@ const Friends = () => {
   const [sentRequests, setSentRequests] = useState<SentRequest[]>([]);
   const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
   const [tab, setTab] = useState<string>("friends");
-  const [_mongoUserId, setMongoUserId] = useState<string | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
 
@@ -81,6 +82,9 @@ const Friends = () => {
     const email = friend.friendEmail || populatedUser?.email;
     const name = friend.friendName || email || 'Unknown';
     const username = (email && email.split?.('@')?.[0]) || name.replace(/\s+/g, '_').toLowerCase();
+    const rawFriendObjectId = typeof friend.friendUser === 'string'
+      ? friend.friendUser
+      : (friend.friendUser?._id ? String(friend.friendUser._id) : undefined);
 
     return {
       id: firebaseUid || mongoId || friend._id || username,
@@ -93,6 +97,11 @@ const Friends = () => {
       online: false,
       avatarColor: friend.friendAvatarColor || populatedUser?.avatarColor,
       lastSeen: friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : undefined,
+      memberSince:
+        populatedUser?.createdAt ||
+        friend.friendCreatedAt ||
+        deriveMemberSinceFromObjectId(mongoId) ||
+        deriveMemberSinceFromObjectId(rawFriendObjectId),
       games: populatedUser?.gameRecents,
     };
   };
@@ -145,8 +154,7 @@ const Friends = () => {
           }),
         });
         if (res.ok) {
-          const mongoUser = await res.json();
-          setMongoUserId(mongoUser._id);
+          await res.json();
           // Once the user is ensured to exist in MongoDB, load their friends
           fetchFriends();
         }
@@ -327,9 +335,8 @@ const Friends = () => {
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
 
-      if (Array.isArray(data?.friends)) {
-        setFriends(data.friends.map(mapFriendFromApi));
-      } else {
+      if (Array.isArray(data?.friends)) setFriends(data.friends.map(mapFriendFromApi));
+      else {
         // Fallback: remove locally
         setFriends((prev) => prev.filter((f) => f.id !== targetId && f.firebaseUid !== targetId && f.mongoId !== targetId));
       }

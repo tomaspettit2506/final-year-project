@@ -3,7 +3,7 @@ import React from "react";
 import { Chip, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Avatar, Box
 } from "@mui/material";
-import { useAuth } from "../../Context/AuthContext";
+import { formatMemberSinceDate } from "../../Utils/memberSince";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -15,15 +15,15 @@ interface ProfileDialogProps {
   wins: number;
   losses: number;
   draws: number;
+  friendMemberSince?: string;
   timePlayedMinutes?: number;
   isLoading?: boolean;
 }
 
 const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
   friendName, friendEmail, friendRating, friendAvatarColor,
-  wins, losses, draws, timePlayedMinutes, isLoading,
+  wins, losses, draws, friendMemberSince, timePlayedMinutes, isLoading,
 }) => {
-  const { user } = useAuth();
   const totalGames = wins + losses + draws;
   const winRate = totalGames ? Math.round((wins / totalGames) * 100) : 0;
 
@@ -55,12 +55,7 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ open, onClose,
 
   const timePlayedLabel = formatTimePlayed(Math.max(0, Math.floor(timePlayedMinutes ?? 0)));
 
-  // When the account has been created, show "Member since X" in the profile dialog. Format the date as "1 Jan 2020"
-  const memberSince = user?.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }) : 'Unknown';
+  const memberSince = formatMemberSinceDate(friendMemberSince) || 'Unknown';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

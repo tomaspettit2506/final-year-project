@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { User, Friend } from '../schemas';
+import { resolveUserCreatedAt } from '../utils/userCreatedAt';
 
 const router = Router();
 
@@ -61,21 +62,63 @@ router.get('/:firebaseUid', async (req, res) => {
       .filter((id: any) => id && mongoose.Types.ObjectId.isValid(id)) as mongoose.Types.ObjectId[];
 
     const friendUsers = await User.find({ _id: { $in: friendObjectIds } })
-      .select('name email rating firebaseUid gameRecents avatarColor')
+      .select('name email rating firebaseUid gameRecents avatarColor createdAt')
       .lean();
 
     const friendMap = new Map(friendUsers.map((u) => [u._id.toString(), u]));
 
+    // Legacy fallback: some friend entries may only have firebase UID / email without friendUser ObjectId
+    const friendFirebaseUids = Array.from(new Set(
+      (user.friends || [])
+        .map((f: any) => f.friendFirebaseUid)
+        .filter((uid: any) => typeof uid === 'string' && uid.trim().length > 0)
+    ));
+    const friendEmails = Array.from(new Set(
+      (user.friends || [])
+        .map((f: any) => f.friendEmail)
+        .filter((email: any) => typeof email === 'string' && email.trim().length > 0)
+    ));
+
+    const fallbackQueries: any[] = [];
+    if (friendFirebaseUids.length > 0) fallbackQueries.push({ firebaseUid: { $in: friendFirebaseUids } });
+    if (friendEmails.length > 0) fallbackQueries.push({ email: { $in: friendEmails } });
+
+    const friendFallbackUsers = fallbackQueries.length > 0
+      ? await User.find({ $or: fallbackQueries })
+          .select('name email rating firebaseUid gameRecents avatarColor createdAt')
+          .lean()
+      : [];
+
+    const friendByFirebaseUid = new Map(
+      friendFallbackUsers
+        .filter((u: any) => typeof u.firebaseUid === 'string' && u.firebaseUid.length > 0)
+        .map((u: any) => [u.firebaseUid, u])
+    );
+    const friendByEmail = new Map(
+      friendFallbackUsers
+        .filter((u: any) => typeof u.email === 'string' && u.email.length > 0)
+        .map((u: any) => [u.email, u])
+    );
+
     const friends = (user.friends || []).map((friend: any) => {
-      const populated = friend.friendUser && friendMap.get(friend.friendUser.toString());
+      const populatedByObjectId = friend.friendUser && friendMap.get(friend.friendUser.toString());
+      const populatedByFirebaseUid = !populatedByObjectId && friend.friendFirebaseUid
+        ? friendByFirebaseUid.get(friend.friendFirebaseUid)
+        : undefined;
+      const populatedByEmail = !populatedByObjectId && !populatedByFirebaseUid && friend.friendEmail
+        ? friendByEmail.get(friend.friendEmail)
+        : undefined;
+      const populated = populatedByObjectId || populatedByFirebaseUid || populatedByEmail;
+      const friendCreatedAt = resolveUserCreatedAt(populated);
       return {
-        friendUser: friend.friendUser,
+        friendUser: friend.friendUser || populated?._id,
         friendFirebaseUid: populated?.firebaseUid || friend.friendFirebaseUid,
         friendName: populated?.name || friend.friendName,
         friendEmail: populated?.email || friend.friendEmail,
         friendRating: populated?.rating ?? friend.friendRating,
         friendAvatarColor: populated?.avatarColor,
         gameRecents: populated?.gameRecents,
+        friendCreatedAt,
         addedAt: friend.addedAt
       };
     });

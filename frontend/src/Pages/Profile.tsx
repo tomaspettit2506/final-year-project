@@ -14,6 +14,7 @@ import GameDetails from "../Components/GameDetails";
 import ProfileLight from "../assets/img-theme/ProfileLight.jpeg";
 import ProfileDark from "../assets/img-theme/ProfileDark.jpeg";
 import { Trophy, Target, TrendingUp } from 'lucide-react';
+import { formatMemberSinceDate } from "../Utils/memberSince";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [mongoUserId, setMongoUserId] = useState<string | null>(null);
+  const [mongoCreatedAt, setMongoCreatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -171,6 +173,7 @@ const Profile = () => {
             if (userRes.ok) {
               const mongoUser = await userRes.json();
               setMongoUserId(mongoUser._id);
+              setMongoCreatedAt(mongoUser?.createdAt || null);
             }
           }
         } catch (error) {
@@ -263,9 +266,7 @@ const Profile = () => {
   const winRate = totalGames > 0 ? Math.round(((userData?.wins || 0) / totalGames) * 100) : 0;
   const username =
     (user?.email?.split("@")[0] || userData?.name || "user").replace(/\s+/g, "_").toLowerCase();
-  const memberSince = user?.metadata?.creationTime
-    ? new Date(user.metadata.creationTime).getDate() + " " + new Date(user.metadata.creationTime).toLocaleString("default", { month: "short" }) + " " + new Date(user.metadata.creationTime).getFullYear()
-    : undefined;
+  const memberSince = formatMemberSinceDate(mongoCreatedAt || user?.metadata?.creationTime);
   const visibleRecentGameCards = isMobile ? 1 : 2;
   const recentGameCardHeight = 225;
   const recentGamesListHeight = visibleRecentGameCards * recentGameCardHeight + (visibleRecentGameCards - 1) * 16;
