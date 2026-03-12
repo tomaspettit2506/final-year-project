@@ -116,12 +116,12 @@ const Landing = () => {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress color="secondary" />
-      </Box>
-    );
-  }
+  return (
+    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+      <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+    </Box>
+  );
+}
 
   return (
     <Box

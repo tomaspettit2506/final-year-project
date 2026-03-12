@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../Context/ThemeContext";
@@ -14,6 +14,7 @@ import SettingsDark from "../assets/img-theme/SettingsDark.jpeg";
 
 const Settings: React.FC = () => {
   const { logout } = useAuth();
+  const [loading, setLoading] = useState(true);
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -70,6 +71,26 @@ const Settings: React.FC = () => {
   const handlePieceSetChange = (set: string) => {
     setPieceSet(set as "standard" | "fancy" | "minimal");
   };
+
+  useEffect(() => {
+      // Whatever async setup Play needs (e.g. fetching user name/rating)
+      const init = async () => {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          } finally {
+            setLoading(false);
+          }
+        };
+        init();
+      }, []);
+  
+    if (loading) {
+      return (
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+          <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+        </Box>
+      );
+    }
 
   return (
     <>

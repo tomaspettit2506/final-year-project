@@ -252,8 +252,8 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#5500aa" }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
       </Box>
     );
   }

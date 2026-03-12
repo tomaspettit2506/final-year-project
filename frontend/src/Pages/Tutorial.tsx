@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Tab, useMediaQuery } from "@mui/material";
+import { useEffect, useState, useRef } from "react";
+import { Box, CircularProgress, Tab, useMediaQuery } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
@@ -16,9 +16,10 @@ import Draw from "../Components/TutorialComponents/Draw";
 
 function Tutorial() {
   const { isDark } = useTheme();
-  const [value, setValue] = React.useState('basic');
-  const tabListRef = React.useRef<HTMLDivElement>(null);
-  const touchStartX = React.useRef(0);
+  const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState('basic');
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
@@ -42,6 +43,26 @@ function Tutorial() {
 
   // Mobile responsiveness
   const isMobile = useMediaQuery('(max-width:600px)');
+
+  useEffect(() => {
+    // Whatever async setup Play needs (e.g. fetching user name/rating)
+    const init = async () => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        } finally {
+          setLoading(false);
+        }
+      };
+      init();
+    }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      </Box>
+    );
+  }
 
   return (
     <>

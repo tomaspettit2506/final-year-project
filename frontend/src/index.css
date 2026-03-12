@@ -5,9 +5,15 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  padding-bottom: 80px;
   -ms-overflow-style: none;
-  background-color: #8fc3df; /* Light blue background */
+  background-image: url("/icon-192.png"), 
+          radial-gradient(120px 80px at 10% 20%, rgba(118, 86, 255, 0.45), transparent 60%),
+          radial-gradient(140px 100px at 90% 30%, rgba(255, 140, 200, 0.35), transparent 65%),
+          radial-gradient(200px 120px at 30% 80%, rgba(70, 180, 255, 0.35), transparent 70%),
+          linear-gradient(180deg, #0b0b1e 0%, #12122a 50%, #0a0a18 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
 }
 
 code {
@@ -17,7 +23,7 @@ code {
 
 /* 🔹 Style Buttons */
 button {
-  background-color: #91aa00; /* Dark purple from logo */
+  background-color: #91aa00; /* Vibrant purple background */
   color: white;
   border: none;
   padding: 10px 16px;

@@ -15,7 +15,7 @@ const Home = () => {
     const { user } = useAuth();
     const theme = useTheme();
     const { isDark } = useAppTheme();
-  const apiBaseUrl = getApiBaseUrl();
+    const apiBaseUrl = getApiBaseUrl();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [loading, setLoading] = useState<boolean>(true);
     const [userData, setUserData] = useState<any>(null);
@@ -122,15 +122,8 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
   // Show loading indicator while fetching data
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "70vh",
-        }}
-      >
-        <CircularProgress sx={{ color: "#5500aa" }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
       </Box>
     );
   }

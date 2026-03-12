@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
-import Box from '@mui/material/Box';
+import { Box, CircularProgress } from '@mui/material';
 import AppBar from '../Components/AppBar';
 import GameSetupTheme from '../assets/img-theme/GameSetupTheme.jpeg';
 
@@ -19,6 +19,7 @@ interface GameConfig {
 
 
 const Play = () => {
+  const [loading, setLoading] = useState<boolean>(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('setup');
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     gameMode: 'ai',
@@ -30,6 +31,19 @@ const Play = () => {
   const [myName, setMyName] = useState<string>('');
   const [roomId, setRoomId] = useState<string>('');
   const [isHost, setIsHost] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Whatever async setup Play needs (e.g. fetching user name/rating)
+    const init = async () => {
+      try {
+        // Simulate async setup with a timeout (replace with real async calls if needed)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, []);
 
   const handleStartGame = (config: GameConfig) => {
     setGameConfig(config);
@@ -57,6 +71,14 @@ const Play = () => {
     }));
     setCurrentScreen('game');
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", mt: 15 }}>
+        <CircularProgress sx={{ color: "#ffffff", fontSize: 20 }} />
+      </Box>
+    );
+  }
 
   if (currentScreen === 'setup') {
     return (
