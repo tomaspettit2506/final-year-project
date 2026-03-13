@@ -135,6 +135,24 @@ router.post('/', async (req, res) => {
     await newInvite.save();
     await newInvite.populate('fromUser', 'name email rating firebaseUid');
 
+    const io = req.app.locals.io;
+    const recipientRoomTarget = toUser.firebaseUid || String(toUser._id);
+    if (io && recipientRoomTarget) {
+      io.to(`user_${recipientRoomTarget}`).emit('game_invite_received', {
+        inviteId: String(newInvite._id),
+        fromUserId: fromUser.firebaseUid || String(fromUser._id),
+        fromUserName: fromUser.name || fromUser.email || 'Unknown',
+        fromUserAvatarColor: fromUser.avatarColor,
+        fromUserRating: fromUser.rating ?? 1200,
+        roomId: newInvite.roomId,
+        timeControl: newInvite.timeControl,
+        rated: newInvite.rated,
+        createdAt: newInvite.createdAt,
+      });
+    } else {
+      console.warn('[gameInvites] Socket.IO unavailable or recipient room target missing for game_invite_received emit');
+    }
+
     return res.status(201).json(newInvite);
   } catch (error: any) {
     console.error('Failed to save game invite:', error?.message || error);

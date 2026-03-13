@@ -27,6 +27,21 @@ router.post('/:id/accept', async (req, res) => {
     await toUser.save();
     await fromUser.save();
 
+    const io = req.app.locals.io;
+    const requesterRoomTarget = fromUser.firebaseUid || String(fromUser._id);
+    if (io && requesterRoomTarget) {
+      io.to(`user_${requesterRoomTarget}`).emit('request_accepted', {
+        requestId: String(request._id),
+        acceptedByUserId: toUser.firebaseUid || String(toUser._id),
+        acceptedByName: toUser.name || toUser.email || 'Unknown',
+        acceptedByRating: toUser.rating ?? 1200,
+        acceptedByAvatarColor: toUser.avatarColor,
+        acceptedAt: new Date().toISOString(),
+      });
+    } else {
+      console.warn('[requests] Socket.IO unavailable or requester room target missing for request_accepted emit');
+    }
+
     return res.status(200).json({ message: 'Friend request accepted', request, friends: toUser.friends });
   } catch (error) {
     console.error('Failed to accept request:', error);
@@ -126,6 +141,21 @@ router.post('/', async (req, res) => {
     const newRequest = new Request({ fromUser: fromUser._id, toUser: toUser._id });
     await newRequest.save();
     await newRequest.populate('fromUser', 'name email rating firebaseUid');
+
+    const io = req.app.locals.io;
+    const recipientRoomTarget = toUser.firebaseUid || String(toUser._id);
+    if (io && recipientRoomTarget) {
+      io.to(`user_${recipientRoomTarget}`).emit('request_received', {
+        requestId: String(newRequest._id),
+        fromUserId: fromUser.firebaseUid || String(fromUser._id),
+        fromUserName: fromUser.name || fromUser.email || 'Unknown',
+        fromUserRating: fromUser.rating ?? 1200,
+        fromUserAvatarColor: fromUser.avatarColor,
+        createdAt: newRequest.createdAt,
+      });
+    } else {
+      console.warn('[requests] Socket.IO unavailable or recipient room target missing for request_received emit');
+    }
 
     return res.status(201).json(newRequest);
   } catch (error) {
