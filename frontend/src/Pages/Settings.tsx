@@ -1,29 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import { useBoardTheme } from "../Context/BoardThemeContext";
 import { Box, Button, Card, CardContent, Typography, Divider, Snackbar, Alert, Dialog, DialogActions, 
   DialogContent, DialogContentText,DialogTitle, Select, MenuItem, FormControl, FormLabel, 
-  CircularProgress, useTheme, useMediaQuery } from "@mui/material";
+  CircularProgress } from "@mui/material";
 import InstallPWA from "../Components/InstallPWA";
 import GridOnIcon from '@mui/icons-material/GridOn';
 import AppBar from "../Components/AppBar";
+import Loading from "../Components/Loading";
 import SettingsLight from "../assets/img-theme/SettingsLight.jpeg";
 import SettingsDark from "../assets/img-theme/SettingsDark.jpeg";
+import { getRandomPageLoadingDelayMs } from "../Utils/loadingDelay";
+import { clearLogoutLoadingWindow, markLogoutLoadingWindow } from "../Utils/logoutLoading";
 
 const Settings: React.FC = () => {
   const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const { isDark } = useAppTheme();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
   
   // Appearance settings with state
   const { boardTheme, setBoardTheme, pieceSet, setPieceSet } = useBoardTheme();
@@ -60,8 +63,19 @@ const Settings: React.FC = () => {
     const success = await clearCache();
     if (success) {
       // Only logout and redirect if cache was cleared successfully
-      await logout();
-      navigate("/", { replace: true });
+      setIsLoggingOut(true);
+      try {
+        markLogoutLoadingWindow();
+        await logout();
+        navigate("/", { replace: true });
+      } catch (error) {
+        clearLogoutLoadingWindow();
+        setIsLoggingOut(false);
+        console.error("Logout failed", error);
+        setSnackbarMessage("Failed to log out");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      }
     }
   };
 
@@ -78,7 +92,7 @@ const Settings: React.FC = () => {
       // Whatever async setup Play needs (e.g. fetching user name/rating)
       const init = async () => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, pageLoadingDelayMs.current));
           } finally {
             setLoading(false);
           }
@@ -88,10 +102,12 @@ const Settings: React.FC = () => {
   
     if (loading) {
       return (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-          <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-        </Box>
+        <Loading message="Settings" />
       );
+    }
+
+    if (isLoggingOut) {
+      return <Loading isLoggingOut />
     }
 
   return (

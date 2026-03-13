@@ -1,6 +1,6 @@
 // Page: frontend/src/Pages/Friends.tsx
 import { useState, useEffect, useRef } from "react";
-import { Box, Container, CircularProgress, Typography, Tabs, Tab, Badge, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Container, Typography, Tabs, Tab, Badge, useTheme, useMediaQuery } from "@mui/material";
 import { useAuth } from "../Context/AuthContext";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
@@ -12,6 +12,8 @@ import PendingRequests from "../Components/FriendsComponents/PendingRequests";
 import SentRequests from "../Components/FriendsComponents/SentRequests";
 import GameInvites from "../Components/FriendsComponents/GameInvites";
 import AppBar from "../Components/AppBar";
+import Loading from "../Components/Loading";
+import { getRandomPageLoadingDelayMs, waitForMinimumDuration } from "../Utils/loadingDelay";
 
 import FriendsTheme from "../assets/img-theme/FriendsTheme.jpeg";
 
@@ -74,6 +76,7 @@ const Friends = () => {
   const [tab, setTab] = useState<string>("friends");
   const tabsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
 
   // Define mapFriendFromApi function before it's used
   const mapFriendFromApi = (friend: any): Friend => {
@@ -107,11 +110,15 @@ const Friends = () => {
     };
   };
 
-  const fetchFriends = async () => {
+  const fetchFriends = async (withPageLoader = false) => {
     if (!user?.uid) return;
 
+    const startedAt = withPageLoader ? Date.now() : 0;
+
     try {
-      setLoading(true);
+      if (withPageLoader) {
+        setLoading(true);
+      }
       const res = await fetch(`${apiBaseUrl}/user/${user.uid}/friends`, {
         credentials: "include",
       });
@@ -121,7 +128,10 @@ const Friends = () => {
     } catch (err) {
       console.error('Failed to fetch friends', err);
     } finally {
-      setLoading(false);
+      if (withPageLoader) {
+        await waitForMinimumDuration(startedAt, pageLoadingDelayMs.current);
+        setLoading(false);
+      }
     }
   };
 
@@ -160,7 +170,7 @@ const Friends = () => {
         if (res.ok) {
           await res.json();
           // Once the user is ensured to exist in MongoDB, load their friends
-          fetchFriends();
+          fetchFriends(true);
         }
       } catch (err) {
         console.error('Failed to sync user to MongoDB:', err);
@@ -322,7 +332,7 @@ const Friends = () => {
   }, [tab]);
 
   // Load friends on initial render or when auth user changes
-  useEffect(() => { fetchFriends(); }, [user]);
+  useEffect(() => { fetchFriends(true); }, [user]);
 
   const handleRemoveFriend = async (friend: Friend) => {
     if (!user?.uid) return;
@@ -442,9 +452,7 @@ const Friends = () => {
 
   if (loading) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-    </Box>
+    <Loading message="Friends"/>
   );
 }
 

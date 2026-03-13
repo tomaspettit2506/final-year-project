@@ -1,20 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { getApiBaseUrl } from "../Services/api";
 import { socket } from "../Services/socket";
-import {CircularProgress, Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
+import { Box, Typography, Button, Card, CardContent, Grid, Paper, Avatar, Divider, Modal,
   TextField, IconButton, FormControl, Tooltip,
   MenuItem, Select as MuiSelect, useMediaQuery, useTheme } from "@mui/material";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import AppBar from "../Components/AppBar";
+import Loading from "../Components/Loading";
 import GameDetails from "../Components/GameDetails";
 import ProfileLight from "../assets/img-theme/ProfileLight.jpeg";
 import ProfileDark from "../assets/img-theme/ProfileDark.jpeg";
 import { Trophy, Target, TrendingUp } from 'lucide-react';
 import { formatMemberSinceDate } from "../Utils/memberSince";
+import { getRandomPageLoadingDelayMs, waitForMinimumDuration } from "../Utils/loadingDelay";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -37,6 +39,7 @@ const Profile = () => {
   const [selectedGameDetails, setSelectedGameDetails] = useState<any>(null);
   const [_loadingRecentGames, setLoadingRecentGames] = useState(false);
   const [isGameDetailsOpen, setIsGameDetailsOpen] = useState(false);
+  const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
 
   const computeStatsFromGames = (games: any[]) => {
     return games.reduce(
@@ -137,6 +140,8 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       const fetchUserData = async () => {
+        const startedAt = Date.now();
+
         try {
           // Fetch from Firestore
           const userRef = doc(firestore, "users", user.uid);
@@ -179,6 +184,7 @@ const Profile = () => {
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
+          await waitForMinimumDuration(startedAt, pageLoadingDelayMs.current);
           setLoading(false);
         }
       };
@@ -252,9 +258,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-      </Box>
+      <Loading message="Profile" />
     );
   }
 

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GameSetup from '../Components/PlayComponents/GameSetup';
 import GameScreen from '../Components/PlayComponents/GameScreen';
 import type { GameMode } from '../Types/chess';
-import { Box, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
+import Box from '@mui/material/Box';
 import AppBar from '../Components/AppBar';
+import Loading from '../Components/Loading';
 import GameSetupTheme from '../assets/img-theme/GameSetupTheme.jpeg';
+import { getRandomPageLoadingDelayMs } from '../Utils/loadingDelay';
 
 type Screen = 'setup' | 'game';
 
@@ -19,10 +21,9 @@ interface GameConfig {
 
 
 const Play = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
 
   const [loading, setLoading] = useState<boolean>(true);
+  const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
   const [currentScreen, setCurrentScreen] = useState<Screen>('setup');
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     gameMode: 'ai',
@@ -40,7 +41,7 @@ const Play = () => {
     const init = async () => {
       try {
         // Simulate async setup with a timeout (replace with real async calls if needed)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, pageLoadingDelayMs.current));
       } finally {
         setLoading(false);
       }
@@ -77,9 +78,7 @@ const Play = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-      </Box>
+        <Loading message="Loading game setup..." />
     );
   }
 

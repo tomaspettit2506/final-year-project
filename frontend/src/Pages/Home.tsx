@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, Card, CardContent, CircularProgress, Grid, LinearProgress, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
@@ -7,7 +7,9 @@ import { socket } from "../Services/socket";
 import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import AppBar from "../Components/AppBar";
 import GameDetails from "../Components/GameDetails";
+import Loading from "../Components/Loading";
 import { getUserRating } from "../Utils/FirestoreService";
+import { getRandomPageLoadingDelayMs, waitForMinimumDuration } from "../Utils/loadingDelay";
 import HomeTheme from "../assets/img-theme/home_theme.jpg";
 
 const Home = () => {
@@ -24,11 +26,14 @@ const Home = () => {
     const [loadingRecentGames, setLoadingRecentGames] = useState<boolean>(false);
     const [selectedGameDetails, setSelectedGameDetails] = useState<any>(null);
     const [isGameDetailsOpen, setIsGameDetailsOpen] = useState(false);
+    const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
 
     useEffect(() => {
     // Fetch user's modules when the component mounts
     const fetchUserData = async () => {
       if (!user) return;
+
+      const startedAt = Date.now();
 
       try {
         setLoading(true);
@@ -51,6 +56,7 @@ const Home = () => {
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
+        await waitForMinimumDuration(startedAt, pageLoadingDelayMs.current);
         setLoading(false);
       }
     };
@@ -122,9 +128,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
   // Show loading indicator while fetching data
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-      </Box>
+      <Loading message="Home"/>
     );
   }
 

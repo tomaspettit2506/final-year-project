@@ -1,13 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, CircularProgress, Tab, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Tab, useTheme, useMediaQuery } from "@mui/material";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import { useTheme as useAppTheme } from "../Context/ThemeContext";
 import ChessGalaxyTheme from "../assets//img-theme/chess_galaxy.jpg";
+import AppBar from "../Components/AppBar";
+import Loading from "../Components/Loading";
+import { getRandomPageLoadingDelayMs } from "../Utils/loadingDelay";
 
 // Tutorial Components
-import AppBar from "../Components/AppBar";
 import Basic from "../Components/TutorialComponents/Basic";
 import Pieces from "../Components/TutorialComponents/Pieces";
 import Rules from "../Components/TutorialComponents/Rules";
@@ -21,6 +23,7 @@ function Tutorial() {
   const [value, setValue] = useState('basic');
   const tabListRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const pageLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
@@ -49,7 +52,7 @@ function Tutorial() {
     // Whatever async setup Play needs (e.g. fetching user name/rating)
     const init = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, pageLoadingDelayMs.current));
         } finally {
           setLoading(false);
         }
@@ -59,9 +62,7 @@ function Tutorial() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-      </Box>
+      <Loading message="Tutorial" />
     );
   }
 

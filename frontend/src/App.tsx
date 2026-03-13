@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { CircularProgress, Box, Fade, CssBaseline, ThemeProvider, useTheme, useMediaQuery } from "@mui/material";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import Landing from './Pages/Landing'
 import Home from './Pages/Home'
 import Settings from './Pages/Settings'
@@ -8,25 +9,70 @@ import Play from './Pages/Play'
 import Tutorial from './Pages/Tutorial'
 import Friends from './Pages/Friends'
 import BottomNav from './Components/BottomNav';
+import Loading from './Components/Loading';
 import { useTheme as useAppTheme} from './Context/ThemeContext';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from './firebase';
+import { getRandomPageLoadingDelayMs, waitForMinimumDuration } from './Utils/loadingDelay';
+import { clearLogoutLoadingWindow, getRemainingLogoutLoadingMs } from './Utils/logoutLoading';
 import './App.css'
 
 function App() {
   const location = useLocation();
-  const theme = useTheme();
   const muiTheme = useAppTheme();
   const [user, loading] = useAuthState(auth);
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Example breakpoint for mobile
+  const [showAppLoader, setShowAppLoader] = useState(true);
+  const [showLogoutLoader, setShowLogoutLoader] = useState(false);
+  const appLoadingStartedAt = useRef(Date.now());
+  const appLoadingDelayMs = useRef(getRandomPageLoadingDelayMs());
 
-  if (loading) {
+  useEffect(() => {
+    if (loading) return;
+
+    let cancelled = false;
+
+    const finishAppLoading = async () => {
+      await waitForMinimumDuration(appLoadingStartedAt.current, appLoadingDelayMs.current);
+      if (!cancelled) {
+        setShowAppLoader(false);
+      }
+    };
+
+    finishAppLoading();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading]);
+
+  useEffect(() => {
+    const remainingMs = getRemainingLogoutLoadingMs();
+
+    if (remainingMs <= 0) {
+      clearLogoutLoadingWindow();
+      setShowLogoutLoader(false);
+      return;
+    }
+
+    setShowLogoutLoader(true);
+
+    const timeoutId = window.setTimeout(() => {
+      clearLogoutLoadingWindow();
+      setShowLogoutLoader(false);
+    }, remainingMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loading, user, location.pathname]);
+
+  if (showLogoutLoader) {
+    return <Loading isLoggingOut />;
+  }
+
+  if (loading || showAppLoader) {
     return (
-      <Fade in={loading} timeout={{ enter: 500, exit: 500 }}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress sx={{ color: "#ffffff", fontSize: isMobile ? 10 : 20, mt: isMobile ? 40 : 50 }} />
-        </Box>
-      </Fade>
+      <Loading />
     );
   }
 

@@ -1,9 +1,11 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Tooltip } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Tooltip, Box } from '@mui/material';
 import { useTheme } from '../Context/ThemeContext';
 import { useAuth } from '../Context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import SpaceTheme from '../assets/img-theme/space_theme.jpg';
+import Loading from './Loading';
+import { clearLogoutLoadingWindow, markLogoutLoadingWindow } from '../Utils/logoutLoading';
 
 interface AppBarComponentProps {
     title?: string;
@@ -16,15 +18,29 @@ const AppBarComponent: React.FC<AppBarComponentProps> = ({ title, isBackButton, 
     const { isDark, toggleTheme } = useTheme();
     const { logout } = useAuth();
     const navigate = useNavigate();
+    const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
     const handleLogout = async () => {
         try {
+            setIsLoggingOut(true);
+            markLogoutLoadingWindow();
             await logout();
+
             navigate("/", { replace: true });
         } catch (error) {
+            clearLogoutLoadingWindow();
+            setIsLoggingOut(false);
             console.error("Logout failed", error);
         }
     };
+
+    if (isLoggingOut) {
+        return (
+            <Box sx={{ position: "fixed", inset: 0, zIndex: (t) => t.zIndex.modal + 1 }}>
+                <Loading isLoggingOut />
+            </Box>
+        );
+    }
 
     return (
         <AppBar position="static" sx={{ backgroundImage: `url(${SpaceTheme})`, backgroundSize: 'cover' }}>
