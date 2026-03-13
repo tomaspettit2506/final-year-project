@@ -83,7 +83,7 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                       variant="contained"
                       size="small"
                       startIcon={<CheckIcon />}
-                      onClick={() => onAccept(request.id)}
+                      onClick={() => { onAccept(request.id) }}
                       sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                     >
                       Accept
@@ -92,7 +92,7 @@ const PendingRequests: React.FC<PendingRequestsProps> = ({ requests, onAccept, o
                       variant="outlined"
                       size="small"
                       startIcon={<CloseIcon />}
-                      onClick={() => onDecline(request.id)}
+                      onClick={() => { onDecline(request.id) }}
                       sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                     >
                       Decline

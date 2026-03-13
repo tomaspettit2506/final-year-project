@@ -94,6 +94,7 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
       onSendMessage(messageText.trim(), friend.id, replyToMessage?.id);
       setMessageText("");
       setReplyToMessage(null);
+
       
       // Trigger chat reload after sending
       if (onReloadChat) {
@@ -121,7 +122,6 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
   const handleEditSave = (messageId: string) => {
     if (editText.trim() && editText !== messages.find(m => m.id === messageId)?.text) {
       onEditMessage(messageId, editText.trim(), friend.id);
-      
       // Trigger chat reload after editing
       if (onReloadChat) {
         onReloadChat(friend.id);
@@ -138,7 +138,6 @@ const ChatDialog: React.FC<ChatDialogProps> = ({
 
   const handleDelete = (messageId: string) => {
     onDeleteMessage(messageId, friend.id);
-    
     // Trigger chat reload after deleting
     if (onReloadChat) {
       onReloadChat(friend.id);

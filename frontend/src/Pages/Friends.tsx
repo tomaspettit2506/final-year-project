@@ -324,6 +324,34 @@ const Friends = () => {
     }
   };
 
+  // Listen for real-time request/invite events and refresh relevant tabs/badges
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const handleRequestReceived = () => {
+      fetchPendingRequests();
+    };
+
+    const handleRequestAccepted = () => {
+      fetchSentRequests();
+      fetchFriends();
+    };
+
+    const handleGameInviteReceived = () => {
+      fetchGameInvites();
+    };
+
+    socket.on('request_received', handleRequestReceived);
+    socket.on('request_accepted', handleRequestAccepted);
+    socket.on('game_invite_received', handleGameInviteReceived);
+
+    return () => {
+      socket.off('request_received', handleRequestReceived);
+      socket.off('request_accepted', handleRequestAccepted);
+      socket.off('game_invite_received', handleGameInviteReceived);
+    };
+  }, [user?.uid]);
+
   // Reload Requests when switching to sent tab
   useEffect(() => {
     if (tab === 'sent') {

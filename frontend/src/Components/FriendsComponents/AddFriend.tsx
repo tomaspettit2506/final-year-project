@@ -79,6 +79,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
     
     setUsers(users.map(u => u.id === userId ? { ...u, isPending: true } : u ));
     onSendRequest(userId);
+    
     // POST Request
     try {
       const res = await fetch(`${apiBaseUrl}/request`, {

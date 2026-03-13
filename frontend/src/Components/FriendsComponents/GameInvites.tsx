@@ -99,7 +99,7 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                     variant="contained"
                     size="small"
                     startIcon={"🤜🤛"}
-                    onClick={() => handleAcceptInvite(invite)}
+                    onClick={() =>  handleAcceptInvite(invite) }
                     color="success"
                     sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                   >
@@ -109,7 +109,8 @@ const GameInvites: React.FC<GameInvitesProps> = ({ invites, onAccept, onDecline 
                     variant="outlined"
                     size="small"
                     startIcon={"❌"}
-                    onClick={() => onDecline(invite.id)}
+                    onClick={() => { onDecline(invite.id) }}
+                    color="error"
                     sx={{ flex: { xs: "1 1 auto", sm: "0 0 auto" } }}
                   >
                     Decline

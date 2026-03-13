@@ -3,7 +3,8 @@ import { auth } from "../firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { getUserRating } from "../Utils/FirestoreService";
-import { requestNotificationPermission } from "../Utils/Notifications"; 
+import { initializePwaNotifications } from "../Utils/Notifications"; 
+import { socket } from "../Services/socket";
 
 // Define authentication context type
 interface AuthContextType {
@@ -23,10 +24,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        if (!socket.connected) {
+          socket.connect();
+        }
+        socket.emit('join_user_room', {
+          userId: currentUser.uid,
+          userName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Friend',
+        });
+
         const userProfile = await getUserRating(currentUser.uid); // ✅ Fetch Firestore Data
         setUserData(userProfile);
         // Request notification permission when user logs in
-        await requestNotificationPermission();
+        await initializePwaNotifications();
       } else {
         setUserData(null);
       }

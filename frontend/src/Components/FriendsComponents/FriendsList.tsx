@@ -398,6 +398,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     socket.emit('send_message', {
       messageId: tempId,
       senderId: user?.uid,
+      senderName: user?.displayName || user?.email?.split('@')[0] || 'Friend',
       recipientId: friendId,
       text,
       replyTo: replyToId,
