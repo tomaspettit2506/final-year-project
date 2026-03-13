@@ -186,7 +186,7 @@ socket.on('request_received', (data: RequestReceivedEvent) => {
     body: `${senderName} sent you a friend request`,
     tag: `friend-request-${data?.requestId || senderName}`,
     data: { requestId: data?.requestId, fromUserId: data?.fromUserId },
-  });
+  }, 'Friend Request');
 });
 
 socket.on('request_accepted', (data: RequestAcceptedEvent) => {
@@ -196,7 +196,7 @@ socket.on('request_accepted', (data: RequestAcceptedEvent) => {
     body: `${accepterName} accepted your friend request`,
     tag: `friend-accepted-${data?.requestId || accepterName}`,
     data: { requestId: data?.requestId, acceptedByUserId: data?.acceptedByUserId },
-  });
+  }, 'Friend Request Accepted');
 });
 
 socket.on('game_invite_received', (data: GameInviteReceivedEvent) => {
@@ -207,7 +207,7 @@ socket.on('game_invite_received', (data: GameInviteReceivedEvent) => {
     body: `${senderName} invited you to play (${gameType})`,
     tag: `game-invite-${data?.inviteId || data?.roomId || senderName}`,
     data: { inviteId: data?.inviteId, roomId: data?.roomId, fromUserId: data?.fromUserId },
-  });
+  }, 'Game Invite');
 });
 
 socket.on('receive_message', async (data: ReceiveMessageEvent) => {
@@ -219,7 +219,7 @@ socket.on('receive_message', async (data: ReceiveMessageEvent) => {
     body: preview ? `${sender}: ${preview}` : `${sender} sent you a message`,
     tag: `chat-${sender}`,
     data: { senderId: data?.senderId, messageId: data?.id },
-  });
+  }, `New Message from ${sender}`);
 });
 
 socket.on('receive_reply_message', async (data: ReplayMessageEvent) => {
@@ -231,25 +231,29 @@ socket.on('receive_reply_message', async (data: ReplayMessageEvent) => {
     body: preview ? `${sender} replied: ${preview}` : `${sender} sent you a reply`,
     tag: `chat-reply-${sender}`,
     data: { senderId: data?.senderId, messageId: data?.id, replyToMessageId: data?.replyToMessageId },
-  });
+  }, `Reply from ${sender}`);
 });
 
 socket.on('gameUpdate', (data: GameUpdateEvent) => {
   console.log('[Socket.io] ← Received gameUpdate event:', data);
   const { gameId, type } = data;
   let body = 'Your game has been updated';
+  let title = 'Game Update';
 
   if (type === 'opponentMoved') {
     body = 'Your opponent made a move';
+    title = 'Opponent Moved';
   } else if (type === 'gameEnded') {
     body = data.result || 'The game has ended';
+    title = 'Game Ended';
   } else if (type === 'gameAbandoned') {
     body = 'Your opponent abandoned the game';
+    title = 'Game Abandoned';
   }
 
   showPwaNotification({
     body,
     tag: 'game-update-' + gameId,
     data: { gameId },
-  });
+  }, title);
 });

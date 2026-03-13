@@ -42,7 +42,7 @@ export const initializePwaNotifications = async (): Promise<boolean> => {
 };
 
 // PWA Notification helper (using icon)
-export const showNotification = (options?: NotificationOptions) => {
+export const showNotification = (options?: NotificationOptions, title = 'GOTCG') => {
   if (!isNotificationSupported()) {
     console.warn('[Notifications] Cannot show notification, notifications are not supported');
     return;
@@ -63,5 +63,5 @@ export const showNotification = (options?: NotificationOptions) => {
     badge: '/icon-192.png',
   };
 
-  new Notification("GOTCG", notificationOptions);
+  new Notification(title, notificationOptions);
 }
