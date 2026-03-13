@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Typography, useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
+import { Badge, Box, Card, Typography, Divider, useMediaQuery, useTheme as useMuiTheme } from '@mui/material';
 import { useTheme as useAppTheme } from '../../Context/ThemeContext';
 
 const Draw = () => {
@@ -21,10 +21,12 @@ const Draw = () => {
         <Box sx={{ p: 4, bgcolor: isDark ? 'rgba(245, 158, 11, 0.12)' : '#FFFBEB', borderLeft: 4, borderColor: isDark ? '#F59E0B' : '#F59E0B', borderRadius: 1, mb: 4, color: isDark ? '#FDE68A' : 'black' }}>
           <Typography><strong>Most common type of draw</strong></Typography>
         </Box>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           Stalemate occurs when a player is NOT in check but has no legal moves available. 
           The game immediately ends in a draw.
         </Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{ p: 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
           <Typography variant="body2"><strong>Example:</strong> A lone king with no legal moves, but not in check. Be careful when you have a big advantage - don't accidentally stalemate your opponent!</Typography>
         </Box>
@@ -32,9 +34,11 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h3" sx={{ fontSize: size }}>2. Insufficient Material</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           When neither player has enough pieces to possibly deliver checkmate, the game is automatically drawn.
         </Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{mb: 2}}>
           <Typography><strong>Automatic draws include:</strong></Typography>
           <ul className="list-disc list-inside ml-4 space-y-1">
@@ -48,9 +52,11 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h3" sx={{ fontSize: size }}>3. Threefold Repetition</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           If the exact same position occurs three times (with the same player to move), either player can claim a draw.
         </Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
           <Typography variant="body2"><strong>Note:</strong> The positions don't have to occur consecutively. The same position at any point in the game counts toward the three repetitions.</Typography>
         </Box>
@@ -58,9 +64,11 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h3" sx={{ fontSize: size }}>4. Fifty-Move Rule</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           If 50 moves occur (by both players) without any pawn moves or captures, either player can claim a draw.
         </Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
           <Typography variant="body2">This rule prevents games from continuing indefinitely when neither player is making progress.</Typography>
         </Box>
@@ -68,6 +76,7 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h3" sx={{ fontSize: size }}>5. Mutual Agreement</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           At any point during the game, both players can agree to a draw. This often happens when:
         </Typography>
@@ -80,9 +89,11 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(15, 23, 42, 0.9)' : '#FFFFFF', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h3" sx={{ fontSize: size }}>6. Dead Position</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Typography>
           When no sequence of legal moves can lead to checkmate, the game is automatically drawn.
         </Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{ p: isMobile ? 2 : 4, bgcolor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'grey.100', borderRadius: 1, color: isDark ? '#E2E8F0' : 'black' }}>
           <Typography variant="body2"><strong>Example:</strong> Both players have only their kings and a few bishops all on the same color squares.</Typography>
         </Box>
@@ -90,19 +101,22 @@ const Draw = () => {
 
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? 'rgba(30, 41, 59, 0.9)' : '#EFF6FF', color: isDark ? '#E2E8F0' : 'black' }}>
         <Typography variant="h3">Draw Strategy Tips</Typography>
+        <Divider sx={{ my: 4 }}/>
         <Box sx={{spaceY: 3}}>
-          <div className="flex gap-3">
-            <Badge>Defending</Badge>
+          <Box sx={{mb: 2}} className="flex gap-3">
+            <Badge sx={{bgcolor: 'rgba(255, 0, 0, 0.1)'}}>Defending</Badge>
             <Typography>If you're losing, try to simplify to a drawn endgame or force a stalemate</Typography>
-          </div>
-          <div className="flex gap-3">
-            <Badge>Winning</Badge>
+          </Box>
+          <Divider sx={{ my: 2 }}/>
+          <Box sx={{mb: 2}} className="flex gap-3">
+            <Badge sx={{bgcolor: 'rgba(0, 255, 0, 0.1)'}}>Winning</Badge>
             <Typography>Be careful not to stalemate your opponent when you have a winning position</Typography>
-          </div>
-          <div className="flex gap-3">
-            <Badge>Technique</Badge>
+          </Box>
+          <Divider sx={{ my: 2 }}/>
+          <Box sx={{mb: 2}} className="flex gap-3">
+            <Badge sx={{bgcolor:'rgba(0, 0, 255, 0.1)'}}>Technique</Badge>
             <Typography>Learn common drawn positions so you know when to accept or offer a draw</Typography>
-          </div>
+          </Box>
         </Box>
       </Card>
     </Box>
