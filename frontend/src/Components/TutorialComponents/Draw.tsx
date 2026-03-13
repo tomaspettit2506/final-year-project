@@ -8,7 +8,7 @@ const Draw = () => {
   const size = isMobile ? 44 : 46;
 
   return (
-    <Box sx={{ mb: 4, p: isMobile ? 2 : 0 }}>
+    <Box sx={{ mb: 4, p: isMobile ? 1 : 0 }}>
       <Card sx={{ p: isMobile ? 2 : 6, mb: 4, bgcolor: isDark ? '#0f172ae6' : '#FFFFFFe6', color: isDark ? '#E2E8F0' : 'inherit' }}>
         <Typography variant="h2" gutterBottom sx={{fontSize: isMobile ? 20 : 24}}> ♟️ How a Game Can End in a Draw</Typography>
         <Typography>
