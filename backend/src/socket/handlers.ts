@@ -1,6 +1,7 @@
 import { Socket, Server } from 'socket.io';
+import mongoose from 'mongoose';
 import { Room } from '../types';
-import { Message } from '../schemas';
+import { Message, User } from '../schemas';
 import { generateRoomId, createRoom, assignColor, cleanupRoomTimeout, setRoomTimeout } from '../utils/room';
 
 const ROOM_WAIT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -10,13 +11,17 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
     console.log(`User connected: ${socket.id}`);
 
     // Join user-specific room for direct messaging
-    socket.on('join_user_room', ({ userId }) => {
+    socket.on('join_user_room', ({ userId, userName }) => {
       socket.join(`user_${userId}`);
+      socket.data.userId = userId;
+      if (typeof userName === 'string' && userName.trim().length > 0) {
+        socket.data.userName = userName.trim();
+      }
       console.log(`User ${userId} joined their personal room`);
     });
 
     // Send message handler
-    socket.on('send_message', async ({ messageId, senderId, recipientId, text, timestamp, replyTo }) => {
+    socket.on('send_message', async ({ messageId, senderId, recipientId, text, timestamp, replyTo, senderName }) => {
       try {
         const message = new Message({
           senderId,
@@ -31,9 +36,35 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
 
         await message.save();
 
+        let resolvedSenderName: string | undefined;
+        try {
+          const senderFilters: Array<Record<string, string>> = [{ firebaseUid: senderId }];
+          if (mongoose.Types.ObjectId.isValid(senderId)) {
+            senderFilters.push({ _id: senderId });
+          }
+          if (typeof senderId === 'string' && senderId.includes('@')) {
+            senderFilters.push({ email: senderId });
+          }
+
+          const senderUser = await User.findOne({ $or: senderFilters }).select('name email').lean();
+          resolvedSenderName =
+            senderUser?.name ||
+            (typeof senderUser?.email === 'string' ? senderUser.email.split('@')[0] : undefined) ||
+            (typeof socket.data.userName === 'string' && socket.data.userName.trim().length > 0 ? socket.data.userName : undefined) ||
+            (typeof senderName === 'string' && senderName.trim().length > 0 ? senderName : undefined) ||
+            'Friend';
+        } catch (lookupError) {
+          console.warn('[socket] sender name lookup failed:', lookupError);
+          resolvedSenderName =
+            (typeof socket.data.userName === 'string' && socket.data.userName.trim().length > 0 ? socket.data.userName : undefined) ||
+            (typeof senderName === 'string' && senderName.trim().length > 0 ? senderName : undefined) ||
+            'Friend';
+        }
+
         const messageData = {
           id: message._id.toString(),
           senderId,
+          senderName: resolvedSenderName,
           recipientId,
           text,
           replyTo: message.replyTo,
