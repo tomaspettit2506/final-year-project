@@ -38,21 +38,23 @@ def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	if "result" in df.columns:
 		plt.figure(figsize=(8, 5))
 		counts = df["result"].fillna("unknown").value_counts().sort_index()
-		counts.plot(kind="bar", color="#4c78a8")
+		counts.plot(kind="bar", color=["#FE0751", "#4c78a8"], edgecolor="black")
 		plt.title("Game Outcome Distribution")
-		plt.xlabel("Result")
-		plt.ylabel("Count")
+		plt.xlabel("Result", fontsize=12, fontdict={'family': 'DejaVu Sans'})
+		plt.ylabel("Count", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		out = image_dir / "game_outcome_distribution.png"
+		# Rotate Losses and Wins for better readability
+		plt.xticks(rotation=45, ha="center", fontsize=15, fontweight="bold", fontfamily="DejaVu Sans")
 		_save_plot(out)
 		output_files.append(out)
 
 	# 2) Rating change distribution
 	if "ratingChange" in df.columns:
 		plt.figure(figsize=(8, 5))
-		df["ratingChange"].dropna().plot(kind="hist", bins=25, color="#f58518")
+		df["ratingChange"].dropna().plot(kind="hist", bins=25, color="#f58518", edgecolor="black")
 		plt.title("Rating Change Distribution")
-		plt.xlabel("Rating Change")
-		plt.ylabel("Frequency")
+		plt.xlabel("Rating Change", fontsize=12, fontdict={'family': 'DejaVu Sans'})
+		plt.ylabel("Frequency", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		out = image_dir / "rating_change_distribution.png"
 		_save_plot(out)
 		output_files.append(out)
@@ -60,10 +62,10 @@ def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	# 3) Accuracy distribution
 	if "myAccuracy" in df.columns:
 		plt.figure(figsize=(8, 5))
-		df["myAccuracy"].dropna().plot(kind="hist", bins=25, color="#54a24b")
+		df["myAccuracy"].dropna().plot(kind="hist", bins=25, color="#54a24b", edgecolor="black")
 		plt.title("Player Accuracy Distribution")
-		plt.xlabel("Accuracy")
-		plt.ylabel("Frequency")
+		plt.xlabel("Accuracy", fontsize=12, fontdict={'family': 'DejaVu Sans'})
+		plt.ylabel("Frequency", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		out = image_dir / "accuracy_distribution.png"
 		_save_plot(out)
 		output_files.append(out)
@@ -71,10 +73,10 @@ def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	# 4) Duration distribution
 	if "duration" in df.columns:
 		plt.figure(figsize=(8, 5))
-		df["duration"].dropna().plot(kind="hist", bins=25, color="#e45756")
+		df["duration"].dropna().plot(kind="hist", bins=25, color="#e45756", edgecolor="black")
 		plt.title("Game Duration Distribution")
-		plt.xlabel("Duration (seconds)")
-		plt.ylabel("Frequency")
+		plt.xlabel("Duration (seconds)", fontsize=12, fontdict={'family': 'DejaVu Sans'})
+		plt.ylabel("Frequency", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		out = image_dir / "game_duration_distribution.png"
 		_save_plot(out)
 		output_files.append(out)
@@ -82,10 +84,10 @@ def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	# 5) Move count distribution
 	if "moves" in df.columns:
 		plt.figure(figsize=(8, 5))
-		df["moves"].dropna().plot(kind="hist", bins=25, color="#72b7b2")
+		df["moves"].dropna().plot(kind="hist", bins=25, color="#72b7b2", edgecolor="black")
 		plt.title("Move Count Distribution")
-		plt.xlabel("Moves")
-		plt.ylabel("Frequency")
+		plt.xlabel("Moves", fontsize=12, fontdict={'family': 'DejaVu Sans'})
+		plt.ylabel("Frequency", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		out = image_dir / "move_count_distribution.png"
 		_save_plot(out)
 		output_files.append(out)
