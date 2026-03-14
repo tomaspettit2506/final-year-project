@@ -115,6 +115,21 @@ The implications for developers and stakeholders include:
 - **For developers:** A clear understanding of the market and user needs
 - **For stakeholders:** Opportunities for investment and growth
 
+## 7. Deployment Application
+### 7.1 How to deploy the frontend and backend with two different deployments
+
+
+### 7.2 How does it work
+
+### 7.3 Best Deployments for the complete High Level Stack Architecture
+Vercel
+
+![Vercel](img/Vercel.jpeg)
+
+Railway
+
+![Railway](img/Railway.jpeg)
+
 **Website References**
 - [Material UI](https://mui.com/material-ui/)
 - [Firebase Google](https://firebase.google.com/)

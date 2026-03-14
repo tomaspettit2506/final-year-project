@@ -1,4 +1,4 @@
-# Meeting Notes — Weeks 1–8
+# Meeting Notes — Weeks 1–16
 
 ## Week 1
 - **Date:** 2025-09-25
@@ -126,10 +126,86 @@
 - **Attendees:** Supervisor, Team lead, Members.
 - **Decisions:**
   - Test multiplayer game recents with proper session termination handling.
-  - Add "Sent Request" tab to Friends feature for checking out the problem for the backend connection.
+  - Add "Sent Request" tab to Friends feature to troubleshoot backend connection issues.
   - Continue dissertation documentation and system design writeup.
 - **Action items:**
   - Test and refine multiplayer game recents with termination handling. (Owner: Team lead, due: Week 12)
   - Implement and test new "Sent Request" tab in Friends interface. (Owner: Member C, due: Week 12)
   - Send feedback and conduct code review testing. (Owner: All, due: Week 12)
   - Continue dissertation documentation. (Owner: Member A, due: Week 12)
+
+## Week 12
+- **Date:** 2026-02-11
+- **Objective:** Deploy frontend using GitHub Pages or Vercel and backend using Firebase.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Complete frontend development before first deployment.
+  - Ensure all backend connections are publicly accessible.
+  - Continue dissertation documentation and system design writeup.
+- **Action items:**
+  - Finalize frontend components and prepare for deployment. (Owner: All, due: Week 13)
+  - Configure Firebase backend for public access and test connections. (Owner: Team lead, due: Week 13)
+  - Deploy frontend to Vercel or GitHub Pages. (Owner: Member D, due: Week 13)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 13)
+
+## Week 13
+- **Date:** 2026-02-18
+- **Objective:** UI polish, landing page redesign, and multiplayer testing.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Apply futuristic font family to all Typography components.
+  - Update Landing Page to align with project vision and branding.
+  - Continue dissertation documentation and system design writeup.
+- **Action items:**
+  - Update Typography font family across entire application. (Owner: Member C, due: Week 14)
+  - Redesign Landing Page with updated vision and styling. (Owner: Team lead, due: Week 14)
+  - Test and refine multiplayer game sessions with termination handling. (Owner: Team lead, due: Week 14)
+  - Implement and test "Sent Request" tab in Friends interface. (Owner: Member C, due: Week 14)
+  - Conduct code review and send feedback. (Owner: All, due: Week 14)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 14)
+
+## Week 14
+- **Date:** 2026-02-25
+- **Objective:** Set up GitHub Actions for connected frontend and backend deployments.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Create CI/CD workflows for both `frontend` and `backend` connected to GitHub.
+  - Ensure both deployment pipelines pass tests before release.
+  - Continue dissertation documentation and system design writeup.
+- **Action items:**
+  - Implement frontend deployment workflow in GitHub Actions. (Owner: Member D, due: Week 15)
+  - Implement backend deployment workflow in GitHub Actions. (Owner: Team lead, due: Week 15)
+  - Add and validate repository secrets/environment configuration for both pipelines. (Owner: All, due: Week 15)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 15)
+
+## Week 15
+- **Date:** 2026-03-04
+- **Objective:** Codebase cleanup, deployment documentation, and artefact generation.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Remove unused code/assets in `frontend` and `backend`.
+  - Apply futuristic font family to all Typography components.
+  - Run Python scripts in `AI-Model-Dev` to generate `images` and `data` artefacts.
+  - Continue dissertation documentation and system design writeup.
+  - Keep any ML-related deployment work exploratory pending scope confirmation.
+- **Action items:**
+  - Generate files from Python workflows in `AI-Model-Dev`. (Owner: Team lead, due: Week 16)
+  - Draft deployment explanation for frontend and backend in project docs. (Owner: Member B, due: Week 16)
+  - Add more images to `docs/research` and expand deployment notes. (Owner: Member B, due: Week 16)
+  - Implement and test "Sent Request" tab in Friends interface. (Owner: Member C, due: Week 16)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 16)
+
+## Week 16
+- **Date:** 2026-03-11
+- **Objective:** Scope finalization (non-ML), integration documentation, and loading-state UX.
+- **Attendees:** Supervisor, Team lead, Members.
+- **Decisions:**
+  - Confirm final production scope excludes Machine Learning.
+  - Create a new folder called `integration` and add `integration.md`.
+  - Use frontend component `Loading.tsx` across pages and logout flows.
+  - Continue dissertation documentation and system design writeup.
+- **Action items:**
+  - Finalize `integration/integration.md` with end-to-end integration flow. (Owner: Team lead, due: Week 17)
+  - Audit all pages/logout flows for consistent loading behavior via `Loading.tsx`. (Owner: Member C, due: Week 17)
+  - Add deployment evidence images and notes to `docs/research`. (Owner: Member B, due: Week 17)
+  - Continue dissertation documentation. (Owner: Member A, due: Week 17)
