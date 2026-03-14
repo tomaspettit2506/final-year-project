@@ -83,6 +83,69 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
       }
     });
 
+    // Reply message handler
+    socket.on('reply_message', async ({ messageId, senderId, recipientId, text, timestamp, replyTo, senderName }) => {
+      try {
+        const message = new Message({
+          senderId,
+          recipientId,
+          text,
+          replyTo,
+          timestamp: new Date(timestamp),
+          read: false,
+          edited: false,
+          deleted: false
+        });
+
+        await message.save();
+
+        let resolvedSenderName: string | undefined;
+        try {
+          const senderFilters: Array<Record<string, string>> = [{ firebaseUid: senderId }];
+          if (mongoose.Types.ObjectId.isValid(senderId)) {
+            senderFilters.push({ _id: senderId });
+          }
+          if (typeof senderId === 'string' && senderId.includes('@')) {
+            senderFilters.push({ email: senderId });
+          }
+
+          const senderUser = await User.findOne({ $or: senderFilters }).select('name email').lean();
+          resolvedSenderName =
+            senderUser?.name ||
+            (typeof senderUser?.email === 'string' ? senderUser.email.split('@')[0] : undefined) || 
+            (typeof socket.data.userName === 'string' && socket.data.userName.trim().length > 0 ? socket.data.userName : undefined) ||
+            (typeof senderName === 'string' && senderName.trim().length > 0 ? senderName : undefined) ||
+            'Friend';
+        } catch (lookupError) {
+          console.warn('[socket] sender name lookup failed:', lookupError);
+          resolvedSenderName =
+            (typeof socket.data.userName === 'string' && socket.data.userName.trim().length > 0 ? socket.data.userName : undefined) ||
+            (typeof senderName === 'string' && senderName.trim().length > 0 ? senderName : undefined) ||
+            'Friend';
+        }
+
+        const messageData = {
+          id: message._id.toString(),
+          senderId,
+          senderName: resolvedSenderName,
+          recipientId,
+          text,
+          replyTo,
+          timestamp: message.timestamp.toISOString(),
+          read: false
+        };
+
+        // Send to recipient's room
+        io.to(`user_${recipientId}`).emit('receive_message', messageData);
+        
+        // Confirm to sender with full message data
+        socket.emit('message_sent', { messageId, serverMessageId: message._id.toString(), messageData, success: true });
+      } catch (error) {
+        console.error('Error sending reply message:', error);
+        socket.emit('message_error', { messageId, error: 'Failed to send reply message' });
+      }
+    });
+
     // Edit message handler
     socket.on('edit_message', async ({ messageId, senderId, recipientId, newText, timestamp }) => {
       try {
