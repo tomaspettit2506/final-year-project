@@ -29,7 +29,7 @@ AI-Model-Dev/
 └── requirements.txt
 ```
 
-## Installation
+## 🏗️ Installation
 1. Install ``requirements.txt``
 ```bash
 cd AI-Model-Dev

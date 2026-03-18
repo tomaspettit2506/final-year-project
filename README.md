@@ -1,310 +1,255 @@
 # Guardians of the Chess Grandmaster
 
-<p align="center">
-  <img src="frontend/public/icon-192.png" alt="GOTCG Logo" width="150" height="150">
-</p>
+**Final Year Project** — BSc (Hons) Computing in Software Development  
+**Student:** Tomás Pettit (G00419414) · **Supervisor:** Kevin O'Brien  
+**College:** ATU Galway · **Year:** 2025/2026
+
+---
 
 <p align="center">
-  <strong>Your Chess Journey Awaits</strong>
+  <img src="frontend/public/icon-192.png" alt="GOTCG Logo" width="150" height="150" />
 </p>
 
+<p align="center"><strong>Your Chess Journey Awaits</strong></p>
+
 <p align="center">
-  <a href="https://tomaspettit2506.github.io/final-year-project/">https://tomaspettit2506.github.io/final-year-project/</a>
+  <a href="https://final-year-project-pearl-tau.vercel.app/">Live Application</a>
 </p>
 
 ## 🎬 Screencast Demonstration
-[Need to add Screencast Video]
+
+> _To be added._
 
 ## 📄 Dissertation Document
-[Need to add a link of my Dissertation Document (.pdf)]
+
+> _To be added._
 
 ## 📚 Overview
-**Guardians of the Chess Grandmaster** (GOTCG) is a tailored platform that utilizes AI to enhance your chess learning experience. It offers personalized tools and resources to help players develop their skills and understand the game better. With its advanced study strategies, users can build a custom approach to their training, focusing on areas that need improvement while also tracking their progress over time.
 
-The platform includes interactive lessons, puzzles, and gameplay analysis to reinforce learning and elevate performance. Whether you're a beginner looking to grasp the fundamentals or an advanced player aiming to refine your strategies, GOTCG provides the resources necessary to elevate your chess game. The portfolio-building aspect allows players to showcase their growth and achievements, making it a comprehensive tool for serious chess enthusiasts.
+**Guardians of the Chess Grandmaster (GOTCG)** is a chess learning platform designed to support players through guided tutorials, game analysis, and skill tracking.
+
+The project combines interactive learning, gameplay tools, and progress-focused features so users can improve systematically—whether they are learning fundamentals or refining higher-level strategy.
 
 ## ✨ Features
-* 🔒 **Authentication:** Email/password and Google Sign-In via Firebase
-* 📅 **Tutorial System:** Learn chess basics, pieces, rules, and winning strategies
-* 🎮 **Game Management:** Create, join, and play chess games
-* 👤 **User Profiles:** Track ratings, game history, and achievements
-* 📳 **Real-time Communication:** WebSocket support for live gameplay
-* 🔁 **Responsive Design:** Works across devices with PWA installation support
+
+- 🔒 **Authentication:** Email/password and Google Sign-In via Firebase
+- 📅 **Tutorial System:** Learn pieces, rules, and practical winning ideas
+- 🎮 **Game Management:** Create, join, and play chess games
+- 👤 **Profiles & Progress:** Track rating, game history, and achievements
+- 📳 **Real-time Communication:** Live gameplay with Socket.IO
+- 🔁 **Responsive PWA:** Mobile-friendly, installable app experience
 
 ## 🛠️ Technology Stack
-* **Frontend:** React + TypeScript with Vite, using Material-UI components and Framer Motion animations
-* **Backend:** Node.js/Express server handling API routes and real-time features via Socket.IO
-* **Database:** Firebase (Authentication & Firestore) + MongoDB (game data & analytics)
-* **Deployment:** PWA (Progressive Web App) - installable on devices with offline support
 
-## 🏗️ Project Structure
-* `/frontend`: React SPA application
-    * `/src`: Source files
-        * `/Components`: Reusable React components
-        * `/Context`: React Context for state management
-        * `/Pages`: Page components (views)
-        * `/Services`: API and external service integrations
-        * `/Types`: TypeScript type definitions
-        * `/Utils`: Utility functions and helpers
-* `/backend`: Node.js/Express server
-    * `/src`: Source code
-        * `/config`: Configuration files (database, Firebase)
-        * `/routes`: API route handlers (friends, gameInvites, games, requests, users)
-        * `/schemas`: Data validation schemas
-        * `/socket`: WebSocket event handlers
-        * `/types`: TypeScript type definitions
-        * `/utils`: Utility functions (friend, room management)
-    * `package.json`: Dependencies and scripts
-    * `.env`: Environment variables
+- **Frontend:** React + TypeScript (Vite), Material UI, Framer Motion
+- **Backend:** Node.js + Express + Socket.IO
+- **Data:** Firebase (Auth + Firestore) and MongoDB (game and analytics data)
+- **Deployment:** Vercel (frontend) + Railway (backend)
+
+## 🏗️ Architecture
+
+![Architecture](docs/architecture/diagrams/myArchitecture.png)
+
+## 🧭 Project Structure
+
+```text
+final-year-project/
+├── AI-Model-Dev/
+├── backend/
+│   └── src/
+│       ├── config/
+│       ├── routes/
+│       ├── schemas/
+│       ├── socket/
+│       ├── types/
+│       ├── utils/
+│       └── index.ts
+├── docs/
+├── frontend/
+│   ├── public/
+│   ├── scripts/
+│   └── src/
+│       ├── Components/
+│       ├── Context/
+│       ├── Pages/
+│       ├── Services/
+│       ├── Types/
+│       └── Utils/
+└── integration/
+```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v22)
+- Node.js (v22 recommended)
 - npm or yarn
-- Firebase CLI (`npm install -g firebase-tools`)
+- Firebase CLI (`npm install -g firebase-tools`) if needed for Firebase workflows
 
-### Installation
+### 1) Clone the Repository
 
-1. Clone the repository:
 ```bash
 git clone https://github.com/tomaspettit2506/final-year-project.git
 cd final-year-project
 ```
 
-2. Install frontend dependencies:
-```bash
-# Navigate to frontend directory
-cd frontend
+### 2) Install Dependencies
 
-# Install dependencies
-npm install
+Use the module-specific setup guides for full details:
 
-# Set up environment variables (create .env file)
-cp .env.example .env
-# Edit .env if using different API URLs
+- Frontend setup: [`frontend/README.md`](frontend/README.md)
+- Backend setup: [`backend/README.md`](backend/README.md)
 
-# Run the development server
-npm run dev
+### 3) Configure Services
 
-# Example for running application
-# Run once on /frontend => AI game (:5173)
-# Run twice => Multiplayer game (:5173 and :5174)
+#### Firebase
+
+- Create a project in [Firebase Console](https://console.firebase.google.com/)
+- Enable Authentication and Firestore
+- Add frontend Firebase config in `frontend/src/firebase.ts`
+
+#### MongoDB
+
+- Create a cluster in [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (or run MongoDB locally)
+- Create a database user and allow network access
+- Use the connection string in backend environment variables (`MONGO_URI`)
+
+### 4) Configure Environment Variables
+
+Create these files before running locally.
+
+#### `backend/.env`
+
+```env
+MONGO_URI=your_mongodb_connection_string
+CLIENT_URL=http://localhost:5173
+# Optional: additional allowed frontend origins (comma-separated)
+CLIENT_URLS=
+
+# Recommended (base64-encoded Firebase service account JSON)
+FIREBASE_SERVICE_ACCOUNT_B64=
+
+# Optional alternative (raw one-line JSON)
+FIREBASE_SERVICE_ACCOUNT={...full service account JSON as one line...}
+
+PORT=8000
 ```
 
-3. Install backend dependencies:
-```bash
-# Navigate to backend directory
-cd backend
+#### `frontend/.env`
 
-# Install dependencies
-npm install
+```env
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
 
-# Set up environment variables (create .env file)
-cp .env.example .env
-# Edit .env with your configuration
+# Primary backend URL used by the frontend
+VITE_API_URL=http://localhost:8000
 
-# Run the development server
-npm run dev
+# Optional fallback supported in code
+VITE_BACKEND_URL=http://localhost:8000
 ```
 
-4. Configure Firebase:
-   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Set up Authentication, Firestore, Functions, etc.
-   - Add your Firebase config to `/frontend/src/firebase.ts`
+### 5) Run the App Locally
 
-5. Configure MongoDB API:
-    - Sign in to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (or use a local MongoDB instance)
-    - Create a free/shared cluster
-    - Create a database user with a strong password
-    - Add your IP to the Network Access allowlist (or `0.0.0.0/0` for local dev)
-    - Click "Connect" and select "Drivers" to get your connection string
-    - Add your MongoDB connection string to `/backend/.env`:
-      ```
-      MONGO_URI=mongodb+srv://<username>:<password>@gotcg.cxm6vsx.mongodb.net/
-      ```
+Start backend and frontend in separate terminals.
 
-6. Configure environment variables:
-    - `/backend/.env`:
-      ```
-      MONGO_URI=your_mongodb_connection_string
-      CLIENT_URL=http://localhost:5173
-      FIREBASE_SERVICE_ACCOUNT={...full service account JSON as one line...}
-      PORT=8000
-      ```
-    - `/frontend/.env`:
-      ```
-      VITE_FIREBASE_API_KEY=your_firebase_api_key
-      VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-      VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-      VITE_API_URL=https://your-backend-domain.example
-      # Optional fallback supported in code:
-      VITE_BACKEND_URL=https://your-backend-domain.example
-      ```
+- Backend: `npm run dev` from `backend/`
+- Frontend: `npm run dev` from `frontend/`
 
-    ## 🚢 Production Deployment
+By default:
 
-    **📖 Full deployment guide: [DEPLOYMENT.md](./DEPLOYMENT.md)**
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
 
-    ### Quick Overview
-    - **Frontend**: Vercel (PWA with static hosting)
-    - **Backend**: Railway or Render (requires WebSocket support - NOT Vercel)
-    - **Database**: MongoDB Atlas + Firebase
+## 🚢 Production Deployment
 
-    > ⚠️ **Important**: The backend CANNOT be deployed to Vercel due to WebSocket requirements.
+### Deployment Overview
 
-    ### CI/CD (GitHub Actions)
-    This repository uses `.github/workflows/frontend_and_backend-deploy.yml` to deploy on every push to `main`.
+- **Frontend:** Vercel
+- **Backend:** Railway (WebSocket support required)
+- **Databases:** MongoDB Atlas + Firebase
 
-    Required GitHub Actions repository secrets:
-    - `VERCEL_TOKEN` - Your Vercel authentication token
-    - `VERCEL_ORG_ID` - Your Vercel organization/team ID
-    - `VERCEL_PROJECT_ID_FRONTEND` - Frontend project ID
-    - `BACKEND_DEPLOY_HOOK_URL` - Railway/Render webhook URL
+> ⚠️ The backend should **not** be deployed to Vercel because Socket.IO/WebSocket support is required.
 
-    The workflow runs build checks before deployment.
-  
-## AI Model Development
-### Setup
-Navigate to the AI Model Development directory:
-```bash
-cd AI-Model-Dev
-```
+### Vercel Frontend → Railway Backend
 
-Create a virtual environment:
-```bash
-python -m venv venv
-```
+- Set Vercel env var: `VITE_API_URL=https://<your-backend>.up.railway.app`
+- Set Railway env var: `CLIENT_URL=https://<your-frontend>.vercel.app`
+- If needed, set `CLIENT_URLS` (comma-separated) for additional frontend origins
+- Deploy backend first, then redeploy frontend so build-time env vars are applied
 
-Activate it:
-```bash
-source venv/bin/activate      # macOS/Linux
-venv\Scripts\activate         # Windows
-```
+### CI/CD (GitHub Actions)
 
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+This repository uses:
 
-## 📱 PWA Support
-GOTCG is a Progressive Web App, which means:
+- `.github/workflows/frontend-deploy.yml`
+- `.github/workflows/backend-deploy.yml`
 
-- It can be installed on your device's home screen
-- It works offline or with a poor internet connection
-- It loads quickly and reliably
-- It supports PWA notifications
+Required repository secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID_FRONTEND`
+- `BACKEND_DEPLOY_HOOK_URL`
+
+## 🤖 AI Model Development
+
+- [AI Model Development README](AI-Model-Dev/README.md)
+
+## 🔗 Integration
+
+- [Integration README](integration/README.md)
 
 ## 🔧 Troubleshooting
 
 ### Frontend Issues
 
 **Port 5173 already in use**
+
 ```bash
-# Kill the process using port 5173
 lsof -i :5173
 kill -9 <PID>
-
-# Or run on a different port
-npm run dev -- --port 5174
 ```
 
 **Firebase configuration errors**
-- Verify your Firebase config in `/frontend/src/firebase.ts` matches your Firebase Console project
-- Check that Authentication and Firestore are enabled in Firebase Console
-- Ensure your API key has the correct restrictions in Firebase Console
 
-**Module not found errors**
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
+- Verify `frontend/src/firebase.ts` matches your Firebase project
+- Confirm Firebase Authentication and Firestore are enabled
 
 **Vite hot reload not working**
-- Check that your `.env` file is correctly configured
-- Restart the dev server: `npm run dev`
-- Clear browser cache and hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
 
-**CORS errors when calling backend**
-- Verify backend is running on the correct port (default: 8000)
-- Check `VITE_API_URL` in `/frontend/.env` matches your backend URL
-- Ensure backend CORS configuration includes your frontend URL
+- Confirm `.env` values are valid
+- Restart the dev server
+- Hard refresh browser cache
 
 ### Backend Issues
 
-**Frontend can't reach backend**
-- Check backend is running on port 8000
-- Ensure port 8000 is Public in the "Ports" tab (Codespaces defaults to Private)
-- Refresh the page after changing port visibility
+**Frontend cannot reach backend**
 
-**Port 8000 already in use**
-```bash
-# Kill the process using port 8000
-lsof -i :8000
-kill -9 <PID>
-
-# Or change PORT in .env
-echo "PORT=8001" >> .env
-```
+- Verify backend is running on port `8000`
+- In cloud dev environments, ensure port `8000` is public if required
+- Confirm `VITE_API_URL` points to the backend URL
 
 **MongoDB connection failed**
-- Verify `MONGO_URI` (or `MONGODB_URI`) in `/backend/.env` is correct
-- Check your MongoDB Atlas IP allowlist includes your dev machine (or use `0.0.0.0/0` temporarily)
-- Ensure your database user credentials are correct
-- Test connection: `mongosh "<your_connection_string>"`
 
-**Firebase authentication errors in backend**
-- Verify `FIREBASE_SERVICE_ACCOUNT` in `/backend/.env`
-- Ensure your Firebase service account JSON is correctly formatted (no line breaks in private key)
-- Download fresh service account key from Firebase Console if needed
+- Check `MONGO_URI` (or `MONGODB_URI`) in `backend/.env`
+- Verify MongoDB Atlas network allowlist and user credentials
 
-**Socket.IO connection errors**
-- Check that Socket.IO is properly initialized on both frontend and backend
-- Verify backend is listening on the correct WebSocket port
-- Check browser console for connection errors
-- Ensure firewall allows WebSocket connections
+**Firebase service account errors**
 
-**Environment variables not loading**
-```bash
-# Verify .env file exists in correct location
-ls -la .env
+- Verify `FIREBASE_SERVICE_ACCOUNT_B64` or `FIREBASE_SERVICE_ACCOUNT`
+- Ensure JSON is valid and correctly encoded/formatted
 
-# Restart the dev server
-npm run dev
-```
+### General Checks
 
-**Dependencies installation fails**
-```bash
-# Clear npm cache and reinstall
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### General Troubleshooting
-
-**Verify all services are running:**
-```bash
-# Check if frontend is running
-curl http://localhost:5173
-
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check if MongoDB is accessible
-mongosh "<your_connection_string>"
-```
-
-**Still stuck?**
-- Check the project's Issue tracker on GitHub
-- Review browser DevTools Console and Network tabs
-- Check backend server logs for detailed error messages
-- Ensure all prerequisites (Node.js v22, npm, Firebase CLI) are installed
+- Frontend reachable at `http://localhost:5173`
+- Backend health endpoint responds at `http://localhost:8000/health`
+- Environment files exist and were loaded before starting services
 
 ## 📝 License
+
 This project is licensed under the MIT License.
 
 ## 🧑🏻 Author
-Name: Tomás Pettit
+
+Tomás Pettit

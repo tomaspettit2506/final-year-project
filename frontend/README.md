@@ -1,73 +1,132 @@
-# React + TypeScript + Vite
+# GOTCG Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Tech Stack
+| Technology | Purpose |
+|-----------|---------|
+| React | Language |
+| TypeScript | Application framework |
+| Vite | Authentication & authorisation |
+| Firebase | Database access (Hibernate) |
+| HTML | Relational database |
+| CSS | Stateless auth tokens |
 
-Currently, two official plugins are available:
+## 🏗️ Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+frontend/src/
+├── assets/
+|
+├── Components/
+│   ├── FriendsComponent/
+|   |   ├── AddFriend.tsx
+|   |   ├── ChallengeDialog.tsx
+|   |   ├── ChatDialog.tsx
+|   |   ├── FriendsList.tsx
+|   |   ├── GameDialog.tsx
+|   |   ├── GameInvites.tsx
+|   |   ├── PendingRequests.tsx
+|   |   ├── ProfileDialog.tsx
+|   |   └── SentRequest.tsx
+|   |   
+│   ├── PlayComponents/
+|   |   ├── AccuracyStats.tsx
+|   |   ├── CapturedPieces.tsx
+|   |   ├── ChessBoard.tsx
+|   |   ├── GameController.tsx
+|   |   ├── GameScreen.tsx
+|   |   ├── GameSetup.tsx
+|   |   ├── MoveHistory.tsx
+|   |   ├── PromotionDialog.tsx
+|   |   └── Timer.tsx
+|   |   
+│   ├── TutorialComponents/
+|   |   ├── Basic.tsx
+|   |   ├── ChessPiece.tsx
+|   |   ├── Draw.tsx
+|   |   ├── MiniBoard.tsx
+|   |   ├── PieceGuide.tsx
+|   |   ├── Pieces.tsx
+|   |   ├── Rules.tsx
+|   |   └── Winning.tsx
+|   |   
+|   ├── AppBar.tsx
+|   ├── BottomNav.tsx
+|   ├── GameDetails.tsx
+|   ├── InstallPWA.tsx
+|   └── Loading.tsx
+|
+├── Context/
+|   ├── AuthContext.tsx
+|   ├── BoardThemeContext.tsx
+|   └── ThemeContext.tsx
+|   
+├── Pages/
+|   ├── Friends.tsx
+|   ├── Home.tsx
+|   ├── Landing.tsx
+|   ├── Play.tsx
+|   ├── Profile.tsx
+|   ├── Settings.tsx
+|   └── Tutorial.tsx
+|   
+├── Services/
+|   ├── api.ts
+|   └── socket.ts
+|   
+├── Types/
+|   └── chess.ts
+|   
+├── Utils/
+|   ├── accuracyColors.ts
+|   ├── avatarColors.ts
+|   ├── chessAI.ts
+|   ├── chessLogic.ts
+|   ├── eloCalculator.ts
+|   ├── FirestoreService.ts
+|   ├── loadingDelay.ts
+|   ├── logoutLoading.ts
+|   ├── memberSince.ts
+|   └── Notifications.ts
+|   
+|   
+├── App.css
+├── App.tsx
+├── firebase.ts
+├── index.css
+├── main.tsx
+└── setupTests.ts
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Frontend Installation
+1. Navigate to frontend directory:
+```bash
+cd frontend
 ```
+
+2. Install frontend dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables (create .env file)
+```bash
+cp .env.example .env
+# Edit .env if using different API URLs
+```
+
+4. Run the development server
+```bash
+npm run dev
+
+# Example for running application
+# Run once on /frontend => AI game (:5173)
+# Run twice => Multiplayer game (:5173 and :5174)
+```
+
+## 📱 PWA Support
+GOTCG is a Progressive Web App, which means:
+
+- It can be installed on your device's home screen
+- It works offline or with a poor internet connection
+- It loads quickly and reliably
+- It supports PWA notifications
