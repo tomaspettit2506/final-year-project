@@ -97,6 +97,19 @@ function resolveApiBaseUrl(): string {
 const URL = resolveApiBaseUrl();
 const senderNameCache = new Map<string, string>();
 
+const normalizeNotificationText = (value: string): string => value.replace(/\s+/g, ' ').trim();
+
+const escapeForRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const stripLeadingSenderFromPreview = (preview: string, sender: string): string => {
+  const normalizedPreview = normalizeNotificationText(preview);
+  const normalizedSender = normalizeNotificationText(sender);
+  if (!normalizedPreview || !normalizedSender) return normalizedPreview;
+
+  const senderPrefix = new RegExp(`^${escapeForRegex(normalizedSender)}\\s*[:\-–—]\\s*`, 'i');
+  return normalizedPreview.replace(senderPrefix, '').trim();
+};
+
 const resolveSenderDisplayName = async (payload: ReceiveMessageEvent): Promise<string> => {
   const embeddedName = typeof payload.senderName === 'string' ? payload.senderName.trim() : '';
   if (embeddedName) {
@@ -213,10 +226,11 @@ socket.on('game_invite_received', (data: GameInviteReceivedEvent) => {
 socket.on('receive_message', async (data: ReceiveMessageEvent) => {
   console.log('[Socket.io] ← Received receive_message event:', data);
   const sender = await resolveSenderDisplayName(data);
-  const text = String(data?.text || '').trim();
-  const preview = text.length > 80 ? `${text.slice(0, 77)}...` : text;
+  const text = normalizeNotificationText(String(data?.text || ''));
+  const previewBase = text.length > 150 ? `${text.slice(0, 147)}...` : text;
+  const preview = stripLeadingSenderFromPreview(previewBase, sender);
   showPwaNotification({
-    body: preview ? `${sender}: ${preview}` : `${sender} sent you a message`,
+    body: preview || 'Sent you a message',
     tag: `chat-${sender}`,
     data: { senderId: data?.senderId, messageId: data?.id },
   }, `New Message from ${sender}`);
@@ -225,10 +239,11 @@ socket.on('receive_message', async (data: ReceiveMessageEvent) => {
 socket.on('receive_reply_message', async (data: ReplayMessageEvent) => {
   console.log('[Socket.io] ← Received receive_reply_message event:', data);
   const sender = await resolveSenderDisplayName(data);
-  const text = String(data?.text || '').trim();
-  const preview = text.length > 80 ? `${text.slice(0, 77)}...` : text;
+  const text = normalizeNotificationText(String(data?.text || ''));
+  const previewBase = text.length > 150 ? `${text.slice(0, 147)}...` : text;
+  const preview = stripLeadingSenderFromPreview(previewBase, sender);
   showPwaNotification({
-    body: preview ? `${sender} replied: ${preview}` : `${sender} sent you a reply`,
+    body: preview || 'Sent you a reply',
     tag: `chat-reply-${sender}`,
     data: { senderId: data?.senderId, messageId: data?.id, replyToMessageId: data?.replyToMessageId },
   }, `Reply from ${sender}`);
