@@ -12,6 +12,22 @@ import { getUserRating } from "../Utils/FirestoreService";
 import { getRandomPageLoadingDelayMs, waitForMinimumDuration } from "../Utils/loadingDelay";
 import HomeTheme from "../assets/img-theme/home_theme.jpg";
 
+const deduplicateRecentGames = (games: any[]) => {
+  const seen = new Set<string>();
+
+  return games.filter((game: any) => {
+    const gameDate = game?.date ? new Date(game.date).toDateString() : 'unknown-date';
+    const key = `${game?.opponent || 'unknown-opponent'}|${gameDate}|${game?.result || 'unknown-result'}|${game?.moves || 0}|${game?.termination || 'unknown-termination'}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
 const Home = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -96,7 +112,10 @@ const Home = () => {
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch recent games');
       const data = await res.json();
-      setRecentGames(data);
+      const normalizedGames = deduplicateRecentGames(data).sort(
+        (a: any, b: any) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime()
+      );
+      setRecentGames(normalizedGames);
     } catch (err) {
       console.error('Error fetching recent games:', err);
     } finally {

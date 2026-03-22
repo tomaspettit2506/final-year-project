@@ -4,6 +4,71 @@ import { calculateNewRatings } from '../utils/eloCalculator';
 
 const router = Router();
 
+const getDayRange = (value: string | Date) => {
+  const baseDate = new Date(value);
+
+  if (Number.isNaN(baseDate.getTime())) {
+    const fallback = new Date();
+    fallback.setHours(0, 0, 0, 0);
+    const fallbackEnd = new Date(fallback);
+    fallbackEnd.setDate(fallbackEnd.getDate() + 1);
+    return { dayStart: fallback, dayEnd: fallbackEnd };
+  }
+
+  const dayStart = new Date(baseDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  return { dayStart, dayEnd };
+};
+
+const appendRecentGameIfMissing = async ({
+  userId,
+  opponent,
+  result,
+  moves,
+  dayStart,
+  dayEnd,
+  gameRecent,
+  newRating
+}: {
+  userId: any;
+  opponent: string;
+  result: string;
+  moves: number;
+  dayStart: Date;
+  dayEnd: Date;
+  gameRecent: any;
+  newRating?: number;
+}) => {
+  const updateData: any = {
+    $push: { gameRecents: gameRecent }
+  };
+
+  if (typeof newRating === 'number') {
+    updateData.$set = { rating: newRating };
+  }
+
+  const updateResult = await User.updateOne(
+    {
+      _id: userId,
+      gameRecents: {
+        $not: {
+          $elemMatch: {
+            opponent,
+            result,
+            moves,
+            date: { $gte: dayStart, $lt: dayEnd }
+          }
+        }
+      }
+    },
+    updateData
+  );
+
+  return updateResult.modifiedCount > 0;
+};
+
 // GET Games (all games globally)
 router.get('/', async (req, res) => {
   try {
@@ -104,15 +169,42 @@ router.post('/', async (req: Request, res) => {
       const user = await User.findOne({ $or: filter });
       
       if (user) {
-        // Check for duplicate game before adding
         const gameDate = new Date(date).toDateString();
-        const isDuplicate = user.gameRecents.some((game: any) => {
-          const existingGameDate = new Date(game.date).toDateString();
-          return game.opponent === opponent &&
-                 existingGameDate === gameDate &&
-                 game.result === result &&
-                 game.moves === moves;
+        const { dayStart, dayEnd } = getDayRange(date);
+
+        const playerRecentGamePayload = {
+          myRating,
+          myNewRating,
+          ratingChange,
+          opponent,
+          opponentRating,
+          opponentNewRating,
+          opponentRatingChange,
+          date,
+          result,
+          isRated: isRated || false,
+          timeControl,
+          termination,
+          moves,
+          duration,
+          myAccuracy,
+          opponentAccuracy,
+          playerColor,
+          _id: newGame._id
+        };
+
+        const insertedForUser = await appendRecentGameIfMissing({
+          userId: user._id,
+          opponent,
+          result,
+          moves,
+          dayStart,
+          dayEnd,
+          gameRecent: playerRecentGamePayload,
+          newRating: isRated ? myNewRating : undefined
         });
+
+        const isDuplicate = !insertedForUser;
 
         if (isDuplicate) {
           console.log(`[Duplicate] Duplicate game detected for user ${user._id}: ${opponent} on ${gameDate} - skipping game save but updating rating`);
@@ -125,40 +217,22 @@ router.post('/', async (req: Request, res) => {
               { new: true }
             );
             console.log(`[Elo] Updated duplicate game submitter ${user._id} (${user.name}) rating: ${user.rating} → ${updatedUser?.rating}`);
+
+            if (updatedUser?.firebaseUid) {
+              ratingUpdates.push({
+                firebaseUid: updatedUser.firebaseUid,
+                userId: updatedUser._id.toString(),
+                newRating: myNewRating
+              });
+            }
           }
         } else {
-          // Not a duplicate - add game and update rating
-          const updateData: any = {
-            $push: {
-              gameRecents: {
-                myRating, 
-                myNewRating,
-                ratingChange,
-                opponent, 
-                opponentRating,
-                opponentNewRating,
-                opponentRatingChange,
-                date, 
-                result, 
-                isRated: isRated || false,
-                timeControl, 
-                termination, 
-                moves, 
-                duration, 
-                myAccuracy, 
-                opponentAccuracy,
-                playerColor,
-                _id: newGame._id
-              }
-            }
-          };
-
+          // Not a duplicate - already added atomically above
           if (isRated) {
-            updateData.$set = { rating: myNewRating };
             console.log(`[Elo] Updating user ${user._id} (${user.name}) rating: ${myRating} → ${myNewRating}`);
           }
 
-          const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true });
+          const updatedUser = await User.findById(user._id);
           console.log(`[Elo] User updated, current rating in DB: ${updatedUser?.rating}`);
           
           // Track rating update for socket notification
@@ -185,15 +259,42 @@ router.post('/', async (req: Request, res) => {
             const opponentResult = result === 'win' ? 'loss' : result === 'loss' ? 'win' : 'draw';
             
             console.log(`[Elo] Found opponent user ${opponentUser._id} (${opponentUser.name}), updating rating: ${opponentRating} → ${opponentNewRating}`);
-            
-            // Check if opponent already has this game
-            const opponentHasGame = opponentUser.gameRecents.some((game: any) => {
-              const existingGameDate = new Date(game.date).toDateString();
-              return game.opponent === user.name &&
-                     existingGameDate === gameDate &&
-                     game.result === opponentResult &&
-                     game.moves === moves;
+            const opponentDisplayName = user.name || 'Unknown';
+            const opponentColor = playerColor === 'white' ? 'black' : playerColor === 'black' ? 'white' : undefined;
+
+            const opponentRecentGamePayload = {
+              myRating: opponentRating,
+              myNewRating: opponentNewRating,
+              ratingChange: opponentRatingChange,
+              opponent: opponentDisplayName,
+              opponentRating: myRating,
+              opponentNewRating: myNewRating,
+              opponentRatingChange: ratingChange,
+              date,
+              result: opponentResult,
+              isRated: true,
+              timeControl,
+              termination,
+              moves,
+              duration,
+              myAccuracy: opponentAccuracy || 0,
+              opponentAccuracy: myAccuracy || 0,
+              playerColor: opponentColor,
+              _id: newGame._id
+            };
+
+            const insertedForOpponent = await appendRecentGameIfMissing({
+              userId: opponentUser._id,
+              opponent: opponentDisplayName,
+              result: opponentResult,
+              moves,
+              dayStart,
+              dayEnd,
+              gameRecent: opponentRecentGamePayload,
+              newRating: opponentNewRating
             });
+
+            const opponentHasGame = !insertedForOpponent;
 
             if (opponentHasGame) {
               // Opponent already has this game, just update their rating
@@ -214,39 +315,8 @@ router.post('/', async (req: Request, res) => {
                 });
               }
             } else {
-              // Add game to opponent's history and update rating
-              // Opponent's color is opposite of player's color
-              const opponentColor = playerColor === 'white' ? 'black' : playerColor === 'black' ? 'white' : undefined;
-              
-              const updatedOpponent = await User.findByIdAndUpdate(
-                opponentUser._id,
-                { 
-                  $set: { rating: opponentNewRating },
-                  $push: {
-                    gameRecents: {
-                      myRating: opponentRating,
-                      myNewRating: opponentNewRating,
-                      ratingChange: opponentRatingChange,
-                      opponent: user.name || 'Unknown',
-                      opponentRating: myRating,
-                      opponentNewRating: myNewRating,
-                      opponentRatingChange: ratingChange,
-                      date,
-                      result: opponentResult,
-                      isRated: true,
-                      timeControl,
-                      termination,
-                      moves,
-                      duration,
-                      myAccuracy: opponentAccuracy || 0,
-                      opponentAccuracy: myAccuracy || 0,
-                      playerColor: opponentColor,
-                      _id: newGame._id
-                    }
-                  }
-                },
-                { new: true }
-              );
+              // Not a duplicate - already added atomically above
+              const updatedOpponent = await User.findById(opponentUser._id);
               console.log(`[Elo] Opponent updated, current rating in DB: ${updatedOpponent?.rating}`);
               
               // Track opponent rating update for socket notification

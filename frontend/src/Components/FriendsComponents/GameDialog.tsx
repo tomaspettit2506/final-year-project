@@ -43,7 +43,29 @@ interface GameDialogProps {
 }
 
 const GameDialog: React.FC<GameDialogProps> = ({ open, onClose, friendName, games, loading, error }) => {
-    const recentGames = games || [];
+    const recentGames = React.useMemo(() => {
+        if (!Array.isArray(games) || games.length === 0) return [];
+
+        const seen = new Set<string>();
+        return games.filter((game) => {
+            const dayKey = game?.date ? new Date(game.date).toDateString() : 'unknown-date';
+            const dedupeKey = [
+                game?.opponent || 'unknown-opponent',
+                dayKey,
+                game?.result || 'unknown-result',
+                game?.moves || 0,
+                game?.termination || 'unknown-termination',
+                game?.playerColor || 'unknown-color'
+            ].join('|');
+
+            if (seen.has(dedupeKey)) {
+                return false;
+            }
+
+            seen.add(dedupeKey);
+            return true;
+        });
+    }, [games]);
     const [selectedGame, setSelectedGame] = React.useState<typeof recentGames[number] | null>(null);
     const { isDark } = useTheme();
 

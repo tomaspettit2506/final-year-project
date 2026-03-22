@@ -86,6 +86,35 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
       .map((entry) => entry.game);
   };
 
+  const deduplicateGames = (games: any[]): any[] => {
+    if (!Array.isArray(games) || games.length === 0) return [];
+
+    const seenKeys = new Set<string>();
+
+    return games.filter((game) => {
+      const dayKey = game?.date ? new Date(game.date).toDateString() : 'unknown-date';
+      const dedupeKey = [
+        game?.opponent || 'unknown-opponent',
+        dayKey,
+        game?.result || 'unknown-result',
+        game?.moves || 0,
+        game?.termination || 'unknown-termination',
+        game?.playerColor || 'unknown-color'
+      ].join('|');
+
+      if (seenKeys.has(dedupeKey)) {
+        return false;
+      }
+
+      seenKeys.add(dedupeKey);
+      return true;
+    });
+  };
+
+  const normalizeGames = (games: any[]): any[] => {
+    return sortGamesNewestFirst(deduplicateGames(games));
+  };
+
   // Set up socket listeners for real-time messaging
   useEffect(() => {
     if (!user?.uid) return;
@@ -220,7 +249,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
         throw new Error(msg || `Failed to load games (status ${res.status})`);
       }
       const data = await res.json();
-      const normalizedGames = sortGamesNewestFirst(data || []);
+      const normalizedGames = normalizeGames(data || []);
       setFriendGames(normalizedGames);
       setProfileStats(computeStatsFromGames(normalizedGames));
       return normalizedGames;
@@ -535,7 +564,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setProfileDialogOpen(true);
     setLoadingProfile(true);
     if (friend.games) {
-      const normalizedGames = sortGamesNewestFirst(friend.games);
+      const normalizedGames = normalizeGames(friend.games);
       setFriendGames(normalizedGames);
       setProfileStats(computeStatsFromGames(normalizedGames));
     }
@@ -610,7 +639,7 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
     setSelectedFriend(friend);
     setGameDialogOpen(true);
     if (friend.games) {
-      const normalizedGames = sortGamesNewestFirst(friend.games);
+      const normalizedGames = normalizeGames(friend.games);
       setFriendGames(normalizedGames);
       setProfileStats(computeStatsFromGames(normalizedGames));
     }
