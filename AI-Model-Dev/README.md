@@ -61,3 +61,6 @@ After running, you should see:
 * ``data/processed/``: cleaned datasets, split manifest, quality report
 * ``data/reports/``: metrics summary, class balance, per-user aggregates
 * ``img/``: generated charts (``*.png``)
+
+## Finally Integration
+- Integration: [`integration/README.md`](../integration/README.md)

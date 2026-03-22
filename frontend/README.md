@@ -97,7 +97,7 @@ frontend/src/
 └── setupTests.ts
 ```
 
-## Frontend Installation
+## Installation
 1. Navigate to frontend directory:
 ```bash
 cd frontend
@@ -111,10 +111,21 @@ npm install
 3. Set up environment variables (create .env file)
 ```bash
 cp .env.example .env
-# Edit .env if using different API URLs
+# REQUIRED: replace all VITE_FIREBASE_* placeholders with real Firebase config
+# REQUIRED: set VITE_API_URL / VITE_BACKEND_URL for your backend (local or deployed)
 ```
 
-4. Run the development server
+4. Then edit `frontend/.env` and replace:
+- `VITE_FIREBASE_API_KEY` → from Firebase Console
+- `VITE_FIREBASE_AUTH_DOMAIN` → from Firebase Console
+- `VITE_FIREBASE_PROJECT_ID` → from Firebase Console
+- `VITE_FIREBASE_STORAGE_BUCKET` → from Firebase Console
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` → from Firebase Console
+- `VITE_FIREBASE_APP_ID` → from Firebase Console
+- `VITE_FIREBASE_MEASUREMENT_ID` → from Firebase Console (optional)
+- `VITE_API_URL` → set to `http://localhost:8000` for local development or your deployed backend URL
+
+5. Run the development server
 ```bash
 npm run dev
 
@@ -130,3 +141,6 @@ GOTCG is a Progressive Web App, which means:
 - It works offline or with a poor internet connection
 - It loads quickly and reliably
 - It supports PWA notifications
+
+## Next, Backend Setup
+- Backend Setup: [`backend/README.md`](../backend/README.md)

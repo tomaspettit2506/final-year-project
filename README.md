@@ -97,8 +97,8 @@ cd final-year-project
 
 Use the module-specific setup guides for full details:
 
-- Frontend setup: [`frontend/README.md`](frontend/README.md)
-- Backend setup: [`backend/README.md`](backend/README.md)
+- Frontend setup: [`frontend/README.md`](../frontend/README.md#installation)
+- Backend setup: [`backend/README.md`](../backend/README.md#installation)
 
 ### 3) Configure Services
 
@@ -115,39 +115,8 @@ Use the module-specific setup guides for full details:
 - Use the connection string in backend environment variables (`MONGO_URI`)
 
 ### 4) Configure Environment Variables
-
-Create these files before running locally.
-
-#### `backend/.env`
-
-```env
-MONGO_URI=your_mongodb_connection_string
-CLIENT_URL=http://localhost:5173
-# Optional: additional allowed frontend origins (comma-separated)
-CLIENT_URLS=
-
-# Recommended (base64-encoded Firebase service account JSON)
-FIREBASE_SERVICE_ACCOUNT_B64=
-
-# Optional alternative (raw one-line JSON)
-FIREBASE_SERVICE_ACCOUNT={...full service account JSON as one line...}
-
-PORT=8000
-```
-
-#### `frontend/.env`
-
-```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-
-# Primary backend URL used by the frontend
-VITE_API_URL=http://localhost:8000
-
-# Optional fallback supported in code
-VITE_BACKEND_URL=http://localhost:8000
-```
+- Frontend Environment Variables Step 3: [`frontend/README.md`](../frontend/README.md#installation)
+- Backend Environment Variables Step 3: [`backend/README.md`](../backend/README.md#installation)
 
 ### 5) Run the App Locally
 
