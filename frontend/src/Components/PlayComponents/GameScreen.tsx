@@ -638,6 +638,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         terminationReason: normalizedReason
       }));
       terminationReasonRef.current = normalizedReason;
+
+      // For resignation, keep both clients on the result screen.
+      // The resigning player already navigates via the endGame callback in handleResignConfirm.
+      if (normalizedReason === 'resignation') {
+        return;
+      }
       
       // Auto-exit after 5 seconds for all game endings
       autoExitTimeoutRef.current = setTimeout(() => {

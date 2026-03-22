@@ -78,7 +78,7 @@ const Play = () => {
 
   if (loading) {
     return (
-        <Loading message="Loading game setup..." />
+        <Loading message="Game Setup..." />
     );
   }
 
