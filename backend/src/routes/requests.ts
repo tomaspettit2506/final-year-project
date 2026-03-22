@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import { User, Request } from '../schemas';
-import { ensureFriendsList, addFriendIfMissing } from '../utils/friend';
+import { User, Request, Friend } from '../schemas';
 
 const router = Router();
 
@@ -21,11 +20,22 @@ router.post('/:id/accept', async (req, res) => {
 
     if (!fromUser || !toUser) return res.status(400).json({ error: 'Invalid users on request' });
 
-    addFriendIfMissing(toUser, fromUser);
-    addFriendIfMissing(fromUser, toUser);
-
-    await toUser.save();
-    await fromUser.save();
+    await Friend.bulkWrite([
+      {
+        updateOne: {
+          filter: { user: toUser._id, friendUser: fromUser._id },
+          update: { $setOnInsert: { user: toUser._id, friendUser: fromUser._id, addedAt: new Date() } },
+          upsert: true,
+        },
+      },
+      {
+        updateOne: {
+          filter: { user: fromUser._id, friendUser: toUser._id },
+          update: { $setOnInsert: { user: fromUser._id, friendUser: toUser._id, addedAt: new Date() } },
+          upsert: true,
+        },
+      },
+    ], { ordered: false });
 
     const io = req.app.locals.io;
     const requesterRoomTarget = fromUser.firebaseUid || String(fromUser._id);
@@ -42,7 +52,7 @@ router.post('/:id/accept', async (req, res) => {
       console.warn('[requests] Socket.IO unavailable or requester room target missing for request_accepted emit');
     }
 
-    return res.status(200).json({ message: 'Friend request accepted', request, friends: toUser.friends });
+    return res.status(200).json({ message: 'Friend request accepted', request });
   } catch (error) {
     console.error('Failed to accept request:', error);
     return res.status(500).json({ error: 'Failed to accept request' });

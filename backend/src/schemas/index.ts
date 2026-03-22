@@ -21,13 +21,12 @@ const gameSchema = new mongoose.Schema({
 });
 
 const friendSchema = new mongoose.Schema({
-  friendUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  friendFirebaseUid: { type: String },
-  friendName: String,
-  friendEmail: String,
-  friendRating: Number,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  friendUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   addedAt: { type: Date, default: Date.now }
 });
+
+friendSchema.index({ user: 1, friendUser: 1 }, { unique: true });
 
 const requestSchema = new mongoose.Schema({
   fromUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -68,8 +67,7 @@ const userSchema = new mongoose.Schema({
   firebaseUid: { type: String, unique: true, sparse: true },
   rating: Number,
   avatarColor: String,
-  gameRecents: [gameSchema],
-  friends: [friendSchema]
+  gameRecents: [gameSchema]
 }, { timestamps: true });
 
 // Add unique indexes to prevent duplicate user creation

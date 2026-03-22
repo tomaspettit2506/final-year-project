@@ -21,15 +21,15 @@ router.delete('/:firebaseUid/friend/:friendId', async (req, res) => {
     // Try to find the friend by Firebase UID first, then by MongoDB ID when valid
     const friendUser = await User.findOne({ $or: friendFilters });
 
-    if (friendUser) {
-      // Remove by MongoDB ObjectId
-      user.friends.pull({ friendUser: friendUser._id });
-    } else {
-      // Try removing by friendFirebaseUid if no user found
-      (user as any).friends = (user.friends as any[]).filter((f: any) => f.friendFirebaseUid !== friendId);
-    }
+    if (!friendUser) return res.status(404).json({ error: 'Friend not found' });
 
-    await user.save();
+    await Friend.deleteMany({
+      $or: [
+        { user: user._id, friendUser: friendUser._id },
+        { user: friendUser._id, friendUser: user._id },
+      ],
+    });
+
     return res.status(200).json({ message: 'Friend removed successfully' });
   } catch (error) {
     console.error('Error removing friend:', error);
@@ -40,7 +40,7 @@ router.delete('/:firebaseUid/friend/:friendId', async (req, res) => {
 // GET Friends
 router.get('/', async (req, res) => {
   try {
-    const friends = await Friend.find().limit(10).sort({ userId: 1 });
+    const friends = await Friend.find().limit(10).sort({ user: 1 });
     return res.json(friends);
   } catch (error) {
     return res.status(500).json({ error: 'Failed to fetch friend data' });
@@ -56,8 +56,11 @@ router.get('/:firebaseUid', async (req, res) => {
     const user = await User.findOne({ firebaseUid }).lean();
     if (!user) return res.json([]);
 
-    // Collect only valid ObjectIds to avoid CastErrors during populate
-    const friendObjectIds = (user.friends || [])
+    const friendLinks = await Friend.find({ user: user._id })
+      .select('friendUser addedAt')
+      .lean();
+
+    const friendObjectIds = friendLinks
       .map((f: any) => f.friendUser)
       .filter((id: any) => id && mongoose.Types.ObjectId.isValid(id)) as mongoose.Types.ObjectId[];
 
@@ -65,63 +68,27 @@ router.get('/:firebaseUid', async (req, res) => {
       .select('name email rating firebaseUid gameRecents avatarColor createdAt')
       .lean();
 
-    const friendMap = new Map(friendUsers.map((u) => [u._id.toString(), u]));
+    const friendMap = new Map(friendUsers.map((u: any) => [String(u._id), u]));
 
-    // Legacy fallback: some friend entries may only have firebase UID / email without friendUser ObjectId
-    const friendFirebaseUids = Array.from(new Set(
-      (user.friends || [])
-        .map((f: any) => f.friendFirebaseUid)
-        .filter((uid: any) => typeof uid === 'string' && uid.trim().length > 0)
-    ));
-    const friendEmails = Array.from(new Set(
-      (user.friends || [])
-        .map((f: any) => f.friendEmail)
-        .filter((email: any) => typeof email === 'string' && email.trim().length > 0)
-    ));
+    const friends = friendLinks
+      .map((friend: any) => {
+        const populated = friendMap.get(String(friend.friendUser));
+        if (!populated) return null;
 
-    const fallbackQueries: any[] = [];
-    if (friendFirebaseUids.length > 0) fallbackQueries.push({ firebaseUid: { $in: friendFirebaseUids } });
-    if (friendEmails.length > 0) fallbackQueries.push({ email: { $in: friendEmails } });
-
-    const friendFallbackUsers = fallbackQueries.length > 0
-      ? await User.find({ $or: fallbackQueries })
-          .select('name email rating firebaseUid gameRecents avatarColor createdAt')
-          .lean()
-      : [];
-
-    const friendByFirebaseUid = new Map(
-      friendFallbackUsers
-        .filter((u: any) => typeof u.firebaseUid === 'string' && u.firebaseUid.length > 0)
-        .map((u: any) => [u.firebaseUid, u])
-    );
-    const friendByEmail = new Map(
-      friendFallbackUsers
-        .filter((u: any) => typeof u.email === 'string' && u.email.length > 0)
-        .map((u: any) => [u.email, u])
-    );
-
-    const friends = (user.friends || []).map((friend: any) => {
-      const populatedByObjectId = friend.friendUser && friendMap.get(friend.friendUser.toString());
-      const populatedByFirebaseUid = !populatedByObjectId && friend.friendFirebaseUid
-        ? friendByFirebaseUid.get(friend.friendFirebaseUid)
-        : undefined;
-      const populatedByEmail = !populatedByObjectId && !populatedByFirebaseUid && friend.friendEmail
-        ? friendByEmail.get(friend.friendEmail)
-        : undefined;
-      const populated = populatedByObjectId || populatedByFirebaseUid || populatedByEmail;
-      const friendCreatedAt = resolveUserCreatedAt(populated);
-      return {
-        friendUser: friend.friendUser || populated?._id,
-        friendFirebaseUid: populated?.firebaseUid || friend.friendFirebaseUid,
-        friendName: populated?.name || friend.friendName,
-        friendEmail: populated?.email || friend.friendEmail,
-        friendRating: populated?.rating ?? friend.friendRating,
-        friendAvatarColor: populated?.avatarColor,
-        gameRecents: populated?.gameRecents,
-        friendCreatedAt,
-        addedAt: friend.addedAt
-      };
-    });
+        const friendCreatedAt = resolveUserCreatedAt(populated);
+        return {
+          friendUser: populated._id,
+          friendFirebaseUid: populated.firebaseUid,
+          friendName: populated.name,
+          friendEmail: populated.email,
+          friendRating: populated.rating,
+          friendAvatarColor: populated.avatarColor,
+          gameRecents: populated.gameRecents,
+          friendCreatedAt,
+          addedAt: friend.addedAt
+        };
+      })
+      .filter(Boolean);
 
     return res.json(friends);
   } catch (error) {
@@ -132,11 +99,45 @@ router.get('/:firebaseUid', async (req, res) => {
 
 // POST Friend
 router.post('/', async (req, res) => {
-  const { friendName, friendEmail, friendRating } = req.body;
+  const { userId, friendId } = req.body;
   try {
-    const newFriend = new Friend({ friendName, friendEmail, friendRating });
-    await newFriend.save();
-    return res.status(201).json(newFriend);
+    if (!userId || !friendId) {
+      return res.status(400).json({ error: 'userId and friendId are required' });
+    }
+
+    const userFilters: any[] = [{ firebaseUid: userId }];
+    const friendFilters: any[] = [{ firebaseUid: friendId }];
+
+    if (mongoose.Types.ObjectId.isValid(userId)) userFilters.push({ _id: userId });
+    if (mongoose.Types.ObjectId.isValid(friendId)) friendFilters.push({ _id: friendId });
+
+    const [user, friendUser] = await Promise.all([
+      User.findOne({ $or: userFilters }),
+      User.findOne({ $or: friendFilters }),
+    ]);
+
+    if (!user || !friendUser) {
+      return res.status(404).json({ error: 'User or friend not found' });
+    }
+
+    await Friend.bulkWrite([
+      {
+        updateOne: {
+          filter: { user: user._id, friendUser: friendUser._id },
+          update: { $setOnInsert: { user: user._id, friendUser: friendUser._id, addedAt: new Date() } },
+          upsert: true,
+        },
+      },
+      {
+        updateOne: {
+          filter: { user: friendUser._id, friendUser: user._id },
+          update: { $setOnInsert: { user: friendUser._id, friendUser: user._id, addedAt: new Date() } },
+          upsert: true,
+        },
+      },
+    ], { ordered: false });
+
+    return res.status(201).json({ message: 'Friendship created successfully' });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to save friend data' });
   }
