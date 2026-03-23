@@ -117,18 +117,73 @@ The implications for developers and stakeholders include:
 
 ## 7. Deployment Application
 ### 7.1 How to deploy the frontend and backend with two different deployments
+This project uses a split deployment architecture:
+
+-   **Frontend (React + Vite + PWA):**  deployed to  **Vercel**
+-   **Backend (Node.js + Express + Socket.IO):**  deployed to  **Railway**
+-   **Data services:**  MongoDB Atlas and Firebase
+
+This separation is recommended because the backend requires persistent server functionality and WebSocket support for real-time gameplay, while the frontend is optimized as a static build served via CDN.
+
+**Deployment sequence (recommended):**
+
+1.  Deploy backend to Railway first.
+2.  Configure backend environment variables in Railway:
+    -   [MONGO_URI](../../backend/.env.example#9)  (or  `MONGODB_URI`)
+    -   `FIREBASE_SERVICE_ACCOUNT_B64`  (recommended) or  [FIREBASE_SERVICE_ACCOUNT](../../backend/.env.example#23)
+    -   [CLIENT_URL](../../backend/.env.example#14)  (Vercel frontend URL)
+    -   [CLIENT_URLS](../../backend/.env.example#14)  (optional comma-separated additional allowed origins)
+3.  Verify Railway health endpoint:  `/health`.
+4.  Deploy frontend to Vercel.
+5.  Configure frontend environment variables in Vercel:
+    - [VITE_API_URL](../../frontend/.env.example#5)
+
+    - [VITE_BACKEND_URL](../../frontend/.env.example#7)
+    
+    -   Firebase public keys (`VITE_FIREBASE_*`)
+6.  Redeploy frontend after changing env vars (Vite injects env values at build time).
 
 
 ### 7.2 How does it work
+The production flow is:
+
+1.  User loads the frontend from  **Vercel**.
+2.  Frontend API calls and Socket.IO connections are directed to  **Railway**  using  [VITE_API_URL](../../frontend/.env.example#5)  or  [VITE_BACKEND_URL](../../frontend/.env.example#7).
+3.  Backend on Railway handles:
+    -   REST endpoints ([/user](../../backend/src/index.ts#78),  `/game`,  `/friend`, etc.)
+    -   real-time Socket.IO events
+    -   CORS validation using  [CLIENT_URL](../../backend/.env.example#14))  /  [CLIENT_URLS](../../backend/.env.example#14))
+4.  Backend communicates with:
+    -   **MongoDB Atlas**  for game and analytics persistence
+    -   **Firebase Admin**  for authentication/user identity integration
+
+**CI/CD in this repository:**
+
+-   [frontend-deploy.yml](../../.github/workflows/frontend-deploy.yml)  triggers on changes in  `frontend/**`  and deploys to Vercel.
+-   [backend-deploy.yml](../../.github/workflows/backend-deploy.yml)  triggers on changes in  `backend/**`, builds TypeScript, then triggers Railway via deploy webhook.
 
 ### 7.3 Best Deployments for the complete High Level Stack Architecture
-Vercel
+**Vercel (Frontend)**
+
+-   Optimized for static React/Vite builds
+-   Global CDN for fast page delivery
+-   Good fit for SPA routing and PWA asset hosting
 
 ![Vercel](img/Vercel.jpeg)
 
-Railway
+**Railway (Backend)**
+-   Suitable for long-running Node.js services
+-   Supports WebSocket workloads required by Socket.IO multiplayer features
+-   Simple health checks and container-based deployment (`Dockerfile`  +  `/health`  endpoint)
 
 ![Railway](img/Railway.jpeg)
+
+**Why this combination is best for this project:**
+
+-   Matches technical needs of each tier (static frontend vs stateful realtime backend)
+-   Improves scalability and operational clarity
+-   Reduces risk of deploying Socket.IO to serverless-only hosting models
+-   Cleanly separates frontend release cadence from backend release cadence
 
 **Website References**
 - [Material UI](https://mui.com/material-ui/)
