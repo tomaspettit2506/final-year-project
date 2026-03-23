@@ -86,7 +86,10 @@ describe('AddFriend Component', () => {
     fireEvent.click(searchButton);
     
     await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringMatching(/\/user$/));
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/user\?/),
+        expect.objectContaining({ cache: 'no-store' })
+      );
     });
   });
 

@@ -34,9 +34,10 @@ interface FriendsListProps {
   friends: Friend[];
   onRemoveFriend: (friend: Friend) => Promise<void> | void;
   onChallengeStarted?: (roomId: string) => void;
+  onFriendRatingUpdated?: (friend: Friend, newRating: number) => void;
 }
 
-const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onChallengeStarted }) => {
+const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onChallengeStarted, onFriendRatingUpdated }) => {
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -618,13 +619,19 @@ const FriendsList: React.FC<FriendsListProps> = ({ friends, onRemoveFriend, onCh
           deriveMemberSinceFromObjectId(friend.mongoId) ||
           deriveMemberSinceFromObjectId(friend.id);
 
+        const resolvedRating = Number.isFinite(Number(updatedFriend.rating))
+          ? Number(updatedFriend.rating)
+          : friend.rating;
+
         setSelectedFriend({
           ...friend,
-          rating: updatedFriend.rating || friend.rating,
+          rating: resolvedRating,
           mongoId: updatedFriend._id || friend.mongoId,
           firebaseUid: updatedFriend.firebaseUid || friend.firebaseUid,
           memberSince: resolvedMemberSince
         });
+
+        onFriendRatingUpdated?.(friend, resolvedRating);
       }
     } catch (error) {
       console.error('Error fetching updated friend data:', error);

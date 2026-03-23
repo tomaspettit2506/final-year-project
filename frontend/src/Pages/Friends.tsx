@@ -478,6 +478,19 @@ const Friends = () => {
   const pageBg = isDark ? "#000000" : "#ffffff";
   const panelBg = isDark ? "#000000d0" : "#ffffffd0";
 
+  const handleFriendRatingUpdated = (targetFriend: Friend, newRating: number) => {
+    setFriends((prevFriends) =>
+      prevFriends.map((friend) => {
+        const isMatch =
+          friend.id === targetFriend.id ||
+          (!!targetFriend.firebaseUid && friend.firebaseUid === targetFriend.firebaseUid) ||
+          (!!targetFriend.mongoId && friend.mongoId === targetFriend.mongoId);
+
+        return isMatch ? { ...friend, rating: newRating } : friend;
+      })
+    );
+  };
+
   if (loading) {
   return (
     <Loading message="Friends"/>
@@ -602,7 +615,11 @@ const Friends = () => {
           }}
         >
           {tab === "friends" && (
-            <FriendsList friends={friends} onRemoveFriend={handleRemoveFriend} />
+            <FriendsList
+              friends={friends}
+              onRemoveFriend={handleRemoveFriend}
+              onFriendRatingUpdated={handleFriendRatingUpdated}
+            />
           )}
           {tab === "invites" && (
             <GameInvites

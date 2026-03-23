@@ -292,7 +292,7 @@ const Profile = () => {
             width: 72, 
             height: 72,
             backgroundColor: userData?.avatarColor,
-            color: isDark ? "#ddaaff" : "#5500aa",
+            color: isDark ? "#000000" : "#ffffff",
             boxShadow: '0 4px 8px rgba(85, 0, 170, 0.2)'
           }}>
             {(userData?.name || user?.displayName || "U").charAt(0).toUpperCase()}

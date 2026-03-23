@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Box, Stack, TextField, InputAdornment, Button, Avatar, Badge, Chip, Typography } from "@mui/material";
 import { useAuth } from "../../Context/AuthContext";
 import { getApiBaseUrl } from "../../Services/api";
+import { socket } from "../../Services/socket";
 
 interface User {
   id: string;
@@ -13,6 +14,7 @@ interface User {
   isFriend: boolean;
   isPending: boolean;
   firebaseUid?: string;
+  email?: string;
 }
 
 interface AddFriendProps {
@@ -28,12 +30,34 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const currentUserId = user?.uid;
+
+  useEffect(() => {
+    const handleFriendRatingUpdate = (payload: { userId?: string; newRating?: number }) => {
+      const targetId = payload?.userId;
+      const newRating = payload?.newRating;
+      if (!targetId || !Number.isFinite(Number(newRating))) return;
+
+      setUsers((prevUsers) =>
+        prevUsers.map((candidate) =>
+          candidate.firebaseUid === targetId || candidate.id === targetId
+            ? { ...candidate, rating: Number(newRating) }
+            : candidate
+        )
+      );
+    };
+
+    socket.on('friend_rating_updated', handleFriendRatingUpdate);
+    return () => {
+      socket.off('friend_rating_updated', handleFriendRatingUpdate);
+    };
+  }, []);
+
   const handleSearch = async () => {
     setHasSearched(true);
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${apiBaseUrl}/user`);
+      const res = await fetch(`${apiBaseUrl}/user?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       
@@ -50,6 +74,7 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           isFriend: false,
           isPending: false,
           firebaseUid: u.firebaseUid,
+          email: u.email,
         };
         // If you own user account here, can't be used on Add Friend page, so filter out later. This is just to ensure we have firebaseUid for all users if available.  
 
@@ -110,7 +135,11 @@ const AddFriend: React.FC<AddFriendProps> = ({ onSendRequest }) => {
           candidate.username.toLowerCase().includes(searchQuery.toLowerCase());
         const isCurrentUser =
           !!currentUserId &&
-          (candidate.firebaseUid === currentUserId || candidate.id === currentUserId);
+          (
+            candidate.firebaseUid === currentUserId ||
+            candidate.id === currentUserId ||
+            (!!user?.email && !!candidate.email && candidate.email.toLowerCase() === user.email.toLowerCase())
+          );
 
         return matchesSearch && !candidate.isFriend && !isCurrentUser;
       })

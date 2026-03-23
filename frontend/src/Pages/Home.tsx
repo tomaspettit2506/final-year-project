@@ -212,7 +212,7 @@ const welcomeTextColor = isDark ? "#a042ff" : "#240c3d";
                       {game.opponent || "Opponent"}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Result:</strong> {game.result}
+                      <strong>Result:</strong> {game.result.toUpperCase()}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       <strong>Date:</strong> {new Date(game.date).toLocaleDateString()}
