@@ -159,6 +159,9 @@ router.post('/', async (req: Request, res) => {
       
       if (userId && require('mongoose').Types.ObjectId.isValid(userId)) {
         filter.push({ _id: userId });
+      } else if (typeof userId === 'string' && userId.trim().length > 0) {
+        // Support legacy/alternate payloads where Firebase UID is sent in `userId`
+        filter.push({ firebaseUid: userId });
       }
 
       if (filter.length === 0) {
