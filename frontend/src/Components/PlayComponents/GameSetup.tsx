@@ -72,6 +72,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
   const [isRated, setIsRated] = useState(true); // Default to rated game (matches timerEnabled default)
   const autoJoinAttemptedRef = useRef(false); // Track if auto-join has been attempted
   const [inviteSettingsLoaded, setInviteSettingsLoaded] = useState(false); // Track if invite settings have been loaded
+  const activeRoomIdRef = useRef('');
 
   const formatWaitingTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -224,7 +225,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
 
   // Multiplayer socket listeners
   useEffect(() => {
-    const handleGameReady = (data: { players: RoomUser[]; status: string; startTime: number; timerEnabled?: boolean; timerDuration?: number; rated?: boolean }) => {
+    const handleGameReady = (data: { roomId?: string; players: RoomUser[]; status: string; startTime: number; timerEnabled?: boolean; timerDuration?: number; rated?: boolean }) => {
       console.log('Game is ready, both players have joined!', data);
       console.log('[GameSetup] Timer settings from server:', { timerEnabled: data.timerEnabled, timerDuration: data.timerDuration, rated: data.rated });
       setRoomUsers(data.players);
@@ -245,7 +246,13 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       if (!playerColor && myPlayer?.color) setPlayerColor(myPlayer.color);
       if (!name && myPlayer?.name) setName(myPlayer.name);
 
-      const actualRoomId = createdRoomId || roomId;
+      const actualRoomId = data.roomId || activeRoomIdRef.current || createdRoomId || roomId;
+      const resolvedTimerDuration = data.timerDuration ?? timerDuration;
+      const resolvedTimerEnabled = data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled;
+
+      if (actualRoomId) {
+        activeRoomIdRef.current = actualRoomId;
+      }
 
       // Schedule the callback after state updates
       setTimeout(() => {
@@ -256,8 +263,8 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
             resolvedName,
             resolvedColor,
             isHost,
-            data.timerDuration || timerDuration,
-            data.timerEnabled !== undefined ? data.timerEnabled : timerEnabled,
+            resolvedTimerDuration,
+            resolvedTimerEnabled,
             resolvedRated
           );
         }
@@ -323,7 +330,9 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     socket.emit('createRoom', { name: resolvedName, timerEnabled, timerDuration, isRated, rating }, (res: { success: boolean; roomId?: string; color?: 'white' | 'black' }) => {
       console.log('[handleCreateRoom] Received callback:', res);
       if (res.success && res.roomId && res.color) {
+        activeRoomIdRef.current = res.roomId;
         setCreatedRoomId(res.roomId);
+        setRoomId(res.roomId);
         setPlayerColor(res.color);
         setIsHost(true);
         setRoomUsers([{ id: socket.id || '', name: resolvedName, color: res.color }]);
@@ -372,6 +381,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     
     const rating = userData?.rating || 1200;
     const resolvedName = accountName;
+    activeRoomIdRef.current = roomId.trim().toUpperCase();
     console.log('[handleJoinRoom] Emitting joinRoom with settings:', { roomId, name: resolvedName, rating, timerEnabled, timerDuration, isRated });
     console.log('[handleJoinRoom] Game Type:', isRated ? 'RATED' : 'CASUAL', '| Timer:', timerEnabled ? `${timerDuration}s` : 'disabled');
     
@@ -389,6 +399,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
       
       if (res.success && res.color) {
         console.log('[handleJoinRoom] Join successful! Color:', res.color);
+        activeRoomIdRef.current = roomId;
         setPlayerColor(res.color);
         setIsHost(false);
         if (res.users) {
@@ -435,6 +446,7 @@ const GameSetup = ({ onStartGame, onRoomJoined }: GameSetupProps) => {
     setPlayerColor(null);
     setWaitingTime(0);
     setError('');
+    activeRoomIdRef.current = '';
   };
 
   const handleStartGame = () => {

@@ -297,6 +297,7 @@ export function registerSocketHandlers(io: Server, rooms: Record<string, Room>):
         console.log(`Game ready in room ${roomId}. Timer: ${room.timerEnabled ? room.timerDuration + 's' : 'disabled'}. Rated: ${room.rated ? 'YES' : 'NO'}`);
         console.log(`[DEBUG] Emitting gameReady with rated=${room.rated}, timerEnabled=${room.timerEnabled}, timerDuration=${room.timerDuration}`);
         io.to(roomId).emit('gameReady', {
+          roomId,
           players: room.users,
           status: room.status,
           startTime: room.gameStartTime,
