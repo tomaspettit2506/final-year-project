@@ -1,11 +1,4 @@
-import Card from "@mui/material/Card";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Avatar from "@mui/material/Avatar";
-import Badge from "@mui/material/Badge";
-import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
-import Typography from "@mui/material/Typography";
+import { Card, Box, Stack, Avatar, Badge, Button, Chip, Typography } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 
