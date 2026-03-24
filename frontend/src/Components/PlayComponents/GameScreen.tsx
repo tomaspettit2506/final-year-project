@@ -887,6 +887,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
         
         setGameState(newGameState);
         setRedoMoves([]);
+
+        if (isCheckmateAfterPromotion || isStalemateAfterPromotion) {
+          if (autoExitTimeoutRef.current !== null) clearTimeout(autoExitTimeoutRef.current);
+          autoExitTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current) {
+              onBackToSetup();
+            }
+          }, 5000);
+        }
         
         if (timerEnabled && currentState.moveHistory.length === 0) {
           setTimer(prev => ({ ...prev, isActive: true }));
@@ -952,15 +961,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameMode, difficulty, difficult
           reason: isCheckmateState ? 'checkmate' : 'stalemate'
         });
       }
-      
-      // Auto-exit after 5 seconds when game ends locally (AI mode or local detection)
-      if (isCheckmateState || isStalemateState) {
-        autoExitTimeoutRef.current = setTimeout(() => {
-          if (isMountedRef.current) {
-            onBackToSetup();
-          }
-        }, 5000);
-      }
+    }
+
+    // Auto-exit after 5 seconds when game ends locally (AI mode or local detection)
+    if (isCheckmateState || isStalemateState) {
+      if (autoExitTimeoutRef.current !== null) clearTimeout(autoExitTimeoutRef.current);
+      autoExitTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          onBackToSetup();
+        }
+      }, 5000);
     }
 
     setGameState(newGameState);
