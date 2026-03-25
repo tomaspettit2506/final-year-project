@@ -30,5 +30,3 @@ export interface Room {
   isPaused?: boolean;
   pausedBy?: string; // player color who paused the game
 }
-
-export * from './inference';
