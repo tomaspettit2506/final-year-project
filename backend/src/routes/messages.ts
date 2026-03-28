@@ -3,6 +3,23 @@ import { Message } from '../schemas';
 
 const router = Router();
 
+// GET unread message count
+router.get('/:userId/unread', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const count = await Message.countDocuments({
+      recipientId: userId,
+      read: false,
+      deleted: false
+    });
+
+    return res.json({ count });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    return res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
 // GET messages between two users
 router.get('/:userId/:friendId', async (req, res) => {
   const { userId, friendId } = req.params;
@@ -52,23 +69,6 @@ router.put('/:userId/read/:friendId', async (req, res) => {
   } catch (error) {
     console.error('Error marking messages as read:', error);
     return res.status(500).json({ error: 'Failed to mark messages as read' });
-  }
-});
-
-// GET unread message count
-router.get('/:userId/unread', async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const count = await Message.countDocuments({
-      recipientId: userId,
-      read: false,
-      deleted: false
-    });
-
-    return res.json({ count });
-  } catch (error) {
-    console.error('Error fetching unread count:', error);
-    return res.status(500).json({ error: 'Failed to fetch unread count' });
   }
 });
 

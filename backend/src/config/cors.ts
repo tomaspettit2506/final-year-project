@@ -64,3 +64,5 @@ export function validateCorsOrigin(
 
   callback(new Error(`Not allowed by CORS: ${origin}`));
 }
+
+export default validateCorsOrigin;

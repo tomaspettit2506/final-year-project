@@ -50,3 +50,5 @@ export function initializeFirebase(): void {
     console.error('❌ Firebase initialization error:', error);
   }
 }
+
+export default initializeFirebase;

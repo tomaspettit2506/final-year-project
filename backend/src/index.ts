@@ -47,6 +47,10 @@ let isInitialized = false;
 let initError: string | null = null;
 
 // Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the backend server!' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -90,11 +94,15 @@ registerSocketHandlers(io, rooms);
 // Start server immediately (don't wait for initialization)
 const PORT = process.env.PORT || 8000;
 
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
-// Initialize services in background (non-blocking)
-initialize().catch((error) => {
-  console.error('Background initialization failed:', error);
-});
+  // Initialize services in background (non-blocking)
+  initialize().catch((error) => {
+    console.error('Background initialization failed:', error);
+  });
+}
+
+export default app;

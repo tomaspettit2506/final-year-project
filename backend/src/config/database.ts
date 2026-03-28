@@ -77,3 +77,5 @@ export async function connectDatabase(): Promise<void> {
     throw err;
   }
 }
+
+export default connectDatabase;
