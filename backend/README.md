@@ -14,36 +14,38 @@
 ## 🏗️ Project Structure
 
 ```
-backend/src/
-├── config/
-|   ├── cors.ts
-|   ├── database.ts
-|   └── firebase.ts
-|
-├── routes/
-|   ├── friends.ts
-|   ├── gameInvites.ts
-|   ├── games.ts
-|   ├── messages.ts
-|   ├── requests.ts
-|   └── users.ts
-|
-├── schemas/
+backend/
+├── src/
+|   ├── config/
+|   |   ├── cors.ts
+|   |   ├── database.ts
+|   |   └── firebase.ts
+|   |
+|   ├── routes/
+|   |   ├── friends.ts
+|   |   ├── gameInvites.ts
+|   |   ├── games.ts
+|   |   ├── messages.ts
+|   |   ├── requests.ts
+|   |   └── users.ts
+|   |
+|   ├── schemas/
+|   |   └── index.ts
+|   |   
+|   ├── socket/
+|   |   └── handlers.ts
+|   |   
+|   ├── types/
+|   |   └── index.ts
+|   |   
+|   ├── utils/
+|   |   ├── eloCalculator.ts
+|   |   ├── friend.ts
+|   |   ├── room.ts
+|   |   └── statsCalculator.ts
+|   |   
 |   └── index.ts
-|   
-├── socket/
-|   └── handlers.ts
-|   
-├── types/
-|   └── index.ts
-|   
-├── utils/
-|   ├── eloCalculator.ts
-|   ├── friend.ts
-|   ├── room.ts
-|   └── statsCalculator.ts
-|   
-└── index.ts
+└── tests/
 ```
 
 ## Installation
