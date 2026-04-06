@@ -1,5 +1,16 @@
 # GOTCG Backend
 
+## Tech Stack
+| Technology | Purpose |
+|-----------|---------|
+| Node.js   | Runtime environment |
+| TypeScript | Language |
+| Express.js | Web framework |
+| MongoDB (via Mongoose) | Database |
+| Firebase Admin SDK | Authentication & notifications |
+| Jest | Testing framework |
+| Docker | Containerization (optional, for deployment) |
+
 ## 🏗️ Project Structure
 
 ```
