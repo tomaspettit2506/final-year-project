@@ -198,12 +198,26 @@ This repository uses:
 - `.github/workflows/frontend-deploy.yml`
 - `.github/workflows/backend-deploy.yml`
 
-Required repository secrets:
+Required Repository Secrets
 
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID_FRONTEND`
-- `BACKEND_DEPLOY_HOOK_URL`
+These secrets are used by GitHub Actions workflows to automate deployment to Vercel (frontend) and Railway (backend):
+
+1.  ``VERCEL_TOKEN``
+    -   Personal access token for Vercel, used by CI to trigger deployments.
+    -   How to get:
+        -   Go to  [Vercel Dashboard](https://vercel.com/)  → Settings (with your account) → Tokens → Create a new token.
+2.  ``VERCEL_ORG_ID``
+    -   The Team (Organization) ID in Vercel, needed for API calls.
+    -   How to get:
+        -   Go to  [Vercel Dashboard](https://vercel.com/)  → Settings → Copy Team ID.
+3.  ``VERCEL_PROJECT_ID_FRONTEND``
+    -   The unique Project ID for your frontend in Vercel.
+    -   How to get:
+        -   Go to  [Vercel](https://vercel.com/)  → Import your  [frontend](frontend)  → Settings → General → Copy Project ID.
+4.  ``BACKEND_DEPLOY_HOOK_URL``
+    -   The Railway deploy hook URL for your backend, used to trigger backend deployments from CI.
+    -   How to get:
+        -   Go to  [Railway](https://railway.com/)  → Import your  [backend](backend)  → Copy the backend URL (e.g.,  `https://gotcg-backend-production.up.railway.app/`).
 
 ## 🤖 AI Model Development
 
