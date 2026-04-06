@@ -13,7 +13,7 @@
 <p align="center"><strong>Your Chess Journey Awaits</strong></p>
 
 <p align="center">
-  <a href="https://final-year-project-pearl-tau.vercel.app/">Live Application</a>
+  <a href="https://gotcg-chess.vercel.app/">Live Application</a>
 </p>
 
 ## 🎬 Screencast Demonstration
@@ -47,8 +47,47 @@ The project combines interactive learning, gameplay tools, and progress-focused 
 - **Deployment:** Vercel (frontend) + Railway (backend)
 
 ## 🏗️ Architecture
+```text
 
-![Architecture](docs/architecture/diagrams/myArchitecture.png)
+                         ┌──────────────────────────────┐
+                         │          Frontend            │
+                         │  React + TypeScript (Vite)   │
+                         │  Material UI + Framer Motion │
+                         └───────────────┬──────────────┘
+                                         │
+                                         │ HTTPS (REST)
+                                         │ WebSockets (Socket.IO client)
+                                         ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               Backend (API)                                  │
+│                        Node.js + Express + Socket.IO                         │
+│                                                                              │
+│   ┌──────────────────────────┐       ┌────────────────────────────────────┐  │
+│   │ REST API Endpoints       │       │ Real‑Time Engine (Socket.IO)       │  │
+│   │ (game logic, user data)  │◄──────┤ Matchmaking, game state sync       │  │
+│   └──────────────────────────┘       └────────────────────────────────────┘  │
+│                                                                              │
+│   ┌──────────────────────────────┐   ┌────────────────────────────────────┐  │
+│   │ Firebase Authentication      │   │ Firestore                          │  │
+│   │ (User auth, tokens)          │   │ (User profiles, progress, settings)│  │
+│   └──────────────────────────────┘   └────────────────────────────────────┘  │
+│                                                                              │
+│   ┌────────────────────────────────────────────────────────────────────────┐ │
+│   │ MongoDB (Railway-hosted)                                               │ │
+│   │ - Game state snapshots                                                 │ │
+│   │ - Match history                                                        │ │
+│   │ - Analytics + telemetry                                                │ │
+│   └────────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+                         ▲
+                         │ Deployment
+                         │
+     ┌──────────────────────────────┐          ┌──────────────────────────────┐
+     │ Vercel                       │          │ Railway                      │
+     │ (Frontend hosting + CDN)     │          │ (Backend hosting + DB layer) │
+     └──────────────────────────────┘          └──────────────────────────────┘
+```
 
 ## 🧭 Project Structure
 
@@ -89,7 +128,7 @@ final-year-project/
 ### 1) Clone the Repository
 
 ```bash
-git clone https://github.com/tomaspettit2506/final-year-project.git
+git clone https://github.com/yourusername/final-year-project.git
 cd final-year-project
 ```
 
@@ -97,8 +136,8 @@ cd final-year-project
 
 Use the module-specific setup guides for full details:
 
-- Frontend setup: [`frontend/README.md`](../frontend/README.md#installation)
-- Backend setup: [`backend/README.md`](../backend/README.md#installation)
+- Frontend setup: [`frontend/README.md`](frontend/README.md#installation)
+- Backend setup: [`backend/README.md`](backend/README.md#installation)
 
 ### 3) Configure Services
 
@@ -111,12 +150,17 @@ Use the module-specific setup guides for full details:
 #### MongoDB
 
 - Create a cluster in [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (or run MongoDB locally)
-- Create a database user and allow network access
+- Create a database user and configure network access
+- For development, allow only your current IP address in Atlas network access (Default IP: 0.0.0.0/0)
+- Create a strong, unique database username and password, and do not hardcode credentials in the codebase
+- Store the connection string securely in backend environment variables (`MONGO_URI`)
 - Use the connection string in backend environment variables (`MONGO_URI`)
 
 ### 4) Configure Environment Variables
-- Frontend Environment Variables Step 3: [`frontend/README.md`](../frontend/README.md#installation)
-- Backend Environment Variables Step 3: [`backend/README.md`](../backend/README.md#installation)
+```bash
+# Copy both frontend and backend
+cp .env.example .env
+```
 
 ### 5) Run the App Locally
 
