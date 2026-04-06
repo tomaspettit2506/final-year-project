@@ -80,45 +80,35 @@ if (difficultyRef.current < 550) {
 // ... progressively longer for higher difficulties
 ````
 
-## Potential ML Integration for Your Project
-To enhance your chess AI with machine learning:
 
-1.Data Pipeline
+## Potential Non-ML Integration for Your Project
 
+To enhance your chess AI and analytics without using machine learning:
+
+1. Data Pipeline
     - Export game data from MongoDB using the games endpoint
     - Extract board positions and outcomes
-    - Label positions with win/loss/draw probabilities
+    - Use deterministic labeling and rule-based evaluation (e.g., win/loss/draw, move accuracy, blunder detection)
 
-2. Model Architecture
-
-    - Consider a convolutional neural network (CNN) for board evaluation
+2. Rule-Based Evaluation Architecture
+    - Continue using piece-square tables, material count, and handcrafted heuristics for board evaluation
     - Input: 8x8 board representation (piece types and colors)
-    - Output: Position evaluation score
+    - Output: Position evaluation score based on fixed rules
 
-3. Training Process
-````python
-# Pseudo-code for training
-1. Load game data from MongoDB
-2. Preprocess board positions into tensor format
-3. Split into training/validation sets
-4. Train CNN to predict position strength
-5. Validate against known game outcomes
-6. Export model weights
-````
+3. Analytics and Reporting
+    - Use Python scripts to generate statistics, charts, and reports from exported data
+    - No predictive modeling or neural networks are used
 
 4. Integration
-
-    - Replace evaluateBoard function with ML model inference
-    - Keep minimax search algorithm
-    - Use trained model for leaf node evaluation
+    - The evaluateBoard function remains deterministic and explainable
+    - Minimax search algorithm is used for AI move selection
+    - All evaluations are based on static rules, not learned models
 
 5. Continuous Improvement
+    - Improve heuristics and evaluation functions based on playtesting and user feedback
+    - Update rule-based logic as needed for better gameplay experience
 
-    - Collect new games through your multiplayer system
-    - Periodically retrain the model with fresh data
-    - A/B test different model versions by difficulty level
-
-Your current architecture already has the foundation for ML integration through your data collection pipeline and Firebase/MongoDB storage. The game history and accuracy tracking provide valuable training data for future model development.
+Your current architecture is fully compliant with a non-ML approach. All AI, analytics, and reporting are performed using deterministic, rule-based methods and traditional programming, with no machine learning or neural networks involved.
 
 ## Implemented Scripts (Report-First Phase)
 
