@@ -14,87 +14,86 @@
 
 ```text
 frontend/src/
-├── assets/
-|
-├── Components/
-│   ├── FriendsComponent/
-|   |   ├── AddFriend.tsx
-|   |   ├── ChallengeDialog.tsx
-|   |   ├── ChatDialog.tsx
-|   |   ├── FriendsList.tsx
-|   |   ├── GameDialog.tsx
-|   |   ├── GameInvites.tsx
-|   |   ├── PendingRequests.tsx
-|   |   ├── ProfileDialog.tsx
-|   |   └── SentRequest.tsx
-|   |   
-│   ├── PlayComponents/
-|   |   ├── AccuracyStats.tsx
-|   |   ├── CapturedPieces.tsx
-|   |   ├── ChessBoard.tsx
-|   |   ├── GameController.tsx
-|   |   ├── GameScreen.tsx
-|   |   ├── GameSetup.tsx
-|   |   ├── MoveHistory.tsx
-|   |   ├── PromotionDialog.tsx
-|   |   └── Timer.tsx
-|   |   
-│   ├── TutorialComponents/
-|   |   ├── Basic.tsx
-|   |   ├── ChessPiece.tsx
-|   |   ├── Draw.tsx
-|   |   ├── MiniBoard.tsx
-|   |   ├── PieceGuide.tsx
-|   |   ├── Pieces.tsx
-|   |   ├── Rules.tsx
-|   |   └── Winning.tsx
-|   |   
-|   ├── AppBar.tsx
-|   ├── BottomNav.tsx
-|   ├── GameDetails.tsx
-|   ├── InstallPWA.tsx
-|   └── Loading.tsx
-|
-├── Context/
-|   ├── AuthContext.tsx
-|   ├── BoardThemeContext.tsx
-|   └── ThemeContext.tsx
-|   
-├── Pages/
-|   ├── Friends.tsx
-|   ├── Home.tsx
-|   ├── Landing.tsx
-|   ├── Play.tsx
-|   ├── Profile.tsx
-|   ├── Settings.tsx
-|   └── Tutorial.tsx
-|   
-├── Services/
-|   ├── api.ts
-|   └── socket.ts
-|   
-├── Types/
-|   └── chess.ts
-|   
-├── Utils/
-|   ├── accuracyColors.ts
-|   ├── avatarColors.ts
-|   ├── chessAI.ts
-|   ├── chessLogic.ts
-|   ├── eloCalculator.ts
-|   ├── FirestoreService.ts
-|   ├── loadingDelay.ts
-|   ├── logoutLoading.ts
-|   ├── memberSince.ts
-|   └── Notifications.ts
-|   
-|   
-├── App.css
-├── App.tsx
-├── firebase.ts
-├── index.css
-├── main.tsx
-└── setupTests.ts
+├── assets/                         # Static assets (images, icons, etc.)
+│
+├── Components/                     # Reusable UI components
+│   ├── FriendsComponent/           # Components for friends and social features
+│   │   ├── AddFriend.tsx           # Add friend dialog/component
+│   │   ├── ChallengeDialog.tsx     # Challenge a friend to a game
+│   │   ├── ChatDialog.tsx          # Friend chat dialog
+│   │   ├── FriendsList.tsx         # List of friends
+│   │   ├── GameDialog.tsx          # Game invitation dialog
+│   │   ├── GameInvites.tsx         # Incoming game invites
+│   │   ├── PendingRequests.tsx     # Pending friend requests
+│   │   ├── ProfileDialog.tsx       # Friend profile dialog
+│   │   └── SentRequest.tsx         # Sent friend requests
+│   │
+│   ├── PlayComponents/             # Components for gameplay and chessboard
+│   │   ├── AccuracyStats.tsx       # Accuracy statistics display
+│   │   ├── CapturedPieces.tsx      # Captured pieces display
+│   │   ├── ChessBoard.tsx          # Chessboard UI
+│   │   ├── GameController.tsx      # Game controls (start, resign, etc.)
+│   │   ├── GameScreen.tsx          # Main game screen
+│   │   ├── GameSetup.tsx           # Game setup dialog
+│   │   ├── MoveHistory.tsx         # Move history display
+│   │   ├── PromotionDialog.tsx     # Pawn promotion dialog
+│   │   └── Timer.tsx               # Game timer
+│   │
+│   ├── TutorialComponents/         # Components for tutorial/learning features
+│   │   ├── Basic.tsx               # Basic tutorial step
+│   │   ├── ChessPiece.tsx          # Chess piece tutorial
+│   │   ├── Draw.tsx                # Draw scenarios tutorial
+│   │   ├── MiniBoard.tsx           # Mini chessboard for tutorials
+│   │   ├── PieceGuide.tsx          # Guide to chess pieces
+│   │   ├── Pieces.tsx              # Piece movement tutorial
+│   │   ├── Rules.tsx               # Chess rules tutorial
+│   │   └── Winning.tsx             # Winning strategies tutorial
+│   │
+│   ├── AppBar.tsx                  # Top navigation bar
+│   ├── BottomNav.tsx               # Bottom navigation bar
+│   ├── GameDetails.tsx             # Game details modal/component
+│   ├── InstallPWA.tsx              # PWA installation prompt
+│   └── Loading.tsx                 # Loading spinner/component
+│
+├── Context/                        # React context providers
+│   ├── AuthContext.tsx             # Authentication context
+│   ├── BoardThemeContext.tsx       # Board theme context
+│   └── ThemeContext.tsx            # App-wide theme context
+│
+├── Pages/                          # Page-level React components (routes)
+│   ├── Friends.tsx                 # Friends page
+│   ├── Home.tsx                    # Home/landing page
+│   ├── Landing.tsx                 # Landing/welcome page
+│   ├── Play.tsx                    # Play game page
+│   ├── Profile.tsx                 # User profile page
+│   ├── Settings.tsx                # Settings page
+│   └── Tutorial.tsx                # Tutorial/learning page
+│
+├── Services/                       # API and WebSocket service modules
+│   ├── api.ts                      # REST API service
+│   └── socket.ts                   # Socket.IO client service
+│
+├── Types/                          # TypeScript type definitions
+│   └── chess.ts                    # Chess-related types
+│
+├── Utils/                          # Utility/helper functions
+│   ├── accuracyColors.ts           # Accuracy color helpers
+│   ├── avatarColors.ts             # Avatar color helpers
+│   ├── chessAI.ts                  # Chess AI logic
+│   ├── chessLogic.ts               # Chess rules/logic helpers
+│   ├── eloCalculator.ts            # ELO rating calculation
+│   ├── FirestoreService.ts         # Firestore utility functions
+│   ├── loadingDelay.ts             # Loading delay utility
+│   ├── logoutLoading.ts            # Logout loading helper
+│   ├── memberSince.ts              # Member since date helper
+│   └── Notifications.ts            # Notification helpers
+│
+├── App.css                         # Global styles
+├── App.tsx                         # Main app component
+├── firebase.ts                     # Firebase config/init
+├── index.css                       # Base styles
+├── main.tsx                        # App entry point
+└── setupTests.ts                   # Test setup file
 ```
 
 ## Installation

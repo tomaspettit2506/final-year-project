@@ -16,36 +16,36 @@
 ```
 backend/
 ├── src/
-|   ├── config/
-|   |   ├── cors.ts
-|   |   ├── database.ts
-|   |   └── firebase.ts
-|   |
-|   ├── routes/
-|   |   ├── friends.ts
-|   |   ├── gameInvites.ts
-|   |   ├── games.ts
-|   |   ├── messages.ts
-|   |   ├── requests.ts
-|   |   └── users.ts
-|   |
-|   ├── schemas/
-|   |   └── index.ts
-|   |   
-|   ├── socket/
-|   |   └── handlers.ts
-|   |   
-|   ├── types/
-|   |   └── index.ts
-|   |   
-|   ├── utils/
-|   |   ├── eloCalculator.ts
-|   |   ├── friend.ts
-|   |   ├── room.ts
-|   |   └── statsCalculator.ts
-|   |   
-|   └── index.ts
-└── tests/
+│   ├── config/              # Backend configuration (CORS, DB, Firebase)
+│   │   ├── cors.ts          # CORS policy setup
+│   │   ├── database.ts      # MongoDB connection logic
+│   │   └── firebase.ts      # Firebase Admin SDK setup
+│   │
+│   ├── routes/              # Express route handlers (REST API endpoints)
+│   │   ├── friends.ts       # Friends management endpoints
+│   │   ├── gameInvites.ts   # Game invitation endpoints
+│   │   ├── games.ts         # Game logic endpoints
+│   │   ├── messages.ts      # Messaging endpoints
+│   │   ├── requests.ts      # Friend/game requests endpoints
+│   │   └── users.ts         # User profile endpoints
+│   │
+│   ├── schemas/             # Data validation schemas
+│   │   └── index.ts         # Schema index/exports
+│   │   
+│   ├── socket/              # Socket.IO event handlers
+│   │   └── handlers.ts      # Real-time event logic
+│   │   
+│   ├── types/               # TypeScript type definitions
+│   │   └── index.ts         # Type exports
+│   │   
+│   ├── utils/               # Utility/helper functions
+│   │   ├── eloCalculator.ts # ELO rating calculation logic
+│   │   ├── friend.ts        # Friend-related utilities
+│   │   ├── room.ts          # Room management utilities
+│   │   └── statsCalculator.ts # Game statistics calculations
+│   │   
+│   └── index.ts             # Backend entry point
+└── tests/                   # Backend unit and integration tests
 ```
 
 ## Installation

@@ -93,28 +93,30 @@ The project combines interactive learning, gameplay tools, and progress-focused 
 
 ```text
 final-year-project/
-├── AI-Model-Dev/
-├── backend/
+├── AI-Model-Dev/                # Non-Machine learning models, data processing, and AI scripts
+├── backend/                     # Node.js/Express backend API and Socket.IO server
+│   ├── src/
+│   │   ├── config/              # Backend configuration files (CORS, DB, Firebase)
+│   │   ├── routes/              # Express route handlers (REST API endpoints)
+│   │   ├── schemas/             # Data validation schemas (e.g., Joi, Zod)
+│   │   ├── socket/              # Socket.IO event handlers and logic
+│   │   ├── types/               # TypeScript type definitions for backend
+│   │   ├── utils/               # Utility/helper functions for backend
+│   │   └── index.ts             # Backend entry point
+│   └── tests/                   # Backend unit and integration tests
+│
+├── docs/                        # Documentation, meeting logs, dissertation (LaTeX)
+├── frontend/                    # React + TypeScript frontend (Vite)
+│   ├── public/                  # Static assets (icons, manifest, service worker)
+│   ├── scripts/                 # Utility scripts for frontend setup or build
 │   └── src/
-│       ├── config/
-│       ├── routes/
-│       ├── schemas/
-│       ├── socket/
-│       ├── types/
-│       ├── utils/
-│       └── index.ts
-├── docs/
-├── frontend/
-│   ├── public/
-│   ├── scripts/
-│   └── src/
-│       ├── Components/
-│       ├── Context/
-│       ├── Pages/
-│       ├── Services/
-│       ├── Types/
-│       └── Utils/
-└── integration/
+│       ├── Components/          # Reusable UI components
+│       ├── Context/             # React context providers (auth, theme, board)
+│       ├── Pages/               # Page-level React components (routes)
+│       ├── Services/            # API and WebSocket service modules
+│       ├── Types/               # TypeScript type definitions for frontend
+│       └── Utils/               # Utility/helper functions for frontend
+└── integration/                 # Integration tests, cross-system scripts, and assets
 ```
 
 ## 🚀 Getting Started

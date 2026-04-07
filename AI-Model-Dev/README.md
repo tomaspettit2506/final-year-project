@@ -16,17 +16,20 @@ This folder contains the data and analytics pipeline used for the AI/dissertatio
 
 ```text
 AI-Model-Dev/
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── reports/
-├── img/
-├── data_export.py
-├── preprocess_positions.py
-├── generate_graphs.py
-├── report_metrics.py
-├── training.py
-└── requirements.txt
+├── data/                     # Data storage for pipeline
+│   ├── raw/                  # Raw exported game data (JSON/CSV)
+│   ├── processed/            # Cleaned and processed datasets
+│   └── reports/              # Generated reports and summaries
+|
+├── img/                      # Output charts and visualizations
+|
+├── data_export.py            # Script to export game data from API or JSON
+├── preprocess_positions.py   # Cleans and processes raw data for ML
+├── generate_graphs.py        # Generates graphs and charts from data
+├── report_metrics.py         # Computes and reports dataset metrics
+├── training.py               # Main ML training pipeline script
+|
+└── requirements.txt          # Python dependencies for the pipeline
 ```
 
 ## 🏗️ Installation
