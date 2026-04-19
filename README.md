@@ -18,7 +18,7 @@
 
 ## 🎬 Screencast Demonstration
 
-> _To be added._
+[![Watch the Demo](https://img.youtube.com/vi/7gg2fioyUZk/0.jpg)](https://youtu.be/7gg2fioyUZk)
 
 ## 📄 Dissertation Document
 

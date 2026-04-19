@@ -1,6 +1,6 @@
 # AI Model Development
 
-This folder contains the data and analytics pipeline used for the AI/dissertation reporting workflow. On the [ai-model-development.md](ai-model-development.md)
+This folder contains the data and analytics pipeline used for the AI/dissertation reporting workflow. On the [ai-model-development.md](ai-model-development.md). Especialy [Data Contract](data-contract.md)
 
 ## Tech Stack
 
