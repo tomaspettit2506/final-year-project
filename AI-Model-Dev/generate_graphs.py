@@ -38,7 +38,7 @@ def generate_graphs(input_csv: Path, image_dir: Path) -> list[Path]:
 	if "result" in df.columns:
 		plt.figure(figsize=(8, 5))
 		counts = df["result"].fillna("unknown").value_counts().sort_index()
-		counts.plot(kind="bar", color=["#FE0751", "#4c78a8"], edgecolor="black")
+		counts.plot(kind="bar", color=["#9ca2a8", "#FE0751", "#65a84c"], edgecolor="black")
 		plt.title("Game Outcome Distribution")
 		plt.xlabel("Result", fontsize=12, fontdict={'family': 'DejaVu Sans'})
 		plt.ylabel("Count", fontsize=12, fontdict={'family': 'DejaVu Sans'})
