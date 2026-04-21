@@ -2,10 +2,11 @@
 
 ## Diagrams
 
-- [ ] System Context Diagram
-- [ ] Service Interaction Diagram
-- [ ] Data Flow Diagram
-- [ ] Deployment Architecture
+- [x] My Architecture Diagram
+- [x] System Context Diagram
+- [x] Service Interaction Diagram
+- [x] Data Flow Diagram
+- [x] Deployment Architecture
 
 ## Tools
 - [Draw.io](https://app.diagrams.net/) / [Excalidraw](https://excalidraw.com/) for initial sketches
