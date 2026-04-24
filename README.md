@@ -20,9 +20,11 @@
 
 [![Watch the Demo](https://img.youtube.com/vi/7gg2fioyUZk/0.jpg)](https://youtu.be/7gg2fioyUZk)
 
+> Click the image above to watch the full demo.
+
 ## 📄 Dissertation Document
 
-> _To be added._
+> Click this link to see my document: [My Dissertation Document](docs/dissertation/SW4_FYP_Dissertation.pdf)
 
 ## 📚 Overview
 
