@@ -28,7 +28,7 @@ In your chess application, data collection happens through:
     - This classification data can be used to train more sophisticated models
     
 ## Training
-Your current AI uses a rule-based approach with evaluation functions, but here's how you could implement ML training:
+Your current AI uses a rule-based approach with evaluation functions, but here's how you could implement Non-ML training:
 
 1. Position Evaluation
 ````typescript
@@ -37,7 +37,7 @@ const PIECE_VALUES = { pawn: 100, knight: 320, bishop: 330, ... }
 const POSITION_BONUS = { pawn: [...], knight: [...], ... }
 ````
 
-2. Potential ML Enhancement
+2. Potential Non-ML Enhancement
 
     - Collect position-outcome pairs from your game database
     - Train a neural network to predict position strength
@@ -108,7 +108,7 @@ To enhance your chess AI and analytics without using machine learning:
     - Improve heuristics and evaluation functions based on playtesting and user feedback
     - Update rule-based logic as needed for better gameplay experience
 
-Your current architecture is fully compliant with a non-ML approach. All AI, analytics, and reporting are performed using deterministic, rule-based methods and traditional programming, with no machine learning or neural networks involved.
+Your current architecture is fully compliant with a Non-ML approach. All AI, analytics, and reporting are performed using deterministic, rule-based methods and traditional programming, with no machine learning or neural networks involved.
 
 ## Implemented Scripts (Report-First Phase)
 

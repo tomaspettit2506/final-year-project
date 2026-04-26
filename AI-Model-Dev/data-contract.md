@@ -1,6 +1,6 @@
-# Chess ML Data Contract (Report-First Phase)
+# Chess Non-ML Data Contract (Report-First Phase)
 
-This contract defines the minimum schema required for reproducible analytics now and position-level ML training later.
+This contract defines the minimum schema required for reproducible analytics now and position-level Non-ML training later.
 
 ## Purpose
 
@@ -32,7 +32,7 @@ This contract defines the minimum schema required for reproducible analytics now
 | `opponentAccuracy` | number | `Game.opponentAccuracy` | Accuracy estimate |
 | `userRef` | string/null | request context | `firebaseUid` or `userId` when available |
 
-## Required Fields (Future Position-Level ML)
+## Required Fields (Future Position-Level Non-ML)
 
 These fields are currently **not persisted** in backend game storage and should be added for full model training:
 

@@ -10,7 +10,7 @@ This folder contains the data and analytics pipeline used for the AI/dissertatio
 | pandas | Data cleaning and reporting |
 | matplotlib / seaborn | Graph generation |
 | numpy | Numeric operations |
-| torch | ML framework dependency |
+| torch | Non-ML framework dependency |
 
 ## Project Structure
 
@@ -24,10 +24,10 @@ AI-Model-Dev/
 ├── img/                      # Output charts and visualizations
 |
 ├── data_export.py            # Script to export game data from API or JSON
-├── preprocess_positions.py   # Cleans and processes raw data for ML
+├── preprocess_positions.py   # Cleans and processes raw data for Non-ML
 ├── generate_graphs.py        # Generates graphs and charts from data
 ├── report_metrics.py         # Computes and reports dataset metrics
-├── training.py               # Main ML training pipeline script
+├── training.py               # Main Non-ML training pipeline script
 |
 └── requirements.txt          # Python dependencies for the pipeline
 ```
