@@ -132,7 +132,7 @@ final-year-project/
 ### 1) Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/final-year-project.git
+git clone https://github.com/tomaspettit2506/final-year-project.git
 cd final-year-project
 ```
 
