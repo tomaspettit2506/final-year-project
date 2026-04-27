@@ -1,0 +1,92 @@
+\chapter{Introduction of GOTCG}
+\label{cha:introduction}
+\section{Project Context}
+
+"Guardians of the Chess Grandmaster" is an \textbf{innovative} chess learning application designed to provide an engaging and accessible platform for chess \textbf{enthusiasts}, whether they are complete beginners or aspiring players looking to reach a more advanced level. The project focuses on teaching the \textbf{intricacies} of chess through a variety of interactive methods, such as puzzles, strategic missions, and real-time matches against other players or an AI opponent like practice for preparing for other players to face in.
+
+Chess is often seen as a complex game that requires a deep understanding of strategies, tactics, and piece movements. Many \textbf{aspiring} players face challenges due to a lack of clear guidance, overwhelming information, or a decline in motivation. This application addresses these barriers by breaking down the game's concepts into manageable lessons that highlight both its strategic depth and \textbf{artistic} nature. It aims to transform the learning process into an enjoyable experience that encourages players to persist in their chess journey.
+
+The scope of this project is suitable for an eighth-grade level and above, as it introduces chess concepts in a structured way while also being challenging enough for more advanced players. Overall, readers should find this project compelling due to its potential to make chess more accessible, enjoyable, and educational for a wide range of users. As chess continues gaining popularity worldwide, tools that simplify learning and promote engagement are essential for \textbf{fostering} a new generation of skilled players.
+
+Before reading further, readers are encouraged to watch the short screencast demonstration of the application, available at \href{https://youtu.be/7gg2fioyUZk}{GOTCG - Final Year Project - Screencast}, to gain a practical sense of the platform in action prior to exploring the technical detail that follows.
+
+\section{Project Objectives}
+
+\begin{enumerate}
+    \item \textbf{User-Friendly Interface}: Design and develop a landing interface with \textbf{intuitive} login and sign-up options to ensure secure user authentication.
+    \item \textbf{Interactive Home Page}: Create a functional home page that provides easy access to all main features, including game modes, tutorials, and user profiles, with a focus on game history.
+    \item \textbf{Comprehensive User Profile}: Develop a user profile page where players can manage their personal information and view their game history.
+    \item \textbf{Customization Settings}: Implement a settings section that allows users to customize preferences such as themes, piece sets, cache management, and install an app while using the Progressive Web Application (PWA).
+    \item \textbf{In-App Tutorial Section}: Provide a tutorial section that effectively teaches users the basic and advanced rules of chess, including the functions of each piece and strategies for winning or drawing at the end of the game.
+    \item \textbf{Play Features}: Enable various game modes, including player vs. player (where one player creates a Room ID and the other can join using that Room ID) and player vs. AI. Differentiate the experiences through an easy naming process and difficulty options.
+    \item \textbf{Friends Feature}: Include functionality for users to manage their friends, send requests, challenge one another by inviting friends to play, and chat to check availability for games by sending or replying to messages.
+    \item \textbf{Secure Logout Functionality}: Implement a secure logout feature that safely ends user sessions and prevents access to protected content.
+\end{enumerate}
+
+\section{Success Metrics}
+
+Success or failure of the project will be measured using the following metrics:
+
+\begin{itemize}
+    \item \textbf{User Authentication Success}: Successful login and registration rates, with effective password recovery tests showing a \textbf{low failure rate}.
+    \item \textbf{Navigation and Feature Access}: High user engagement levels as measured by the number of users accessing the home page and successfully navigating to different features.
+    \item \textbf{Profile Updates}: The number of successful profile updates and the correct display of changes made.
+    \item \textbf{Preference Persistence}: Confirmation that user customization settings remain \textbf{intact} after app restarts.
+    \item \textbf{Tutorial Accessibility and Utilization}: Monitoring tutorial access frequency and user completion rates.
+    \item \textbf{Game Functionality}: Successful match \textbf{initiation rates} for all game modes with proper AI responses.
+    \item \textbf{Friends Feature Efficiency}: Number of successful friend requests, chat messages and in-game challenges made.
+    \item \textbf{Logout Security}: Tests confirming that users cannot access secured content post-logout.
+\end{itemize}
+
+By addressing these objectives and utilizing measurable success metrics, the project aims to create a comprehensive chess learning platform that is both functional and engaging for users.
+
+\section*{Chapter/Section Overview}
+
+\begin{itemize}
+    \item \textbf{Methodology}
+    - This section outlines the approach taken for the project, discussing the validity and rationale behind the chosen methods on ~\textit{Chapter} \ref{cha:methodology}.
+    \item \textbf{Technology Review (Literature Review)}
+    A detailed examination of the technologies used in the project on a Literature Review on ~\textit{Chapter} \ref{cha:review}:
+    \begin{itemize}
+        \item \textbf{Frontend}: Utilizes React with Vite and TypeScript to create a responsive interface, leveraging efficient development processes and smooth updates.
+        \item \textbf{Backend}: Incorporates Node.js or Express.js to define server-side logic, manage authentication, and handle data storage.
+        \item \textbf{Database}: Employs MongoDB as a NoSQL database to manage user profiles and game data, using Mongoose for object data modeling and streamlined interactions.
+        \item \textbf{Operating System Compatibility}: The web-based application is compatible with any OS supporting modern browsers, emphasizing cross-platform development.
+        \item \textbf{Third-Party Libraries and Services}: Integrates various libraries to enhance functionality and simplify development. 
+    \end{itemize}
+    \item \textbf{System Design}
+    - Provides a comprehensive overview of the system architecture, detailing the components and connections within the project in ~\textit{Chapter} \ref{cha:design}.
+    \item \textbf{System Evaluation}
+    - Assesses the project against the initial objectives set in the introduction, discussing successes and areas for improvement in ~\textit{Chapter} \ref{cha:evaluation}.
+    \item \textbf{Conclusion}
+    - Summarizes the project context, key findings, and overall objectives on ~\textit{Chapter} \ref{cha:conclusion}.
+\end{itemize}
+
+\section*{Resource URLs}
+
+\begin{itemize}
+    \item \textbf{GitHub Repository}: \href{https://github.com/tomaspettit2506/final-year-project}{Project GitHub URL}
+    \item \textbf{Frontend Folder (React, Vite, and TypeScript)}: 
+    \href{https://github.com/tomaspettit2506/final-year-project/tree/main/frontend}{Frontend Link}
+    \item \textbf{Backend Folder (Node.js and Server.js)}: 
+    \href{https://github.com/tomaspettit2506/final-year-project/tree/main/backend}{Backend Link}
+    \item \textbf{AI Model Development}: 
+    \href{https://github.com/tomaspettit2506/final-year-project/tree/main/AI-Model-Dev}{AI Model Development Link}
+    \item \textbf{Integration}:
+    \href{https://github.com/tomaspettit2506/final-year-project/tree/main/integration}{Integration Link}
+    \item \textbf{Documentation Folder}: 
+    \href{https://github.com/tomaspettit2506/final-year-project/tree/main/docs}{Documentation Link}
+    \item \textbf{Work Plan}:  \href{https://github.com/users/tomaspettit2506/projects/6}{Link to My Work Plan Projects}
+    \item \textbf{Screencast Video}: \href{https://youtu.be/7gg2fioyUZk}{GOTCG - Final Year Project - Screencast}
+\end{itemize}
+
+\section*{Main Elements at the URL}
+
+\begin{enumerate}
+    \item \textbf{Source Code} - The complete codebase for the project is organized into \texttt{frontend} (React + Vite) and \texttt{backend} (Node.js \& Server.js) components, with a clear structure that facilitates easy navigation.
+    \item \textbf{Documentation} - A comprehensive \texttt{README} file is provided, which includes installation instructions, usage guidelines, and setup procedures for both development and deployment. Additionally, a brief screencast (2-5 minutes) showcasing your application in action is included to demonstrate its functionality.
+    \item \textbf{Deployments} - GitHub offers robust deployment capabilities through GitHub Actions, allowing for seamless integration and automation when deploying applications. Here are the steps to deploy your project using GitHub: the \texttt{frontend} can be deployed on Vercel, while the \texttt{backend} can be deployed on Railway.
+    \item \textbf{Issues Tracker} - There is a dedicated section for reporting bugs or requesting features, which encourages community engagement and feedback.
+    \item \textbf{Contributing Guidelines} - Instructions for how other developers can contribute to the project are included, covering coding standards and the submission process.
+    \item \textbf{License} - Information about the open-source license under which the project is distributed is provided, promoting transparency and encouraging community use.
+\end{enumerate}
