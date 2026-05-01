@@ -24,7 +24,7 @@
 
 ## 📄 Dissertation Document
 
-> Click this link to see my document: [My Dissertation Document](docs/dissertation/DD-G00419414.pdf)
+> Click this link to see my document: [My Dissertation Document](docs/dissertation/DD_G00419414.pdf)
 
 ## 📚 Overview
 
